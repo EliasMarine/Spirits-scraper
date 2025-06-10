@@ -61,9 +61,13 @@ export class SupabaseStorage {
       // Prepare data for insertion
       const insertData = this.prepareForDatabase(spiritData);
       
-      // Debug logging for all data
-      // Removed verbose debug logging for cleaner output
-      // logger.info(`Debug: insertData = ${JSON.stringify(insertData, null, 2)}`);
+      // Debug logging for ABV and price
+      if (spiritData.abv || spiritData.price) {
+        logger.info(`🔧 Database insert data:`);
+        logger.info(`  Name: ${insertData.name}`);
+        logger.info(`  ABV: ${insertData.abv} (type: ${typeof insertData.abv})`);
+        logger.info(`  Price: ${insertData.price} (type: ${typeof insertData.price})`);
+      }
 
       // Insert into database
       const { data: inserted, error } = await this.client

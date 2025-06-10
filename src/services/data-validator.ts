@@ -257,7 +257,33 @@ export class DataValidator {
   /**
    * Normalize spirit type
    */
-  private normalizeType(type: string): string {
+  private normalizeType(type: any): string {
+    // Handle various input types
+    let typeString: string;
+    
+    if (!type) {
+      return 'Whiskey'; // Default for null/undefined
+    }
+    
+    if (Array.isArray(type)) {
+      if (type.length === 0) {
+        return 'Whiskey'; // Default for empty array
+      }
+      // Take the first element and ensure it's a string
+      typeString = String(type[0]);
+    } else if (typeof type === 'object') {
+      // Handle unexpected object types
+      return 'Whiskey'; // Default for objects
+    } else {
+      // Convert to string for any other type
+      typeString = String(type);
+    }
+    
+    // Ensure we have a valid string
+    if (!typeString || typeof typeString !== 'string') {
+      return 'Whiskey';
+    }
+    
     const typeMap: Record<string, string> = {
       // Whiskey types
       'whiskey': 'Whiskey',
@@ -293,7 +319,7 @@ export class DataValidator {
       'spirit': 'Spirit',
     };
 
-    const lower = type.toLowerCase().trim();
+    const lower = typeString.toLowerCase().trim();
     
     // Check exact match first
     if (typeMap[lower]) {
@@ -308,7 +334,7 @@ export class DataValidator {
     }
     
     // Don't default to Single Malt - use the original type in title case
-    return this.titleCase(type);
+    return this.titleCase(typeString);
   }
 
   /**

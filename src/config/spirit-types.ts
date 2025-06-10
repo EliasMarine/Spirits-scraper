@@ -475,6 +475,8 @@ export const SPIRIT_TYPE_CONFIG: SpiritTypeConfig = {
     'Titos': 'Vodka',
     'Smirnoff': 'Vodka',
     'Stolichnaya': 'Vodka',
+    'Wheatley': 'Vodka',
+    'Wheatley Vodka': 'Vodka',
     
     // Gin brands
     'Tanqueray': 'Gin',
@@ -513,7 +515,12 @@ export function detectSpiritType(
   brand?: string,
   description?: string
 ): { type: string; subType?: string; confidence: number } {
-  const searchText = `${name} ${brand || ''} ${description || ''}`.toLowerCase();
+  // Ensure all parameters are strings
+  const safeName = String(name || '');
+  const safeBrand = String(brand || '');
+  const safeDescription = String(description || '');
+  
+  const searchText = `${safeName} ${safeBrand} ${safeDescription}`.toLowerCase();
   
   // First check for flavored/liqueur products even with known brands
   const flavoredPatterns = [
@@ -649,7 +656,11 @@ export function validateSpiritType(
   const config = SPIRIT_TYPE_CONFIG.types[detectedType];
   if (!config) return false;
   
-  const searchText = `${name} ${brand || ''}`.toLowerCase();
+  // Ensure all parameters are strings
+  const safeName = String(name || '');
+  const safeBrand = String(brand || '');
+  
+  const searchText = `${safeName} ${safeBrand}`.toLowerCase();
   
   // Check if it matches the patterns for this type
   const matchesPattern = config.patterns.some(pattern => pattern.test(searchText));
