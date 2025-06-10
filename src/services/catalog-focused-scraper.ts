@@ -117,8 +117,24 @@ export class CatalogFocusedScraper {
         // Add delay between distilleries
         await this.delay(2000);
         
-      } catch (error) {
+      } catch (error: any) {
         logger.error(`❌ Error scraping ${distillery.name}:`, error);
+        
+        // Check if it's an API limit error
+        if (error.message && error.message.includes('Daily API limit')) {
+          logger.error('🛑 API limit reached. Stopping all distillery scraping.');
+          results.push({
+            distillery: distillery.name,
+            productsFound: 0,
+            productsStored: 0,
+            errors: 1,
+            queries: [],
+            duration: 0,
+            efficiency: 0
+          });
+          break; // Stop processing more distilleries
+        }
+        
         results.push({
           distillery: distillery.name,
           productsFound: 0,
@@ -256,8 +272,14 @@ export class CatalogFocusedScraper {
               if (fullProductData && fullProductData.data_quality_score && fullProductData.data_quality_score > 50) {
                 logger.debug(`Enhanced extraction for ${product.name}: Quality score ${fullProductData.data_quality_score}`);
               }
-            } catch (error) {
+            } catch (error: any) {
               logger.debug(`Spirit extractor failed for ${product.name}: ${error}`);
+              
+              // Check if it's an API limit error and stop the entire process
+              if (error.message && error.message.includes('Daily API limit')) {
+                logger.error('🛑 Stopping scraper due to API limit reached');
+                throw error; // Re-throw to stop the entire scraping process
+              }
             }
 
             // Merge discovered data with extracted data
@@ -424,9 +446,15 @@ export class CatalogFocusedScraper {
           // Rate limiting
           await this.delay(1500);
           
-        } catch (error) {
+        } catch (error: any) {
           logger.error(`Error processing catalog query "${query}":`, error);
           result.errors++;
+          
+          // Check if it's an API limit error and stop the entire process
+          if (error.message && error.message.includes('Daily API limit')) {
+            logger.error('🛑 Stopping scraper due to API limit reached');
+            throw error; // Re-throw to stop the entire scraping process
+          }
         }
       }
 
