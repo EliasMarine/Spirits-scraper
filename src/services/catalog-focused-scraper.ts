@@ -11,6 +11,7 @@ import { detectSpiritType } from '../config/spirit-types.js';
 import { getDistilleryFromBrand } from '../config/brand-distillery-mapping.js';
 import { TextProcessor } from './text-processor.js';
 import { createNormalizedKey, createMultipleKeys, extractVariantInfo } from './normalization-keys.js';
+import { apiCallTracker } from './api-call-tracker.js';
 
 export interface CatalogScrapingOptions {
   maxProductsPerDistillery?: number;
@@ -222,6 +223,12 @@ export class CatalogFocusedScraper {
 
           // PHASE 4: Process discovered products
           for (const product of productsFromResults) {
+            // CRITICAL: Check API limit before processing each product
+            if (apiCallTracker.isAPILimitReached()) {
+              logger.error('🛑 API limit reached - stopping product processing');
+              throw new Error('Daily API limit has been reached. Please try again tomorrow.');
+            }
+            
             if (processedProducts.size >= maxProducts) break;
 
             // Use enhanced normalization for better duplicate detection
@@ -277,7 +284,7 @@ export class CatalogFocusedScraper {
               
               // Check if it's an API limit error and stop the entire process
               if (error.message && error.message.includes('Daily API limit')) {
-                logger.error('🛑 Stopping scraper due to API limit reached');
+                logger.error('🛑 Stopping entire catalog scraper due to API limit reached');
                 throw error; // Re-throw to stop the entire scraping process
               }
             }

@@ -20,6 +20,7 @@ export class APICallTracker {
   private calls: APICallEntry[] = [];
   private dailyLimit: number;
   private resetTime: number; // Daily reset timestamp
+  private apiLimitReached: boolean = false;
 
   constructor(dailyLimit = 100) {
     this.dailyLimit = dailyLimit;
@@ -39,6 +40,7 @@ export class APICallTracker {
     const now = Date.now();
     if (now >= this.resetTime) {
       this.calls = [];
+      this.apiLimitReached = false; // Reset the API limit flag
       this.resetTime = this.getNextResetTime();
       logger.info('🔄 API call tracker reset for new day');
     }
@@ -63,6 +65,28 @@ export class APICallTracker {
     } else if (stats.totalCalls >= 10 && stats.efficiency < 0.5) {
       logger.warn(`🚨 Very low API efficiency: ${stats.efficiency.toFixed(2)} spirits/call. Cache may be returning stale results.`);
     }
+    
+    // Check if API limit reached
+    if (stats.totalCalls >= this.dailyLimit) {
+      this.apiLimitReached = true;
+      logger.error(`🚫 API limit reached: ${stats.totalCalls}/${this.dailyLimit} calls used`);
+    }
+  }
+
+  /**
+   * Check if API limit has been reached
+   */
+  isAPILimitReached(): boolean {
+    this.checkDailyReset();
+    return this.apiLimitReached || this.calls.length >= this.dailyLimit;
+  }
+
+  /**
+   * Set API limit reached flag
+   */
+  setAPILimitReached(): void {
+    this.apiLimitReached = true;
+    logger.error('🚫 API limit flag set - all further API calls will be blocked');
   }
 
   getStats(): APICallStats {

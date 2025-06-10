@@ -93,8 +93,8 @@ export class GoogleSearchClient {
       }
       
       // CRITICAL FIX: Check API limit BEFORE making the call
-      const currentStats = apiCallTracker.getStats();
-      if (currentStats.totalCalls >= currentStats.dailyLimit) {
+      if (apiCallTracker.isAPILimitReached()) {
+        const currentStats = apiCallTracker.getStats();
         logger.error(`🚫 API limit reached: ${currentStats.totalCalls}/${currentStats.dailyLimit} calls used`);
         throw new Error(`Daily API limit of ${currentStats.dailyLimit} calls has been reached. Please try again tomorrow.`);
       }

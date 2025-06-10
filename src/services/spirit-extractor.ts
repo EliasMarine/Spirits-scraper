@@ -79,8 +79,14 @@ export class SpiritExtractor {
         if (results.items) {
           allResults.push(...results.items);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error(`Search failed for query "${query}":`, error);
+        
+        // CRITICAL: Check if it's an API limit error and stop immediately
+        if (error.message && error.message.includes('Daily API limit')) {
+          logger.error('🛑 API limit reached in spirit extractor - stopping all queries');
+          throw error; // Re-throw to stop the entire extraction process
+        }
       }
     }
 
