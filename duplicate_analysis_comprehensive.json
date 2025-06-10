@@ -1,0 +1,14 @@
+{
+  "total_spirits": 50,
+  "unique_spirits": 44,
+  "duplicate_rate": 12.0,
+  "within_brand_duplicates": 10,
+  "cross_brand_matches": 0,
+  "pattern_statistics": {
+    "size_variants": 4,
+    "marketing_variants": 3,
+    "year_variants": 2,
+    "proof_variants": 2,
+    "type_mismatches": 2
+  }
+}

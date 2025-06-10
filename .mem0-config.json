@@ -1,0 +1,52 @@
+{
+  "apiKey": "m0-810IjSAzsvkiiagF9Mwqu8eYWizjCTBNjZ5AJs5w",
+  "config": {
+    "userId": "spirits-database-project",
+    "agentId": "claude-code-assistant",
+    "projectContext": {
+      "name": "Spirits Database",
+      "type": "monorepo",
+      "components": [
+        "spirits-frontend",
+        "spirits-scraper",
+        "supabase"
+      ],
+      "primaryLanguages": [
+        "TypeScript",
+        "JavaScript",
+        "SQL"
+      ]
+    }
+  },
+  "memoryCategories": {
+    "code_patterns": {
+      "description": "Successful code patterns and solutions",
+      "retention": "permanent"
+    },
+    "data_quality": {
+      "description": "Data quality improvements and fixes",
+      "retention": "permanent"
+    },
+    "scraping_context": {
+      "description": "Scraping patterns and domain knowledge",
+      "retention": "30_days"
+    },
+    "error_patterns": {
+      "description": "Common errors and their solutions",
+      "retention": "permanent"
+    },
+    "project_decisions": {
+      "description": "Architecture and design decisions",
+      "retention": "permanent"
+    }
+  },
+  "autoStore": {
+    "enabled": true,
+    "triggers": [
+      "file_modification",
+      "test_completion",
+      "error_resolution",
+      "performance_improvement"
+    ]
+  }
+}

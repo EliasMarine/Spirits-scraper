@@ -1,0 +1,53 @@
+{
+  "total_spirits": 50,
+  "total_duplicates": 5,
+  "duplicate_rate": 10.0,
+  "brands_with_duplicates": 1,
+  "total_brands": 11,
+  "duplicate_groups": {
+    "Buffalo Trace": [
+      {
+        "normalized_name": "buffalo trace kosher wheat",
+        "count": 2,
+        "spirits": [
+          {
+            "id": "998c77ce-c9ca-466c-854b-d36af49912f3",
+            "name": "Buffalo Trace Kosher Wheat - Ratings And Reviews - Whiskybase",
+            "type": "Whiskey",
+            "abv": "47"
+          },
+          {
+            "id": "e04cffd3-3778-4cee-9e77-49fb7171eef1",
+            "name": "Buffalo Trace Kosher Wheat",
+            "type": "Bourbon",
+            "abv": "40"
+          }
+        ]
+      },
+      {
+        "normalized_name": "buffalo trace bourbon",
+        "count": 3,
+        "spirits": [
+          {
+            "id": "903faecd-c498-4dab-8ba6-7eb39b550e3e",
+            "name": "Buffalo Trace Bourbon Sample",
+            "type": "Bourbon",
+            "abv": "40"
+          },
+          {
+            "id": "25a7c18f-dd22-433f-b051-c957d1b1b0a8",
+            "name": "Buffalo Trace Bourbon Magnum",
+            "type": "Bourbon",
+            "abv": "40"
+          },
+          {
+            "id": "078dec3d-a199-4771-b1e3-654f2417d98a",
+            "name": "Buffalo Trace Bourbon Single Barrel Select",
+            "type": "Bourbon",
+            "abv": "40"
+          }
+        ]
+      }
+    ]
+  }
+}
