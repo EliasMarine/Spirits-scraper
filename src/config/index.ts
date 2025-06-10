@@ -1,6 +1,9 @@
 import dotenv from 'dotenv';
 import { ScraperConfig } from '../types/index.js';
 
+// Re-export Distillery types
+export type { Distillery, Distillery as DistilleryConfig, ProductLine } from './distilleries.js';
+
 dotenv.config();
 
 export const config: ScraperConfig = {

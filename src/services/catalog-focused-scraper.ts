@@ -10,6 +10,7 @@ import { getSearchExclusions } from '../config/excluded-domains.js';
 import { detectSpiritType } from '../config/spirit-types.js';
 import { getDistilleryFromBrand } from '../config/brand-distillery-mapping.js';
 import { TextProcessor } from './text-processor.js';
+import { createNormalizedKey, createMultipleKeys, extractVariantInfo } from './normalization-keys.js';
 
 export interface CatalogScrapingOptions {
   maxProductsPerDistillery?: number;
@@ -207,8 +208,24 @@ export class CatalogFocusedScraper {
           for (const product of productsFromResults) {
             if (processedProducts.size >= maxProducts) break;
 
-            const productKey = `${product.name}-${distillery.name}`.toLowerCase();
-            if (discoveredProducts.has(productKey)) continue;
+            // Use enhanced normalization for better duplicate detection
+            const normalizedKeys = createMultipleKeys(product.name);
+            const productKey = `${normalizedKeys.aggressive}-${distillery.name}`.toLowerCase();
+            
+            // Check if already discovered using any normalization level
+            const alreadyDiscovered = Array.from(discoveredProducts).some(key => {
+              const [existingName] = key.split('-');
+              const existingKeys = createMultipleKeys(existingName);
+              return existingKeys.aggressive === normalizedKeys.aggressive ||
+                     existingKeys.ultraAggressive === normalizedKeys.ultraAggressive;
+            });
+            
+            if (alreadyDiscovered) {
+              // Extract variant info for logging
+              const variantInfo = extractVariantInfo(product.name);
+              logger.debug(`Skipping duplicate variant: ${product.name} (size: ${variantInfo.size}, year: ${variantInfo.year}, gift: ${variantInfo.giftSet})`);
+              continue;
+            }
             
             discoveredProducts.add(productKey);
             result.productsFound++;
@@ -219,14 +236,28 @@ export class CatalogFocusedScraper {
               continue;
             }
 
-            // Try to extract full product data if we have a URL
+            // Use spirit-extractor service for comprehensive data extraction
             let fullProductData = null;
-            if (product.url) {
-              try {
-                fullProductData = await spiritExtractor.extractFromUrl(product.url);
-              } catch (error) {
-                logger.debug(`Could not extract full data from ${product.url}`);
+            try {
+              // Extract comprehensive spirit data using the enhanced extractor
+              fullProductData = await spiritExtractor.extractSpirit(
+                product.name,
+                product.brand || this.extractBrandFromName(product.name, distillery),
+                {
+                  maxResults: 5, // Limit API calls
+                  includeRetailers: true,
+                  includeReviews: false,
+                  deepParse: false, // We already have the URL
+                  targetSites: this.topRetailers
+                }
+              );
+              
+              // If we got good data, merge it with our discovered data
+              if (fullProductData && fullProductData.data_quality_score && fullProductData.data_quality_score > 50) {
+                logger.debug(`Enhanced extraction for ${product.name}: Quality score ${fullProductData.data_quality_score}`);
               }
+            } catch (error) {
+              logger.debug(`Spirit extractor failed for ${product.name}: ${error}`);
             }
 
             // Merge discovered data with extracted data
@@ -241,7 +272,7 @@ export class CatalogFocusedScraper {
               finalType = Array.isArray(product.type) ? product.type[0] : product.type;
             }
             
-            // Extract ABV from description if not already found
+            // Use enhanced extraction data if available
             let finalABV = fullProductData?.abv || product.abv;
             if (!finalABV && (product.description || fullProductData?.description)) {
               const desc = product.description || fullProductData?.description || '';
@@ -340,19 +371,29 @@ export class CatalogFocusedScraper {
               brand: TextProcessor.normalizeBrandName(
                 fullProductData?.brand || product.brand || this.extractBrandFromName(product.name, distillery)
               ),
-              distillery: distillery.name,
+              distillery: fullProductData?.distillery || distillery.name,
               type: TextProcessor.normalizeCategory(product.name, finalType),
+              category: fullProductData?.category || this.detectCategoryFromType(finalType),
+              subcategory: fullProductData?.subcategory,
               region: fullProductData?.region || distillery.region,
               country: fullProductData?.origin_country || distillery.country,
               price: typeof finalPrice === 'number' ? finalPrice : undefined,
+              price_range: fullProductData?.price_range,
               abv: abvNumber,
+              proof: fullProductData?.proof,
               age_statement: ageStatement,
               volume: fullProductData?.volume || product.volume || '750ml',
               image_url: fullProductData?.image_url || product.image,
-              source_url: product.url,
+              source_url: fullProductData?.source_url || product.url,
               description: validDescription,
-              data_source: 'catalog_scraper',
-              data_quality_score: this.calculateQualityScore({
+              description_mismatch: fullProductData?.description_mismatch,
+              flavor_profile: fullProductData?.flavor_profile,
+              awards: fullProductData?.awards,
+              limited_edition: fullProductData?.limited_edition,
+              in_stock: fullProductData?.in_stock !== undefined ? fullProductData.in_stock : true,
+              whiskey_style: fullProductData?.whiskey_style,
+              data_source: 'catalog_scraper_enhanced',
+              data_quality_score: fullProductData?.data_quality_score || this.calculateQualityScore({
                 ...product,
                 ...fullProductData,
                 abv: abvNumber,
@@ -1181,18 +1222,11 @@ export class CatalogFocusedScraper {
   }
 
   /**
-   * Normalize product name for deduplication
+   * Normalize product name for deduplication using enhanced normalization
    */
   private normalizeProductName(name: string): string {
-    // Fix spacing issues first
-    const fixed = TextProcessor.fixTextSpacing(name);
-    
-    return fixed
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, '')
-      .replace(/proof$/, '')
-      .replace(/years?old$/, '')
-      .replace(/yo$/, '');
+    // Use the enhanced normalization key for better duplicate detection
+    return createNormalizedKey(name);
   }
 
   /**
@@ -1280,23 +1314,57 @@ export class CatalogFocusedScraper {
   }
 
   /**
-   * Check if product exists
+   * Check if product exists using enhanced normalization
    */
   private async checkProductExists(productName: string, distilleryName: string): Promise<boolean> {
     try {
-      const normalized = this.normalizeProductName(productName);
+      const normalizedKeys = createMultipleKeys(productName);
       const existing = await this.storage.searchSpirits({
         query: productName,
         filters: { distillery: distilleryName }
       });
       
-      return existing.some(spirit => 
-        this.normalizeProductName(spirit.name) === normalized
-      );
+      // Check against all normalization levels
+      return existing.some(spirit => {
+        const existingKeys = createMultipleKeys(spirit.name);
+        return existingKeys.standard === normalizedKeys.standard ||
+               existingKeys.aggressive === normalizedKeys.aggressive ||
+               existingKeys.ultraAggressive === normalizedKeys.ultraAggressive;
+      });
     } catch (error) {
       logger.debug(`Error checking product existence: ${error}`);
       return false;
     }
+  }
+
+  /**
+   * Detect category from type
+   */
+  private detectCategoryFromType(type: string): string {
+    const categoryMap: Record<string, string> = {
+      'Bourbon': 'Bourbon',
+      'Rye Whiskey': 'Rye Whiskey',
+      'Tennessee Whiskey': 'Tennessee Whiskey',
+      'Scotch': 'Scotch Whiskey',
+      'Single Malt Scotch': 'Scotch Whiskey',
+      'Blended Scotch': 'Scotch Whiskey',
+      'Irish Whiskey': 'Irish Whiskey',
+      'Japanese Whisky': 'Japanese Whiskey',
+      'Canadian Whisky': 'Canadian Whiskey',
+      'American Single Malt': 'Single Malt Whiskey',
+      'Vodka': 'Vodka',
+      'Gin': 'Gin',
+      'Rum': 'Rum',
+      'Tequila': 'Tequila',
+      'Mezcal': 'Mezcal',
+      'Cognac': 'Cognac',
+      'Brandy': 'Brandy',
+      'Liqueur': 'Liqueur',
+      'Whiskey': 'Whiskey',
+      'Spirit': 'Other'
+    };
+    
+    return categoryMap[type] || 'Other';
   }
 
   /**
