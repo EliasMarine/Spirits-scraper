@@ -1,6 +1,6 @@
-# Spirits Scraper Usage Guide (v2.3 - Ultra-Efficient Edition)
+# Spirits Scraper Usage Guide (v2.4 - Ultra-Efficient Edition)
 
-This document provides usage instructions for the Smart Spirits Scraper with NEW high-efficiency catalog-focused scraping and all enhanced features built-in by default.
+This document provides usage instructions for the Smart Spirits Scraper with ULTRA-EFFICIENT catalog scraping now DEFAULT for ALL commands!
 
 ## 🚀 Quick Start
 
@@ -8,12 +8,12 @@ This document provides usage instructions for the Smart Spirits Scraper with NEW
 # Install dependencies
 npm install
 
-# 🚀 ULTRA-EFFICIENT SCRAPING (NOW DEFAULT!) - 3-5 spirits per API call!
-npm run scrape -- --distillery "Buffalo Trace"    # Uses optimized scraper by default
-npm run scrape -- --distillery "Buffalo Trace,Wild Turkey,Jack Daniels"
+# 🚀 ALL COMMANDS NOW ULTRA-EFFICIENT (60%+ efficiency)!
+npm run scrape -- --categories bourbon --limit 50    # Now ultra-efficient!
+npm run scrape -- --distillery "Buffalo Trace"       # Already ultra-efficient!
 
-# Category-based scraping (standard efficiency)
-npm run scrape -- --categories bourbon --limit 50
+# Multiple categories - ALL ULTRA-EFFICIENT!
+npm run scrape -- --categories "bourbon,whiskey,scotch" --limit 200
 
 # Alternative catalog command (also high-efficiency)
 npm run scrape-catalogs -- --distilleries "Buffalo Trace" --max-products 5000

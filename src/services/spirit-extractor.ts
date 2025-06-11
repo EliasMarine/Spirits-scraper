@@ -274,6 +274,31 @@ export class SpiritExtractor {
       extractedData.age_statement = metadata.age_statement;
     }
 
+    // CRITICAL FIX: Populate scraped_data metadata field
+    extractedData.scraped_data = {
+      source: "google_search_api",
+      version: "1.0",
+      scraped_at: new Date().toISOString(),
+      extraction_method: "spirit_extractor",
+      queries_used: queries.length,
+      results_processed: allResults.length,
+      parsing_results: parsedResults.length
+    };
+
+    // Add structured metadata from search results
+    if (parsedResults.length > 0) {
+      const firstResult = parsedResults[0];
+      if (firstResult.metadata) {
+        extractedData.scraped_data.page_metadata = firstResult.metadata;
+      }
+      
+      // Add image source information
+      if (extractedData.image_url) {
+        extractedData.scraped_data.image_source = extractedData.image_url;
+        extractedData.scraped_data.image_extraction_method = "search_results";
+      }
+    }
+
     // CRITICAL: Validate this is actually an alcoholic beverage, not merchandise
     if (!this.isAlcoholicBeverage(fixedName, extractedData.description || '')) {
       logger.warn(`❌ Rejecting non-spirit product: "${fixedName}" (likely merchandise/clothing)`);
@@ -1588,37 +1613,74 @@ export class SpiritExtractor {
   }
 
   /**
-   * Calculate a simple data quality score based on field completeness
+   * Calculate a comprehensive data quality score - FIXED for proper scoring
    */
   private calculateSimpleQualityScore(data: Partial<SpiritData>): number {
     let score = 0;
     let maxScore = 0;
 
-    // Required fields (higher weight)
-    const requiredFields = ['name', 'type', 'brand', 'description'];
-    requiredFields.forEach(field => {
+    // Core required fields (20 points each)
+    const coreFields = ['name', 'type', 'brand', 'description'];
+    coreFields.forEach(field => {
       maxScore += 20;
-      if (data[field as keyof SpiritData]) {
+      const value = data[field as keyof SpiritData];
+      if (value && value !== '' && value !== 'Other' && value !== 'Spirit') {
         score += 20;
+        
+        // Bonus for high-quality values
+        if (field === 'description' && typeof value === 'string') {
+          if (value.length > 100) score += 5; // Long description bonus
+          if (value.includes('aged') || value.includes('proof') || value.includes('barrel')) score += 5; // Content quality bonus
+        }
+        
+        if (field === 'type' && value !== 'Whiskey' && value !== 'Other') {
+          score += 5; // Specific type bonus
+        }
       }
     });
 
-    // Optional but valuable fields
-    const optionalFields = ['abv', 'price', 'age_statement', 'region', 'image_url'];
-    optionalFields.forEach(field => {
+    // Important optional fields (10 points each)
+    const importantFields = ['abv', 'proof', 'price', 'age_statement', 'image_url', 'source_url'];
+    importantFields.forEach(field => {
       maxScore += 10;
-      if (data[field as keyof SpiritData]) {
+      const value = data[field as keyof SpiritData];
+      if (value && value !== '' && value !== null && value !== undefined) {
         score += 10;
       }
     });
 
-    // Bonus for valid description
-    if (data.description && !data.description_mismatch) {
+    // Quality bonuses (20 points total)
+    maxScore += 20;
+    
+    // Valid description bonus (10 points)
+    if (data.description && typeof data.description === 'string' && 
+        data.description.length > 50 && 
+        !data.description_mismatch &&
+        !data.description.includes('I love') && 
+        !data.description.includes('5 stars') &&
+        !data.description.includes('buy now') &&
+        !data.description.includes('add to cart')) {
       score += 10;
     }
-    maxScore += 10;
 
-    return Math.round((score / maxScore) * 100);
+    // Valid image URL bonus (5 points)
+    if (data.image_url && typeof data.image_url === 'string' && 
+        data.image_url.startsWith('http') && 
+        !data.image_url.includes('placeholder') &&
+        !data.image_url.includes('no-image')) {
+      score += 5;
+    }
+
+    // Valid source URL bonus (5 points)
+    if (data.source_url && typeof data.source_url === 'string' && 
+        data.source_url.startsWith('http')) {
+      score += 5;
+    }
+
+    const finalScore = Math.round((score / maxScore) * 100);
+    
+    // Ensure minimum score of 30 for spirits with basic info, max of 95
+    return Math.max(Math.min(finalScore, 95), 30);
   }
 
   /**

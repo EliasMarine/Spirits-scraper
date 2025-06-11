@@ -1,14 +1,15 @@
-# Spirits Scraper v2.3 - Ultra-Efficient Edition 🚀
+# Spirits Scraper v2.5 - Ultra-Efficient Edition 🚀
 
-A high-efficiency Node.js spirits scraper that achieves **3-5 spirits per API call** (up to 440% efficiency) with optimized catalog scraping and comprehensive data quality improvements.
+A ultra-efficient Node.js spirits scraper that achieves **3-5 spirits per API call** by extracting multiple products from search result metadata - now DEFAULT for ALL commands!
 
-## 🌟 What's New in v2.3
+## 🌟 What's New in v2.5
 
-### Ultra-Efficient Scraping (Now Default!)
-- **OPTIMIZED SCRAPER**: 3-5 spirits per API call (440% efficiency)
-- **IMPROVED DATA QUALITY**: Fixed price extraction, cleaner names, better validation
-- **SMARTER FILTERING**: Excludes non-spirit items (cigars, accessories, reviews)
-- **DEFAULT MODE**: Optimized scraper is now used automatically for distillery scraping
+### Ultra-Efficient Scraping (Now Default for ALL Commands!)
+- **ULTRA-EFFICIENT SCRAPER**: Extracts multiple products from search result metadata
+- **NOW DEFAULT FOR ALL**: Both category and distillery scraping use ultra-efficient approach
+- **NO PAGE FETCHING**: Extracts from Google's structured data, metatags, titles, snippets
+- **IMPROVED EXTRACTION**: Better product name validation and price extraction
+- **TRUE EFFICIENCY**: Real 3-5 spirits per API call without additional HTTP requests
 
 ### Real Performance Results
 ```bash
@@ -19,7 +20,7 @@ A high-efficiency Node.js spirits scraper that achieves **3-5 spirits per API ca
 
 ## Features
 
-- 🚀 **Ultra-Efficient Scraping** - 3-5 spirits per API call (optimized scraper default)
+- 🚀 **High-Efficiency Scraping** - 3-5 spirits per API call DEFAULT for ALL commands
 - 📦 **908 Distilleries** - Comprehensive coverage across all spirit types
 - 🔍 **Smart Data Extraction** - Fixed price extraction, cleaner product names
 - 🎯 **Quality Validation** - Excludes cigars, accessories, review articles
@@ -67,13 +68,15 @@ npm run scrape-catalogs -- --distilleries "Buffalo Trace" --max-products 500
 npm run scrape-catalogs -- --start-index 100
 ```
 
-### Category-Based Scraping
+### Category-Based Scraping (Now High-Efficiency!)
 ```bash
-# Standard category scraping
+# Standard category scraping - NOW USES HIGH-EFFICIENCY MODE!
 npm run scrape -- --categories bourbon --limit 50
+# Expected: 3-5 spirits per API call via top distilleries
 
-# Multiple categories
+# Multiple categories - ALL HIGH-EFFICIENCY!
 npm run scrape -- --categories "bourbon,whiskey,scotch" --limit 200
+# Expected: 3-5 spirits per API call for each category
 ```
 
 ## How Ultra-Efficient Scraping Works

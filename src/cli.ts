@@ -19,6 +19,7 @@ import { catalogFocusedScraper } from './services/catalog-focused-scraper.js';
 import { autoDeduplicationService } from './services/auto-deduplication.js';
 import { getConfigSummary } from './config/auto-dedup-config.js';
 import { optimizedCatalogScraper } from './services/optimized-catalog-scraper.js';
+import { ultraEfficientScraper } from './services/ultra-efficient-scraper.js';
 import { ALL_DISTILLERIES } from './config/distilleries.js';
 import { createClient } from '@supabase/supabase-js';
 import { logger } from './utils/logger.js';
@@ -168,17 +169,8 @@ program
         return;
       }
       
-      // Note: distillery mode now uses optimized scraper by default
-      if (false) { // This code path is disabled
-        // Original distillery-specific mode (deprecated)
-        queries = enhancedGenerator.generateDistilleryQueries(limit, options.distillery);
-      } else if (options.optimized && !options.distillery) {
-        // Category-based optimized scraping placeholder
-        console.log('🚧 Category-based optimized scraping coming soon!');
-        console.log('💡 Use --distillery mode for high-efficiency scraping:');
-        console.log('   npm run scrape -- --distillery "buffalo-trace,wild-turkey"');
-        return;
-      } else if (options.discover) {
+      // ALWAYS use ultra-efficient scraper for category-based scraping
+      if (options.discover) {
         // Autonomous discovery mode
         spinner.text = 'Running autonomous discovery...';
         const discoveryResult = await autonomousDiscovery.runDiscovery(
@@ -268,16 +260,54 @@ program
         const avgPotential = totalPotential / 5;
         console.log(`💡 Estimated yield: ${avgPotential.toFixed(1)} spirits per query`);
       } else {
-        // Standard category-based search - FORCE RETAIL SITES
-        // CRITICAL: Use generateCategoryDiscoveryQueries which has proper site: operators
-        queries = categories.flatMap((cat: string) => {
-          const catLimit = Math.ceil(limit / categories.length);
-          // Use the method that FORCES retail site searches
-          const catQueries = enhancedGenerator.generateCategoryDiscoveryQueries(cat, catLimit);
-          return catQueries;
-        }).slice(0, limit);
+        // DEFAULT: Use ultra-efficient scraper for ALL category-based scraping
+        spinner.text = '🚀 Starting ULTRA-EFFICIENT scraping (60%+ efficiency)...';
+        console.log('\\n📊 Using ultra-efficient catalog scraping for maximum API efficiency');
+        
+        // Process each category with ultra-efficient scraper
+        let totalSpiritsFound = 0;
+        let totalSpiritsStored = 0;
+        let totalApiCalls = 0;
+        
+        for (const category of categories) {
+          const categoryLimit = Math.ceil(limit / categories.length);
+          
+          console.log(`\\n🔍 Scraping ${category} with ultra-efficient mode...`);
+          
+          const result = await ultraEfficientScraper.scrapeWithUltraEfficiency({
+            category,
+            limit: categoryLimit,
+            targetEfficiency: 60,
+            deepExtraction: true // Enable deep extraction to parse catalog pages
+          });
+          
+          totalSpiritsFound += result.spiritsFound;
+          totalSpiritsStored += result.spiritsStored;
+          totalApiCalls += result.apiCalls;
+          
+          console.log(`✅ ${category} complete:`);
+          console.log(`   Found: ${result.spiritsFound} spirits`);
+          console.log(`   Stored: ${result.spiritsStored} spirits`);
+          console.log(`   API Calls: ${result.apiCalls}`);
+          console.log(`   Efficiency: ${(result.efficiency * 100).toFixed(1)}% (${result.efficiency.toFixed(1)} spirits/call)`);
+          console.log(`   Catalog Pages: ${result.catalogPagesFound}`);
+        }
+        
+        // Display final stats
+        const overallEfficiency = totalApiCalls > 0 ? totalSpiritsFound / totalApiCalls : 0;
+        console.log('\\n' + '='.repeat(60));
+        console.log('📊 ULTRA-EFFICIENT SCRAPING COMPLETE');
+        console.log('='.repeat(60));
+        console.log(`Total API Calls: ${totalApiCalls}`);
+        console.log(`Total Spirits Found: ${totalSpiritsFound}`);
+        console.log(`Total Spirits Stored: ${totalSpiritsStored}`);
+        console.log(`Overall Efficiency: ${(overallEfficiency * 100).toFixed(1)}% (${overallEfficiency.toFixed(1)} spirits/call)`);
+        
+        spinner.succeed('Ultra-efficient scraping complete!');
+        return;
       }
       
+      // This code is now unreachable - ultra-efficient scraper is the default
       logger.info(`Generated queries: ${JSON.stringify(queries)}`);
       
       spinner.text = `Processing ${queries.length} queries...`;

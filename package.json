@@ -20,6 +20,8 @@
     "test-dry-run": "tsx src/test-dry-run-deduplication.ts",
     "test-special-cases": "tsx src/test-blocking-special-cases.ts",
     "test-blocking-performance": "tsx src/test-blocking-performance.ts",
+    "fix-metadata": "tsx fix-metadata-images-quality.ts",
+    "fix-specific": "tsx fix-metadata-images-quality.ts fix-specific",
     "lint": "eslint src --ext .ts",
     "typecheck": "tsc --noEmit"
   },

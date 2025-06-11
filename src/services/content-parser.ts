@@ -299,7 +299,7 @@ export class ContentParser {
   }
 
   /**
-   * Extract price from text with enhanced patterns
+   * Extract price from text with enhanced patterns - FIXED to avoid years/ages/proof
    */
   private extractPrice(text: string): string | null {
     if (!text) return null;
@@ -307,19 +307,44 @@ export class ContentParser {
     // Clean the text
     const cleanText = text.replace(/\s+/g, ' ').trim();
 
-    // Enhanced price patterns
+    // CRITICAL: Skip text that contains years, ages, or proof values
+    // This prevents extracting "1993" from "1993 Buffalo Trace" as a price
+    if (/\b(19\d{2}|20\d{2})\b/.test(cleanText)) {
+      // Contains a year - check if it's part of a price context
+      if (!/(\$|price|cost|usd|eur|gbp)/i.test(cleanText)) {
+        return null; // Year without price context, skip
+      }
+    }
+
+    // Skip if contains age statements
+    if (/\b\d+\s*(year|yr|age)\b/i.test(cleanText)) {
+      return null;
+    }
+
+    // Skip if contains proof values
+    if (/\b\d+\s*proof\b/i.test(cleanText)) {
+      return null;
+    }
+
+    // Skip if contains batch numbers
+    if (/\bbatch\s*#?\s*\d+/i.test(cleanText)) {
+      return null;
+    }
+
+    // Enhanced price patterns - more specific to avoid false positives
     const patterns = [
-      // Standard currency patterns
-      /\$\s*(\d+(?:\.\d{2})?)/,
-      /USD\s*(\d+(?:\.\d{2})?)/i,
-      /€\s*(\d+(?:\.\d{2})?)/,
-      /£\s*(\d+(?:\.\d{2})?)/,
-      /(\d+(?:\.\d{2})?)\s*(?:USD|EUR|GBP)/i,
-      // Patterns with words
-      /price:?\s*\$?(\d+(?:\.\d{2})?)/i,
-      /(?:was|now|sale|regular|msrp|srp):?\s*\$?(\d+(?:\.\d{2})?)/i,
-      // Handle prices without decimal points
-      /\$\s*(\d{4,5})(?!\d)/,  // e.g., $2999 -> 29.99
+      // Standard currency patterns with explicit currency symbols
+      /\$\s*(\d+(?:\.\d{2})?)\b/,
+      /USD\s*(\d+(?:\.\d{2})?)\b/i,
+      /€\s*(\d+(?:\.\d{2})?)\b/,
+      /£\s*(\d+(?:\.\d{2})?)\b/,
+      /(\d+(?:\.\d{2})?)\s*(?:USD|EUR|GBP)\b/i,
+      // Patterns with explicit price context
+      /\bprice:?\s*\$?(\d+(?:\.\d{2})?)\b/i,
+      /\b(?:cost|retail|msrp|srp):?\s*\$?(\d+(?:\.\d{2})?)\b/i,
+      /\b(?:was|now|sale|regular):?\s*\$(\d+(?:\.\d{2})?)\b/i,
+      // Structured product price data
+      /\bproduct:price:amount["\s]*(\d+(?:\.\d{2})?)/i,
     ];
 
     for (const pattern of patterns) {
@@ -327,18 +352,34 @@ export class ContentParser {
       if (match) {
         let value = parseFloat(match[1]);
         
-        // Handle 4-5 digit prices without decimals
+        // Handle 4-5 digit prices without decimals (e.g., $2999 -> $29.99)
         if (value >= 1000 && value < 100000) {
-          // Check if it's likely missing a decimal
           const strValue = match[1];
           if (!strValue.includes('.')) {
-            // Convert 2999 to 29.99, 14995 to 149.95
             value = value / 100;
           }
         }
         
-        // Sanity check - spirits typically cost between $10 and $10,000
-        if (value >= 10 && value <= 10000) {
+        // STRICT validation - spirits typically cost between $5 and $5000
+        if (value >= 5 && value <= 5000) {
+          // Additional validation: avoid extracting years as prices
+          const invalidValues = [
+            // Years (1990-2025)
+            ...Array.from({length: 36}, (_, i) => 1990 + i),
+            // Common ages (2-30)
+            ...Array.from({length: 29}, (_, i) => 2 + i),
+            // Common proof values (80-150, incrementing by 2)
+            ...Array.from({length: 36}, (_, i) => 80 + i * 2),
+            // Bottle sizes
+            375, 500, 700, 750, 1000, 1750,
+            // Common batch numbers
+            125, 126, 127, 128, 129, 130
+          ];
+          
+          if (invalidValues.includes(Math.round(value))) {
+            continue; // Skip this value, try next pattern
+          }
+          
           return `$${value.toFixed(2)}`;
         }
       }

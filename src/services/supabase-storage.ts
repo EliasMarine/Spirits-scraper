@@ -177,7 +177,7 @@ export class SupabaseStorage {
       source_url: spirit.source_url,
       flavor_profile: spirit.flavor_profile || null,
       is_available: true,
-      scraped_data: {
+      scraped_data: spirit.scraped_data || {
         scraped_at: spirit.scraped_at,
         source: 'google_search_api',
         version: '1.0',

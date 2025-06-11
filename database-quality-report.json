@@ -1,0 +1,444 @@
+{
+  "timestamp": "2025-06-11T04:04:00.309Z",
+  "metrics": {
+    "totalSpirits": 248,
+    "spiritsWithPrice": 22,
+    "spiritsWithABV": 6,
+    "spiritsWithImage": 137,
+    "spiritsWithDescription": 46,
+    "spiritsWithBrand": 248,
+    "spiritsWithMetadata": 0,
+    "avgQualityScore": 50.78629032258065,
+    "categoryBreakdown": {
+      "Tequila": {
+        "count": 16,
+        "priceRate": 0,
+        "abvRate": 0,
+        "imageRate": 87.5,
+        "descriptionRate": 18.75
+      },
+      "Gin": {
+        "count": 27,
+        "priceRate": 22.22222222222222,
+        "abvRate": 0,
+        "imageRate": 59.25925925925925,
+        "descriptionRate": 40.74074074074074
+      },
+      "Rum": {
+        "count": 14,
+        "priceRate": 21.428571428571427,
+        "abvRate": 7.142857142857142,
+        "imageRate": 50,
+        "descriptionRate": 50
+      },
+      "Vodka": {
+        "count": 19,
+        "priceRate": 31.57894736842105,
+        "abvRate": 0,
+        "imageRate": 52.63157894736842,
+        "descriptionRate": 36.84210526315789
+      },
+      "Other": {
+        "count": 39,
+        "priceRate": 0,
+        "abvRate": 0,
+        "imageRate": 89.74358974358975,
+        "descriptionRate": 10.256410256410255
+      },
+      "Bourbon": {
+        "count": 130,
+        "priceRate": 5.384615384615385,
+        "abvRate": 3.8461538461538463,
+        "imageRate": 40,
+        "descriptionRate": 10.76923076923077
+      },
+      "Rye Whiskey": {
+        "count": 2,
+        "priceRate": 0,
+        "abvRate": 0,
+        "imageRate": 100,
+        "descriptionRate": 0
+      },
+      "Irish Whiskey": {
+        "count": 1,
+        "priceRate": 0,
+        "abvRate": 0,
+        "imageRate": 100,
+        "descriptionRate": 0
+      }
+    },
+    "sourceBreakdown": {
+      "wine.com": {
+        "count": 71,
+        "priceRate": 0,
+        "abvRate": 0,
+        "imageRate": 97.1830985915493,
+        "avgQuality": 64.15492957746478
+      },
+      "shop.klwines.com": {
+        "count": 28,
+        "priceRate": 17.857142857142858,
+        "abvRate": 3.571428571428571,
+        "imageRate": 53.57142857142857,
+        "avgQuality": 63.035714285714285
+      },
+      "klwines.com": {
+        "count": 42,
+        "priceRate": 14.285714285714285,
+        "abvRate": 4.761904761904762,
+        "imageRate": 47.61904761904761,
+        "avgQuality": 56.54761904761905
+      },
+      "totalwine.com": {
+        "count": 35,
+        "priceRate": 31.428571428571427,
+        "abvRate": 2.857142857142857,
+        "imageRate": 65.71428571428571,
+        "avgQuality": 59.857142857142854
+      },
+      "m.klwines.com": {
+        "count": 3,
+        "priceRate": 0,
+        "abvRate": 0,
+        "imageRate": 66.66666666666666,
+        "avgQuality": 68.33333333333333
+      },
+      "merch.wildturkeybourbon.com": {
+        "count": 1,
+        "priceRate": 0,
+        "abvRate": 0,
+        "imageRate": 0,
+        "avgQuality": 20
+      },
+      "abc.virginia.gov": {
+        "count": 1,
+        "priceRate": 0,
+        "abvRate": 0,
+        "imageRate": 0,
+        "avgQuality": 20
+      },
+      "ohlq.com": {
+        "count": 2,
+        "priceRate": 0,
+        "abvRate": 0,
+        "imageRate": 50,
+        "avgQuality": 30
+      },
+      "crownwineandspirits.com": {
+        "count": 2,
+        "priceRate": 0,
+        "abvRate": 0,
+        "imageRate": 0,
+        "avgQuality": 20
+      },
+      "wildturkeybourbon.com": {
+        "count": 4,
+        "priceRate": 0,
+        "abvRate": 0,
+        "imageRate": 0,
+        "avgQuality": 22.5
+      },
+      "sfwtc.com": {
+        "count": 2,
+        "priceRate": 0,
+        "abvRate": 0,
+        "imageRate": 0,
+        "avgQuality": 20
+      },
+      "misterwrightfinewines.com": {
+        "count": 1,
+        "priceRate": 0,
+        "abvRate": 0,
+        "imageRate": 100,
+        "avgQuality": 50
+      },
+      "sendgifts.com": {
+        "count": 1,
+        "priceRate": 0,
+        "abvRate": 0,
+        "imageRate": 0,
+        "avgQuality": 20
+      },
+      "oldtowntequila.com": {
+        "count": 2,
+        "priceRate": 0,
+        "abvRate": 0,
+        "imageRate": 0,
+        "avgQuality": 20
+      },
+      "uptownspirits.com": {
+        "count": 1,
+        "priceRate": 0,
+        "abvRate": 0,
+        "imageRate": 0,
+        "avgQuality": 20
+      },
+      "cocktailwonk.com": {
+        "count": 1,
+        "priceRate": 0,
+        "abvRate": 0,
+        "imageRate": 0,
+        "avgQuality": 20
+      },
+      "thewhiskyexchange.com": {
+        "count": 12,
+        "priceRate": 0,
+        "abvRate": 0,
+        "imageRate": 8.333333333333332,
+        "avgQuality": 21.666666666666668
+      },
+      "walmart.com": {
+        "count": 1,
+        "priceRate": 0,
+        "abvRate": 0,
+        "imageRate": 0,
+        "avgQuality": 20
+      },
+      "whisky.my": {
+        "count": 2,
+        "priceRate": 0,
+        "abvRate": 0,
+        "imageRate": 0,
+        "avgQuality": 20
+      },
+      "blackwellswines.com": {
+        "count": 5,
+        "priceRate": 0,
+        "abvRate": 0,
+        "imageRate": 40,
+        "avgQuality": 28
+      },
+      "whiskyliquorstore.com": {
+        "count": 2,
+        "priceRate": 0,
+        "abvRate": 0,
+        "imageRate": 0,
+        "avgQuality": 30
+      },
+      "qualityliquorstore.com": {
+        "count": 2,
+        "priceRate": 0,
+        "abvRate": 0,
+        "imageRate": 0,
+        "avgQuality": 20
+      },
+      "epicurious.reservebar.com": {
+        "count": 4,
+        "priceRate": 0,
+        "abvRate": 0,
+        "imageRate": 0,
+        "avgQuality": 20
+      },
+      "mmihomedelivery.ae": {
+        "count": 1,
+        "priceRate": 0,
+        "abvRate": 0,
+        "imageRate": 0,
+        "avgQuality": 20
+      },
+      "shop.savemart.com": {
+        "count": 2,
+        "priceRate": 0,
+        "abvRate": 50,
+        "imageRate": 0,
+        "avgQuality": 25
+      },
+      "buffalotracedaily.com": {
+        "count": 1,
+        "priceRate": 0,
+        "abvRate": 0,
+        "imageRate": 0,
+        "avgQuality": 20
+      },
+      "wine-searcher.com": {
+        "count": 3,
+        "priceRate": 0,
+        "abvRate": 0,
+        "imageRate": 33.33333333333333,
+        "avgQuality": 26.666666666666668
+      },
+      "flaskfinewines.com": {
+        "count": 1,
+        "priceRate": 0,
+        "abvRate": 0,
+        "imageRate": 100,
+        "avgQuality": 40
+      },
+      "kingswineandspirits.com": {
+        "count": 1,
+        "priceRate": 0,
+        "abvRate": 0,
+        "imageRate": 0,
+        "avgQuality": 20
+      },
+      "binnys.com": {
+        "count": 3,
+        "priceRate": 0,
+        "abvRate": 0,
+        "imageRate": 0,
+        "avgQuality": 20
+      },
+      "spiritacademy.it": {
+        "count": 1,
+        "priceRate": 0,
+        "abvRate": 100,
+        "imageRate": 0,
+        "avgQuality": 30
+      },
+      "youbooze.com": {
+        "count": 1,
+        "priceRate": 0,
+        "abvRate": 0,
+        "imageRate": 0,
+        "avgQuality": 20
+      },
+      "bourbonhaven.com": {
+        "count": 1,
+        "priceRate": 0,
+        "abvRate": 0,
+        "imageRate": 0,
+        "avgQuality": 20
+      },
+      "purdyswine.com": {
+        "count": 1,
+        "priceRate": 0,
+        "abvRate": 0,
+        "imageRate": 0,
+        "avgQuality": 20
+      },
+      "barbank.com": {
+        "count": 2,
+        "priceRate": 0,
+        "abvRate": 0,
+        "imageRate": 0,
+        "avgQuality": 20
+      },
+      "whiskymarketplace.com": {
+        "count": 2,
+        "priceRate": 0,
+        "abvRate": 0,
+        "imageRate": 50,
+        "avgQuality": 30
+      },
+      "whiskyandwhiskey.com": {
+        "count": 1,
+        "priceRate": 0,
+        "abvRate": 0,
+        "imageRate": 0,
+        "avgQuality": 20
+      },
+      "theliquorbros.com": {
+        "count": 1,
+        "priceRate": 0,
+        "abvRate": 0,
+        "imageRate": 0,
+        "avgQuality": 20
+      },
+      "flaviar.com": {
+        "count": 1,
+        "priceRate": 0,
+        "abvRate": 0,
+        "imageRate": 0,
+        "avgQuality": 20
+      }
+    },
+    "recentSpirits": [
+      {
+        "name": "Patron Extra Anejo Tequila",
+        "price": null,
+        "abv": null,
+        "image_url": "https://assets.wine.com/winecom/image/upload/e_trim,w_90,h_180,c_fit,q_auto:best,fl_progressive/dhojck9ergtint3xujas.jpg",
+        "description": null,
+        "source_url": "https://www.wine.com/list/spirits/patron/7157-123177",
+        "created_at": "2025-06-11T04:02:52.910611+00:00"
+      },
+      {
+        "name": "Patron Gran Platinum Tequila With Gift Box",
+        "price": null,
+        "abv": null,
+        "image_url": "https://assets.wine.com/winecom/image/upload/e_trim,w_90,h_180,c_fit,q_auto:best,fl_progressive/b3rvdycrureprwluxssf.jpg",
+        "description": null,
+        "source_url": "https://www.wine.com/list/spirits/patron/7157-123177",
+        "created_at": "2025-06-11T04:02:52.554465+00:00"
+      },
+      {
+        "name": "Patron Gran Burdeos Anejo Tequila",
+        "price": null,
+        "abv": null,
+        "image_url": "https://assets.wine.com/winecom/image/upload/e_trim,w_90,h_180,c_fit,q_auto:best,fl_progressive/gxsgrb0n1pafmj6st4i5.jpg",
+        "description": null,
+        "source_url": "https://www.wine.com/list/spirits/patron/7157-123177",
+        "created_at": "2025-06-11T04:02:52.300249+00:00"
+      },
+      {
+        "name": "Patron El Alto Reposado Tequila",
+        "price": null,
+        "abv": null,
+        "image_url": "https://assets.wine.com/winecom/image/upload/e_trim,w_90,h_180,c_fit,q_auto:best,fl_progressive/i52k07odxhrhkn9emi1j.jpg",
+        "description": null,
+        "source_url": "https://www.wine.com/list/spirits/patron/7157-123177",
+        "created_at": "2025-06-11T04:02:51.837854+00:00"
+      },
+      {
+        "name": "Patron Silver Tequila",
+        "price": null,
+        "abv": null,
+        "image_url": "https://assets.wine.com/winecom/image/upload/e_trim,w_90,h_180,c_fit,q_auto:best,fl_progressive/frqgzbakyuyqhxxy2znn.jpg",
+        "description": null,
+        "source_url": "https://www.wine.com/list/spirits/patron/7157-123177",
+        "created_at": "2025-06-11T04:02:51.541852+00:00"
+      },
+      {
+        "name": "Patron Anejo Tequila",
+        "price": null,
+        "abv": null,
+        "image_url": "https://assets.wine.com/winecom/image/upload/e_trim,w_90,h_180,c_fit,q_auto:best,fl_progressive/gkpfa2zxcql43kewasac.jpg",
+        "description": null,
+        "source_url": "https://www.wine.com/list/spirits/patron/7157-123177",
+        "created_at": "2025-06-11T04:02:51.20524+00:00"
+      },
+      {
+        "name": "Patron Gran Piedra Extra Anejo Tequila",
+        "price": null,
+        "abv": null,
+        "image_url": "https://assets.wine.com/winecom/image/upload/e_trim,w_90,h_180,c_fit,q_auto:best,fl_progressive/yoabnnsocwew7qjswcoi.jpg",
+        "description": null,
+        "source_url": "https://www.wine.com/list/spirits/patron/7157-123177",
+        "created_at": "2025-06-11T04:02:50.880771+00:00"
+      },
+      {
+        "name": "Patron Reposado Tequila",
+        "price": null,
+        "abv": null,
+        "image_url": "https://assets.wine.com/winecom/image/upload/e_trim,w_90,h_180,c_fit,q_auto:best,fl_progressive/mbejwmo1vm9p9pifcgby.jpg",
+        "description": null,
+        "source_url": "https://www.wine.com/list/spirits/patron/7157-123177",
+        "created_at": "2025-06-11T04:02:50.561764+00:00"
+      },
+      {
+        "name": "Real De Penjamo Reposado Tequila (Ship As 1.)-sku ...",
+        "price": null,
+        "abv": null,
+        "image_url": null,
+        "description": null,
+        "source_url": "https://shop.klwines.com/products/details/1034744",
+        "created_at": "2025-06-11T04:02:48.808633+00:00"
+      },
+      {
+        "name": "Real De Penjamo Reposado Tequila (Ship As 1.)",
+        "price": null,
+        "abv": null,
+        "image_url": "https://cdn.klwines.com/images/skus/shiner_na-xl.jpg",
+        "description": "Currently Not Available. Special Order Only! Will take 3-7 business days to receive this product before it can be shipped.",
+        "source_url": "https://shop.klwines.com/products/details/1034744",
+        "created_at": "2025-06-11T04:02:48.487748+00:00"
+      }
+    ]
+  },
+  "recommendations": {
+    "priceExtraction": "Critical - needs immediate improvement",
+    "abvExtraction": "Critical - needs immediate improvement",
+    "imageExtraction": "Needs improvement",
+    "overallQuality": "Acceptable"
+  }
+}
