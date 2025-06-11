@@ -59,7 +59,7 @@ program
   .option('--diversity-level <level>', 'Query diversity level (low|medium|high)', 'medium')
   .option('--optimize-queries', 'Use optimized query generation for maximum API efficiency')
   .option('--target-efficiency <number>', 'Target spirits per API call (default: 3.0)', '3.0')
-  .option('--optimized', 'Use new high-efficiency catalog scraper (60%+ efficiency)')
+  .option('--optimized', 'DEPRECATED - Optimized scraper is now the default for distillery mode')
   .action(async (options) => {
     // Set log level based on options
     if (options.quiet) {
@@ -127,58 +127,57 @@ program
       // Generate queries based on options
       let queries: string[] = [];
       
-      // Check if using optimized mode first
-      if (options.optimized) {
+      // Always use optimized scraper for distillery mode (default behavior)
+      if (options.distillery) {
         spinner.text = '🚀 Starting HIGH-EFFICIENCY catalog scraping (60%+ efficiency)...';
         
-        if (options.distillery) {
-          // Optimized distillery scraping
-          const distilleryNames = options.distillery.split(',').map((d: string) => d.trim());
+        // Optimized distillery scraping
+        const distilleryNames = options.distillery.split(',').map((d: string) => d.trim());
+        
+        for (const distilleryName of distilleryNames) {
+          const distillery = ALL_DISTILLERIES.find(d => 
+            d.name.toLowerCase().includes(distilleryName.toLowerCase()) ||
+            d.variations.some(v => v.toLowerCase().includes(distilleryName.toLowerCase()))
+          );
           
-          for (const distilleryName of distilleryNames) {
-            const distillery = ALL_DISTILLERIES.find(d => 
-              d.name.toLowerCase().includes(distilleryName.toLowerCase()) ||
-              d.variations.some(v => v.toLowerCase().includes(distilleryName.toLowerCase()))
-            );
-            
-            if (!distillery) {
-              console.error(`❌ Distillery "${distilleryName}" not found`);
-              continue;
-            }
-            
-            console.log(`\n📊 Optimized scraping for ${distillery.name}...`);
-            
-            const result = await optimizedCatalogScraper.scrapeDistilleryOptimized(
-              distillery,
-              parseInt(options.limit) || 10
-            );
-            
-            console.log(`\n✅ ${distillery.name} Results:`);
-            console.log(`  API Calls: ${result.apiCalls}`);
-            console.log(`  Spirits Found: ${result.spiritsFound}`);
-            console.log(`  Spirits Stored: ${result.spiritsStored}`);
-            console.log(`  Efficiency: ${(result.efficiency * 100).toFixed(1)}% (${result.efficiency.toFixed(1)} spirits/call)`);
-            console.log(`  Catalog Pages: ${result.catalogPagesFound}`);
-            
-            if (result.efficiency >= 0.6) {
-              console.log(`  🎯 Target efficiency achieved!`);
-            }
+          if (!distillery) {
+            console.error(`❌ Distillery "${distilleryName}" not found`);
+            continue;
           }
           
-          spinner.succeed('Optimized scraping complete!');
-          return;
-        } else {
-          // Category-based optimized scraping
-          console.log('🚧 Category-based optimized scraping coming soon!');
-          console.log('💡 Use --distillery mode for now, e.g.:');
-          console.log('   npm run scrape -- --distillery buffalo-trace --optimized');
-          return;
+          console.log(`\n📊 Optimized scraping for ${distillery.name}...`);
+          
+          const result = await optimizedCatalogScraper.scrapeDistilleryOptimized(
+            distillery,
+            parseInt(options.limit) || 10
+          );
+          
+          console.log(`\n✅ ${distillery.name} Results:`);
+          console.log(`  API Calls: ${result.apiCalls}`);
+          console.log(`  Spirits Found: ${result.spiritsFound}`);
+          console.log(`  Spirits Stored: ${result.spiritsStored}`);
+          console.log(`  Efficiency: ${(result.efficiency * 100).toFixed(1)}% (${result.efficiency.toFixed(1)} spirits/call)`);
+          console.log(`  Catalog Pages: ${result.catalogPagesFound}`);
+          
+          if (result.efficiency >= 0.6) {
+            console.log(`  🎯 Target efficiency achieved!`);
+          }
         }
+        
+        spinner.succeed('Optimized scraping complete!');
+        return;
       }
       
-      if (options.distillery) {
-        // Original distillery-specific mode
+      // Note: distillery mode now uses optimized scraper by default
+      if (false) { // This code path is disabled
+        // Original distillery-specific mode (deprecated)
         queries = enhancedGenerator.generateDistilleryQueries(limit, options.distillery);
+      } else if (options.optimized && !options.distillery) {
+        // Category-based optimized scraping placeholder
+        console.log('🚧 Category-based optimized scraping coming soon!');
+        console.log('💡 Use --distillery mode for high-efficiency scraping:');
+        console.log('   npm run scrape -- --distillery "buffalo-trace,wild-turkey"');
+        return;
       } else if (options.discover) {
         // Autonomous discovery mode
         spinner.text = 'Running autonomous discovery...';
@@ -1397,8 +1396,8 @@ program.on('--help', () => {
   console.log('Examples:');
   console.log('  $ npm run scrape -- --categories bourbon --limit 100');
   console.log('  $ npm run scrape -- --categories bourbon --limit 50 --verbose');
-  console.log('  $ npm run scrape -- --categories bourbon --limit 50 --force-refresh');
-  console.log('  $ npm run scrape -- --distillery buffalo-trace --limit 50');
+  console.log('  $ npm run scrape -- --distillery "buffalo-trace" --limit 50    # 🚀 HIGH EFFICIENCY (default)');
+  console.log('  $ npm run scrape -- --distillery "buffalo-trace,wild-turkey"  # 🚀 Multiple distilleries');
   console.log('  $ npm run scrape -- --discover --limit 200');
   console.log('');
   console.log('API efficiency and cache management:');
@@ -1413,11 +1412,11 @@ program.on('--help', () => {
   console.log('  $ npm run backup -- --description "Before major update"');
   console.log('  $ npm run stats');
   console.log('');
-  console.log('High-efficiency catalog scraping (NEW - RECOMMENDED):');
-  console.log('  $ npm run scrape-catalogs                                  # 🚀 10+ spirits per API call!');
-  console.log('  $ npm run scrape-catalogs -- --distilleries "Buffalo Trace"');
-  console.log('  $ npm run scrape-catalogs -- --max-products 200           # Get up to 200 products per distillery');
-  console.log('  $ npm run scrape-catalogs -- --start-index 100            # Resume from distillery #100');
+  console.log('High-efficiency scraping (🚀 NOW DEFAULT for distillery mode):');
+  console.log('  $ npm run scrape -- --distillery "buffalo-trace"          # 3-5 spirits per API call!');
+  console.log('  $ npm run scrape -- --distillery "jack-daniels,makers-mark"');
+  console.log('  $ npm run scrape-catalogs                                  # Alternative catalog command');
+  console.log('  $ npm run scrape-catalogs -- --max-products 200           # Get up to 200 products');
   console.log('');
   console.log('Original distillery scraping (slower):');
   console.log('  $ npm run scrape-distilleries                              # Scrape all distilleries');

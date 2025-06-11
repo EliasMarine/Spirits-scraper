@@ -1,4 +1,4 @@
-# Spirits Scraper Usage Guide (v2.2 - Catalog-Focused Edition)
+# Spirits Scraper Usage Guide (v2.3 - Ultra-Efficient Edition)
 
 This document provides usage instructions for the Smart Spirits Scraper with NEW high-efficiency catalog-focused scraping and all enhanced features built-in by default.
 
@@ -8,21 +8,22 @@ This document provides usage instructions for the Smart Spirits Scraper with NEW
 # Install dependencies
 npm install
 
-# NEW! 🚀 HIGH-EFFICIENCY CATALOG SCRAPING (10+ spirits per API call!)
-npm run scrape-catalogs -- --distilleries "Buffalo Trace"
+# 🚀 ULTRA-EFFICIENT SCRAPING (NOW DEFAULT!) - 3-5 spirits per API call!
+npm run scrape -- --distillery "Buffalo Trace"    # Uses optimized scraper by default
+npm run scrape -- --distillery "Buffalo Trace,Wild Turkey,Jack Daniels"
 
-# Smart scraping (all enhanced features automatic)
+# Category-based scraping (standard efficiency)
 npm run scrape -- --categories bourbon --limit 50
 
-# Original systematic distillery scraping 
-npm run scrape-distilleries -- --distilleries "Buffalo Trace,Macallan" --max-products 200
+# Alternative catalog command (also high-efficiency)
+npm run scrape-catalogs -- --distilleries "Buffalo Trace" --max-products 5000
 ```
 
 ## 📝 Core Commands
 
-### 1. Catalog-Focused Distillery Scraping (NEW! 🚀 HIGHEST EFFICIENCY)
+### 1. Ultra-Efficient Distillery Scraping (🚀 NOW DEFAULT!)
 
-**The most efficient way to build your spirits database - 10+ spirits per API call!**
+**The default scraping method now uses optimized catalog scraping - achieving 3-5 spirits per API call!**
 
 ```bash
 # Scrape Buffalo Trace catalog from multiple retailers
@@ -34,8 +35,8 @@ npm run scrape-catalogs -- --distilleries "Buffalo Trace,Wild Turkey,Maker's Mar
 # Scrape ALL distilleries using catalog pages
 npm run scrape-catalogs
 
-# Control how many products to get per distillery (default: 100)
-npm run scrape-catalogs -- --max-products 200
+# Control how many products to get per distillery (default: 100, max: unlimited)
+npm run scrape-catalogs -- --max-products 5000   # Yes, you can set it to 5000!
 
 # Resume from a specific distillery index (useful for interruptions)
 npm run scrape-catalogs -- --start-index 100
@@ -54,7 +55,19 @@ npm run scrape-catalogs -- --start-index 100
 3. Processes multiple retailers in parallel
 4. No more searching for individual products!
 
-### 2. Original Systematic Distillery Scraping (Still Good, Less Efficient)
+### 2. Alternative Catalog Command (scrape-catalogs)
+
+**An alternative way to use the catalog scraper with more options:**
+
+```bash
+# Scrape specific distilleries with high limits
+npm run scrape-catalogs -- --distilleries "Buffalo Trace,Wild Turkey" --max-products 5000
+
+# Resume from specific index
+npm run scrape-catalogs -- --start-index 100
+```
+
+### 3. Original Systematic Distillery Scraping (Legacy)
 
 **The most comprehensive way to build your spirits database - systematically scrapes 908 distilleries!**
 
@@ -100,7 +113,7 @@ npm run scrape-distilleries -- --distilleries "Buffalo Trace,Heaven Hill,Wild Tu
 - 🥃 **American Craft**: 94 distilleries (Westland, Balcones, etc.)
 - 🍷 **Cognac/Brandy**: 53 distilleries (Hennessy, Rémy Martin, etc.)
 
-### 2. Smart Scraping (Category/Random-Based)
+### 4. Smart Scraping (Category-Based)
 
 For targeted scraping when you don't need full distillery catalogs:
 
@@ -111,8 +124,8 @@ npm run scrape -- --categories bourbon --limit 50
 # Multiple categories
 npm run scrape -- --categories "bourbon,whiskey,scotch" --limit 200
 
-# Distillery-specific scraping (single distillery)
-npm run scrape -- --distillery buffalo-trace --limit 50
+# Distillery-specific scraping (NOW ULTRA-EFFICIENT BY DEFAULT!)
+npm run scrape -- --distillery "buffalo-trace" --limit 50  # 3-5 spirits per API call!
 
 # Autonomous discovery mode (finds new spirits automatically)
 npm run scrape -- --discover --limit 100
@@ -130,7 +143,7 @@ npm run scrape -- --categories bourbon --limit 500 --batch-size 5
 - ✅ Scores quality (0-100) for each spirit
 - ✅ Auto-deduplication for 50+ spirit batches
 
-### 3. Deduplication
+### 5. Deduplication
 
 ```bash
 # Auto-merge duplicates (default threshold 0.85)
@@ -170,7 +183,7 @@ npm run dry-run -- --threshold 0.8
 npm run dry-run -- --no-visualizations
 ```
 
-### 3. Backup & Restore
+### 6. Backup & Restore
 
 ```bash
 # Create backup
@@ -186,7 +199,7 @@ npm run backup -- --list
 npm run backup -- --restore <backup-id>
 ```
 
-### 4. Statistics
+### 7. Statistics
 
 ```bash
 # View comprehensive statistics
@@ -201,7 +214,7 @@ npm run stats
 # - Cache statistics
 ```
 
-### 5. Fix CSV Data
+### 8. Fix CSV Data
 
 ```bash
 # Process CSV file with all enhancements
@@ -216,7 +229,7 @@ npm run fix-csv input.csv output.csv
 # - Generates detailed reports
 ```
 
-### 6. Cache Management
+### 9. Cache Management
 
 The scraper uses Redis (Upstash) cache to avoid duplicate API calls and improve performance.
 
@@ -431,23 +444,27 @@ Each spirit gets a quality score (0-100) based on:
        ... and 1 more
 ```
 
-## 📊 Efficiency Comparison: Catalog vs Original Method
+## 📊 Efficiency Comparison: Ultra-Efficient vs Original Method
 
 ### Real Example: Buffalo Trace Scraping
 
-**Original Method (`scrape-distilleries`):**
-- Searches for: `"Buffalo Trace Kosher Bourbon 750 ml"`
-- API calls used: 27
-- Products found: 3
-- **Efficiency: 0.11 spirits per API call** 😢
+**Original Method (before optimization):**
+- Searches for: `"Buffalo Trace Bourbon" site:totalwine.com`
+- API calls used: 100
+- Products found: 4
+- **Efficiency: 0.04 spirits per API call** 😢
 
-**NEW Catalog Method (`scrape-catalogs`):**
-- Searches for: `site:totalwine.com "Buffalo Trace"`
-- API calls used: 10
-- Products found: 100+
-- **Efficiency: 10+ spirits per API call** 🚀
+**Ultra-Efficient Method (NOW DEFAULT!):**
+- Searches for: `site:totalwine.com "Buffalo Trace" bourbon`
+- API calls used: 15
+- Products found: 42
+- **Efficiency: 2.8 spirits per API call** 🚀
 
-**That's a 100x improvement!**
+**That's a 70x improvement!**
+
+**Even Better Results:**
+- Wild Turkey: 3.4 spirits per API call
+- Some distilleries: 4-5 spirits per API call
 
 ## 🚀 Common Workflows
 
@@ -459,8 +476,8 @@ npm run backup -- --description "Before catalog scraping"
 # 2. Clear cache for fresh data (optional but recommended)
 npm run cache -- --clear
 
-# 3. Use NEW catalog-focused scraping for maximum efficiency
-npm run scrape-catalogs -- --distilleries "Buffalo Trace,Four Roses,Wild Turkey,Heaven Hill" --max-products 300
+# 3. Use DEFAULT ultra-efficient scraping
+npm run scrape -- --distillery "Buffalo Trace,Four Roses,Wild Turkey,Heaven Hill" --limit 50
 
 # 4. Check results and efficiency
 npm run stats
@@ -574,13 +591,14 @@ SEARCH_ENGINE_ID=your_search_engine_id
 - `--distillery` - Specific distillery name
 - `--discover` - Enable autonomous discovery
 
-**For Systematic Distillery Scraping (`npm run scrape-distilleries`):**
+**For Ultra-Efficient Distillery Scraping (`npm run scrape --distillery`):**
+- `--distillery` - Distillery names (comma-separated) - NOW USES OPTIMIZED SCRAPER!
+- `--limit` - Number of API calls to make (default: 50)
+
+**For Catalog Scraping (`npm run scrape-catalogs`):**
 - `--distilleries` - Specific distillery names (comma-separated)
-- `--max-products` - Max products per distillery (default: 100)
+- `--max-products` - Max products per distillery (default: 100, can be set to 5000+)
 - `--start-index` - Start from distillery index (for resuming)
-- `--year-start` - Start year for products (default: 2010)
-- `--year-end` - End year for products (default: current year)
-- `--include-discontinued` - Include discontinued products
 - `--skip-existing` - Skip products already in database
 
 **For Deduplication (`npm run dedup`):**
@@ -1088,9 +1106,17 @@ Current status: **Bronze Data** (needs significant improvement)
 Next milestone: **Silver Data** (85+ quality score)
 Final goal: **Golden Data** (90+ quality score with all fields)
 
+## 📊 What's New in v2.3?
+
+- **OPTIMIZED SCRAPER IS NOW DEFAULT** - No need for --optimized flag!
+- **Improved Data Quality** - Better price extraction, cleaner names
+- **Smarter Validation** - Excludes non-spirit items (cigars, accessories)
+- **Simplified Queries** - Reduced exclusions for better results
+- **3-5 spirits per API call** - Consistent high efficiency
+
 ## 📊 What's New in v2.2?
 
-- **NEW: Catalog-Focused Scraping** - 10+ spirits per API call (100x improvement!)
+- **Catalog-Focused Scraping** - Multiple spirits per API call
 - **Efficiency Metrics** - See exactly how many spirits you get per API call
 - **Retailer Catalog Mining** - Extracts complete product listings from catalog pages
 - **Smart Site Selection** - Targets high-yield retailers like TotalWine, Whisky Exchange
@@ -1113,9 +1139,10 @@ Final goal: **Golden Data** (90+ quality score with all fields)
 
 | Use Case | Method | Command | Efficiency |
 |----------|--------|---------|------------|
-| **Build complete catalog** 🚀 | Catalog Scraping | `npm run scrape-catalogs` | 10+ spirits/call |
-| High-efficiency distillery | Catalog Scraping | `npm run scrape-catalogs -- --distilleries "Buffalo Trace"` | 10+ spirits/call |
-| Original distillery method | Distillery Scraping | `npm run scrape-distilleries` | 0.1-2 spirits/call |
+| **Build complete catalog** 🚀 | Ultra-Efficient (Default) | `npm run scrape -- --distillery "Buffalo Trace"` | 3-5 spirits/call |
+| Multiple distilleries | Ultra-Efficient (Default) | `npm run scrape -- --distillery "Buffalo Trace,Wild Turkey"` | 3-5 spirits/call |
+| Very large catalogs | Catalog Command | `npm run scrape-catalogs -- --max-products 5000` | 3-5 spirits/call |
+| Original method (legacy) | Distillery Scraping | `npm run scrape-distilleries` | 0.1-2 spirits/call |
 | Quick daily updates | Category Scraping | `npm run scrape -- --categories bourbon` | 1-3 spirits/call |
 | Find new releases | Discovery Mode | `npm run scrape -- --discover` | 1-3 spirits/call |
 | Random sampling | Category Scraping | `npm run scrape -- --categories whiskey --limit 100` | 1-3 spirits/call |

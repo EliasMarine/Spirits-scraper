@@ -170,42 +170,46 @@ export class OptimizedCatalogScraper {
    */
   private generateOptimizedQueries(distillery: Distillery): string[] {
     const queries: string[] = [];
-    const exclusions = getSearchExclusions();
     const distilleryName = distillery.name;
+    const spiritType = distillery.type?.[0]?.toLowerCase() || 'whiskey';
+    
+    // Simplified exclusions - only critical ones
+    const simpleExclusions = '-reddit -facebook -twitter -youtube';
 
-    // 1. Direct catalog URLs for top domains
-    for (const { domain } of this.topCatalogDomains.slice(0, 4)) {
-      queries.push(
-        `site:${domain} "${distilleryName}" catalog collection "all products" ${exclusions}`,
-        `site:${domain} "${distilleryName}" "view all" "sort by" ${exclusions}`,
-        `site:${domain} intitle:"${distilleryName}" products ${exclusions}`
-      );
-    }
-
-    // 2. Multi-site catalog searches
+    // 1. High-yield site-specific searches (proven to work)
     queries.push(
-      `"${distilleryName}" "products found" OR "items found" (site:totalwine.com OR site:wine.com) ${exclusions}`,
-      `"${distilleryName} collection" "filter by" price -reddit -facebook`,
-      `"shop ${distilleryName}" online "showing" results spirits`,
-      `"all ${distilleryName} products" catalog whiskey bourbon`
+      `site:totalwine.com "${distilleryName}" ${spiritType}`,
+      `site:klwines.com "${distilleryName}" products`,
+      `site:thewhiskyexchange.com intitle:"${distilleryName}"`,
+      `site:wine.com "${distilleryName}" spirits`
     );
 
-    // 3. Product line searches if available
+    // 2. Multi-site searches with better patterns
+    queries.push(
+      `(site:totalwine.com OR site:klwines.com) "${distilleryName}" ${spiritType} -gift -cigar`,
+      `(site:thewhiskyexchange.com OR site:masterofmalt.com) "${distilleryName}"`,
+      `(site:flaviar.com OR site:reservebar.com) "${distilleryName}" buy`
+    );
+
+    // 3. General searches for catalog pages
+    queries.push(
+      `"${distilleryName} ${spiritType}" buy online price ${simpleExclusions}`,
+      `"${distilleryName} products" shop whiskey ${simpleExclusions}`,
+      `"${distilleryName}" "in stock" bottle ${simpleExclusions}`
+    );
+
+    // 4. Product line searches if available
     if (distillery.product_lines && distillery.product_lines.length > 0) {
-      const topLine = distillery.product_lines[0];
-      queries.push(
-        `"${topLine.name}" "${distilleryName}" collection "view all" ${exclusions}`,
-        `"${topLine.name} series" by ${distilleryName} products`
-      );
+      const topProducts = distillery.product_lines.slice(0, 2);
+      for (const product of topProducts) {
+        queries.push(
+          `"${product.name}" "${distilleryName}" price buy`,
+          `site:totalwine.com "${product.name}"`
+        );
+      }
     }
 
-    // 4. High-yield patterns
-    queries.push(
-      `intitle:"${distilleryName}" inurl:products OR inurl:catalog`,
-      `"${distilleryName}" filetype:html "add to cart" "price" spirits`
-    );
-
-    return queries.slice(0, 15); // Limit to most promising queries
+    return queries.slice(0, 12); // Focus on quality over quantity
   }
 
   /**
@@ -339,31 +343,56 @@ export class OptimizedCatalogScraper {
   private isValidProduct(name: string, distillery: Distillery): boolean {
     if (!name || name.length < 5 || name.length > 150) return false;
 
+    const nameLower = name.toLowerCase();
+
     // Must reference distillery
     const hasDistillery = 
-      name.toLowerCase().includes(distillery.name.toLowerCase()) ||
-      distillery.variations.some(v => name.toLowerCase().includes(v.toLowerCase()));
+      nameLower.includes(distillery.name.toLowerCase()) ||
+      distillery.variations.some(v => nameLower.includes(v.toLowerCase()));
 
     if (!hasDistillery) return false;
 
     // Exclude non-products
     const excludeTerms = [
       'review', 'article', 'blog', 'gift set', 'merchandise',
-      'tour', 'tasting', 'event', 'vs', 'versus'
+      'tour', 'tasting', 'event', 'vs', 'versus', 'cigar', 'cigars',
+      'toro', 'robusto', 'shop', 'collection', 'category', 'home of',
+      'distillery tour', 'visitor center', 'gift shop', 'accessories'
     ];
 
-    return !excludeTerms.some(term => name.toLowerCase().includes(term));
+    // Check for excluded terms
+    if (excludeTerms.some(term => nameLower.includes(term))) {
+      return false;
+    }
+
+    // Must be a drinkable spirit (check for spirit-related terms)
+    const spiritTerms = [
+      'whiskey', 'whisky', 'bourbon', 'rye', 'scotch', 'vodka', 'gin', 
+      'rum', 'tequila', 'mezcal', 'brandy', 'cognac', 'liqueur', 'proof',
+      'year', 'barrel', 'cask', 'single', 'blend', 'straight', 'reserve'
+    ];
+
+    return spiritTerms.some(term => nameLower.includes(term));
   }
 
   /**
    * Clean product name
    */
   private cleanProductName(name: string, distillery: Distillery): string {
-    return TextProcessor.fixTextSpacing(name)
-      .replace(/\s*\|.*$/, '')
-      .replace(/\s*-\s*\d+ml$/i, '')
-      .replace(/\s*\$\d+\.?\d*/, '')
+    let cleaned = TextProcessor.fixTextSpacing(name)
+      .replace(/\s*\|.*$/, '')  // Remove everything after |
+      .replace(/\s*-\s*\d+ml$/i, '')  // Remove volume
+      .replace(/\s*\$[\d,]+\.?\d*/, '')  // Remove price
+      .replace(/\(\)\s*-?\s*Sku.*$/i, '')  // Remove ()-Sku patterns
+      .replace(/\s*\.{3,}$/, '')  // Remove trailing dots
+      .replace(/\s*-\s*Sku\s*\d*$/i, '')  // Remove -Sku patterns
+      .replace(/\s+\(\s*\)/, '')  // Remove empty parentheses
       .trim();
+      
+    // Final cleanup for K&L specific patterns
+    cleaned = cleaned.replace(/\s*K&l\s+/i, 'K&L ');
+    
+    return cleaned;
   }
 
   /**
@@ -436,13 +465,32 @@ export class OptimizedCatalogScraper {
    * Extract price from text
    */
   private extractPrice(text: any): number | undefined {
-    if (typeof text === 'number') return text;
     if (!text) return undefined;
-
-    const match = text.toString().match(/\$?(\d+\.?\d*)/);
-    if (match) {
-      const price = parseFloat(match[1]);
-      return price > 0 && price < 50000 ? price : undefined;
+    
+    // Don't extract from product names or years
+    const textStr = text.toString();
+    
+    // Look for explicit price patterns only
+    const pricePatterns = [
+      /\$([\d,]+\.?\d{0,2})/,  // $29.99 or $1,299.99
+      /([\d,]+\.\d{2})\s*(?:USD|usd|dollars?)?/,  // 29.99 USD
+      /price:?\s*\$?([\d,]+\.?\d{0,2})/i,  // price: 29.99
+    ];
+    
+    for (const pattern of pricePatterns) {
+      const match = textStr.match(pattern);
+      if (match) {
+        const price = parseFloat(match[1].replace(/,/g, ''));
+        // Validate reasonable price range for spirits
+        if (price >= 5 && price <= 5000) {
+          return price;
+        }
+      }
+    }
+    
+    // If it's a pure number but from structured data, validate range
+    if (typeof text === 'number' && text >= 5 && text <= 5000) {
+      return text;
     }
     
     return undefined;
