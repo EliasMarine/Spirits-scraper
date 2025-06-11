@@ -12,10 +12,19 @@ export class EnhancedQueryGenerator extends QueryGenerator {
   }
 
   /**
-   * Shuffle an array
+   * Shuffle an array with optional seed for more randomization
    */
-  private shuffleArray<T>(array: T[]): T[] {
+  private shuffleArray<T>(array: T[], useSeed: boolean = false): T[] {
     const result = [...array];
+    
+    // Add time-based randomization to ensure different results each run
+    if (useSeed) {
+      // Rotate the array by a random offset based on current time
+      const offset = new Date().getTime() % result.length;
+      const rotated = [...result.slice(offset), ...result.slice(0, offset)];
+      result.splice(0, result.length, ...rotated);
+    }
+    
     for (let i = result.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [result[i], result[j]] = [result[j], result[i]];
@@ -346,6 +355,7 @@ export class EnhancedQueryGenerator extends QueryGenerator {
 
   /**
    * Generate category-specific discovery queries for focused scraping
+   * REDESIGNED: Generate realistic product searches like real consumers
    */
   generateCategoryDiscoveryQueries(category: string, count: number = 1000): string[] {
     const normalizedCategory = category.toLowerCase();
@@ -387,42 +397,44 @@ export class EnhancedQueryGenerator extends QueryGenerator {
       'liquorama.net'
     ];
     
-    // Shuffle brands and retailers for randomization
-    const shuffledBrands = this.shuffleArray([...categoryConfig.brands]);
-    const shuffledDescriptors = this.shuffleArray([...categoryConfig.descriptors]);
-    const shuffledRetailers = this.shuffleArray([...retailSites]);
+    // Get specific products for this category
+    const specificProducts = this.getRealProductSearches(normalizedCategory);
     
-    // PRIORITY 1: Site-specific searches on retail sites (70% of queries)
+    // Shuffle for randomization with time-based seed for more variety
+    const shuffledProducts = this.shuffleArray([...specificProducts], true);
+    const shuffledRetailers = this.shuffleArray([...retailSites], true);
+    
+    // PRIORITY 1: Specific product searches on retail sites (70% of queries)
     const retailerCount = Math.ceil(count * 0.7);
     let retailerQueriesAdded = 0;
     
-    shuffledRetailers.forEach(site => {
+    // Generate real product searches
+    shuffledProducts.forEach((product, idx) => {
       if (retailerQueriesAdded >= retailerCount) return;
       
-      // Category-specific searches on retail sites
-      queries.push(`site:${site} ${category} bottle 750ml`);
-      queries.push(`site:${site} ${category} spirits collection`);
-      retailerQueriesAdded += 2;
+      // Rotate through retailers
+      const site = shuffledRetailers[idx % shuffledRetailers.length];
       
-      // Brand-specific searches on retail sites
-      const topBrands = this.getRandomElements(shuffledBrands, 5);
-      topBrands.forEach(brand => {
-        if (retailerQueriesAdded >= retailerCount) return;
-        queries.push(`site:${site} ${brand} ${category} bottle`);
-        queries.push(`site:${site} ${brand} ${category} 750ml price`);
-        retailerQueriesAdded += 2;
-      });
+      // Add the product search as a real person would
+      queries.push(`site:${site} ${product}`);
+      retailerQueriesAdded++;
       
-      // Descriptor searches on retail sites
-      const topDescriptors = this.getRandomElements(shuffledDescriptors, 3);
-      topDescriptors.forEach(desc => {
-        if (retailerQueriesAdded >= retailerCount) return;
-        queries.push(`site:${site} ${desc} ${category}`);
+      // Sometimes add variations people might search
+      if (Math.random() < 0.3 && retailerQueriesAdded < retailerCount) {
+        queries.push(`site:${site} ${product} price`);
         retailerQueriesAdded++;
-      });
+      }
+      if (Math.random() < 0.2 && retailerQueriesAdded < retailerCount) {
+        queries.push(`site:${site} ${product} 750ml`);
+        retailerQueriesAdded++;
+      }
+      if (Math.random() < 0.1 && retailerQueriesAdded < retailerCount) {
+        queries.push(`site:${site} ${product} in stock`);
+        retailerQueriesAdded++;
+      }
     });
     
-    // PRIORITY 2: Multi-site OR queries (20% of queries)
+    // PRIORITY 2: Multi-site OR queries for specific products (20% of queries)
     const multiSiteCount = Math.ceil(count * 0.2);
     const siteGroups = [
       'site:totalwine.com OR site:wine.com OR site:drizly.com',
@@ -431,149 +443,644 @@ export class EnhancedQueryGenerator extends QueryGenerator {
       'site:caskers.com OR site:reservebar.com OR site:flaviar.com'
     ];
     
-    shuffledBrands.slice(0, multiSiteCount / 2).forEach((brand, idx) => {
+    shuffledProducts.slice(0, multiSiteCount).forEach((product, idx) => {
       const siteGroup = siteGroups[idx % siteGroups.length];
-      queries.push(`(${siteGroup}) ${brand} ${category}`);
-      queries.push(`(${siteGroup}) ${brand} ${category} bottle 750ml`);
+      queries.push(`(${siteGroup}) ${product}`);
     });
     
-    // PRIORITY 3: Brand-specific queries with retail focus (remaining 30%)
-    shuffledBrands.forEach(brand => {
-      const variations = [
-        `${brand} ${category} bottle buy online`,
-        `${brand} ${category} 750ml price`,
-        `${brand} ${category} where to buy online`,
-        `${brand} ${category} in stock`,
-        `${brand} ${category} shop online`
-      ];
-      // Randomly select 2-3 variations per brand
-      const selectedVariations = this.getRandomElements(variations, Math.floor(Math.random() * 2) + 2);
-      queries.push(...selectedVariations);
+    // PRIORITY 3: Popular searches without site restrictions (10%)
+    // These are the most natural searches people make
+    const popularProducts = this.getPopularProducts(normalizedCategory);
+    popularProducts.slice(0, Math.ceil(count * 0.1)).forEach(product => {
+      queries.push(product);
+      if (Math.random() < 0.3) {
+        queries.push(`${product} near me`);
+      }
+      if (Math.random() < 0.2) {
+        queries.push(`where to buy ${product}`);
+      }
     });
-
-    // Descriptor combinations with randomization
-    shuffledDescriptors.forEach(desc => {
-      const baseQueries = [
-        `${desc} ${category}`,
-        `best ${desc} ${category}`,
-        `premium ${desc} ${category}`,
-        `top rated ${desc} ${category}`,
-        `${desc} ${category} guide`,
-        `${desc} ${category} comparison`
-      ];
-      queries.push(...this.getRandomElements(baseQueries, 3));
-      
-      // Random brand combinations
-      const randomBrands = this.getRandomElements(shuffledBrands, 3);
-      randomBrands.forEach(brand => {
-        queries.push(`${brand} ${desc} ${category}`);
-      });
-    });
-
-    // Age statements with temporal variations (for aged spirits)
-    if (categoryConfig.ageStatements) {
-      const shuffledAges = this.shuffleArray([...categoryConfig.ageStatements]);
-      shuffledAges.forEach(age => {
-        const ageVariations = [
-          `${age} ${category}`,
-          `${age} old ${category}`,
-          `${category} aged ${age}`,
-          `${age} ${category} review`,
-          `best ${age} ${category}`,
-          `${age} ${category} tasting`
-        ];
-        queries.push(...this.getRandomElements(ageVariations, 3));
-        
-        // Random brand combinations with ages
-        const randomBrands = this.getRandomElements(shuffledBrands, 2);
-        randomBrands.forEach(brand => {
-          queries.push(`${brand} ${age} ${category}`);
-        });
-      });
-    }
-
-    // Regional queries with discovery focus
-    if (categoryConfig.regions) {
-      const shuffledRegions = this.shuffleArray([...categoryConfig.regions]);
-      shuffledRegions.forEach(region => {
-        const regionVariations = [
-          `${region} ${category}`,
-          `${category} from ${region}`,
-          `${region} ${category} distilleries`,
-          `${region} ${category} producers`,
-          `${category} made in ${region}`,
-          `${region} craft ${category}`,
-          `${region} ${category} brands`
-        ];
-        queries.push(...this.getRandomElements(regionVariations, 4));
-      });
-    }
-
-    // Temporal and seasonal queries
-    const currentYear = new Date().getFullYear();
-    const months = ['January', 'February', 'March', 'April', 'May', 'June', 
-                   'July', 'August', 'September', 'October', 'November', 'December'];
-    const seasons = ['spring', 'summer', 'fall', 'winter', 'holiday'];
     
-    // Recent releases and trends
-    const timeVariations = [
-      `${category} releases ${currentYear}`,
-      `new ${category} ${currentYear}`,
-      `best ${category} ${currentYear}`,
-      `${category} trends ${currentYear}`,
-      `upcoming ${category} releases`,
-      `${category} releases ${currentYear - 1}`,
-      `limited edition ${category} ${currentYear}`,
-      `award winning ${category} ${currentYear}`
-    ];
-    queries.push(...timeVariations);
-    
-    // Seasonal queries
-    const randomSeasons = this.getRandomElements(seasons, 3);
-    randomSeasons.forEach(season => {
-      queries.push(`${season} ${category} releases`);
-      queries.push(`${category} for ${season}`);
+    // Add some limited edition and special release searches
+    const specialReleases = this.getSpecialReleases(normalizedCategory);
+    specialReleases.forEach(release => {
+      if (queries.length < count) {
+        queries.push(release);
+        // Sometimes add site restrictions for these
+        if (Math.random() < 0.5) {
+          const site = shuffledRetailers[Math.floor(Math.random() * 5)];
+          queries.push(`site:${site} ${release}`);
+        }
+      }
     });
-
-    // Niche and discovery-focused queries
-    const nicheQueries = [
-      `rare ${category} bottles`,
-      `discontinued ${category}`,
-      `${category} collector items`,
-      `vintage ${category} collection`,
-      `${category} auction results`,
-      `investment grade ${category}`,
-      `${category} secondary market`,
-      `${category} bottle hunting`,
-      `allocated ${category} list`,
-      `${category} distillery tours`,
-      `craft ${category} makers`,
-      `independent ${category} bottlers`,
-      `${category} barrel picks`,
-      `${category} store picks`,
-      `single barrel ${category} releases`,
-      `${category} distillery exclusives`,
-      `${category} club releases`,
-      `${category} society bottlings`
-    ];
-    queries.push(...this.getRandomElements(nicheQueries, 15));
-
-    // Price point queries with specificity
-    const priceRanges = [
-      'under $30', '$30-50', '$50-100', '$100-200', '$200-500', 'over $500',
-      'budget friendly', 'mid-range', 'premium', 'luxury', 'ultra-premium'
-    ];
-    priceRanges.forEach(price => {
-      queries.push(`${category} ${price}`);
-      queries.push(`best ${category} ${price}`);
-    });
-
-    // CRITICAL: All remaining queries should have site restrictions
-    // Never do open-ended searches that allow Reddit/blogs
     
     // Shuffle final queries and return requested count
     const shuffledQueries = this.shuffleArray(queries);
     return shuffledQueries.slice(0, count);
+  }
+
+  /**
+   * Get real product searches for a category - what people actually search for
+   */
+  private getRealProductSearches(category: string): string[] {
+    const productSearches: Record<string, string[]> = {
+      bourbon: [
+        // Mix of distilleries for better variety
+        "Four Roses Single Barrel",
+        "Elijah Craig Small Batch",
+        "Wild Turkey 101",
+        "Maker's Mark",
+        "Knob Creek 9 year",
+        "Old Forester 1920",
+        "Angel's Envy",
+        "Woodford Reserve",
+        "Henry McKenna 10 year",
+        "Evan Williams Single Barrel",
+        "Buffalo Trace bourbon",
+        "Eagle Rare 10 year",
+        "Blanton's Single Barrel",
+        "Weller Special Reserve",
+        "Weller Antique 107", 
+        "Weller 12 year",
+        "Elijah Craig Barrel Proof",
+        "Four Roses Small Batch Select",
+        "Woodford Reserve Double Oaked",
+        "Maker's Mark 46",
+        "Maker's Mark Cask Strength",
+        "Wild Turkey Rare Breed",
+        "Knob Creek Single Barrel",
+        "Knob Creek 12 year",
+        "Jim Beam Black",
+        "Booker's bourbon",
+        "Baker's 7 year",
+        "Basil Hayden",
+        "Old Forester 1920",
+        "Old Forester 1910", 
+        "Old Forester 1897",
+        "Old Forester Birthday Bourbon",
+        "Angel's Envy",
+        "Angel's Envy Rye",
+        "Michter's US-1 Bourbon",
+        "Michter's 10 year",
+        "Henry McKenna 10 year",
+        "Very Old Barton Bottled in Bond",
+        "Old Grand-Dad 114",
+        "Old Grand-Dad Bottled in Bond",
+        "Evan Williams Single Barrel",
+        "Evan Williams Bottled in Bond",
+        "Heaven Hill Bottled in Bond",
+        "Larceny bourbon",
+        "Larceny Barrel Proof",
+        "E.H. Taylor Small Batch",
+        "E.H. Taylor Single Barrel",
+        "E.H. Taylor Barrel Proof",
+        "Stagg Jr",
+        "George T Stagg",
+        "William Larue Weller",
+        "Thomas H Handy",
+        "Pappy Van Winkle 15",
+        "Pappy Van Winkle 20", 
+        "Pappy Van Winkle 23",
+        "Old Rip Van Winkle 10",
+        "Van Winkle Special Reserve 12",
+        "1792 Small Batch",
+        "1792 Bottled in Bond",
+        "1792 Full Proof",
+        "Russell's Reserve 10 year",
+        "Russell's Reserve Single Barrel",
+        "Bulleit bourbon",
+        "Bulleit 10 year",
+        "Jefferson's Ocean",
+        "Jefferson's Reserve",
+        "Smoke Wagon Uncut Unfiltered",
+        "Smoke Wagon Small Batch",
+        "Bardstown Bottled in Bond",
+        "Bardstown Discovery Series",
+        "High West American Prairie",
+        "Belle Meade Reserve",
+        "New Riff Bottled in Bond",
+        "Wilderness Trail Bottled in Bond",
+        "Old Ezra 7 year Barrel Strength",
+        "Early Times Bottled in Bond",
+        "Benchmark bonded",
+        "Ancient Age",
+        "Buffalo Trace Kosher",
+        "Sazerac Rye",
+        "Whistlepig 10 year",
+        "Whistlepig 12 year",
+        "Whistlepig 15 year"
+      ],
+      scotch: [
+        "Macallan 12",
+        "Macallan 18", 
+        "Macallan Double Cask",
+        "Macallan Sherry Oak",
+        "Glenfiddich 12",
+        "Glenfiddich 15",
+        "Glenfiddich 18",
+        "Glenfiddich 21",
+        "Glenlivet 12",
+        "Glenlivet 15",
+        "Glenlivet 18",
+        "Glenlivet Founder's Reserve",
+        "Balvenie 12 DoubleWood",
+        "Balvenie 14 Caribbean Cask",
+        "Balvenie 17 DoubleWood",
+        "Balvenie 21 PortWood",
+        "Highland Park 12",
+        "Highland Park 18",
+        "Highland Park Viking Honour",
+        "Glenmorangie 10",
+        "Glenmorangie Lasanta",
+        "Glenmorangie Quinta Ruban",
+        "Glenmorangie Nectar D'Or",
+        "Johnnie Walker Black",
+        "Johnnie Walker Blue",
+        "Johnnie Walker Green",
+        "Johnnie Walker Gold",
+        "Lagavulin 16",
+        "Lagavulin 8",
+        "Lagavulin Distillers Edition",
+        "Ardbeg 10",
+        "Ardbeg Uigeadail",
+        "Ardbeg Corryvreckan",
+        "Ardbeg An Oa",
+        "Laphroaig 10",
+        "Laphroaig Quarter Cask",
+        "Laphroaig Triple Wood",
+        "Laphroaig 10 Cask Strength",
+        "Bowmore 12",
+        "Bowmore 15",
+        "Bowmore 18",
+        "Talisker 10",
+        "Talisker Storm",
+        "Talisker 18",
+        "Oban 14",
+        "Oban Little Bay",
+        "Dalmore 12",
+        "Dalmore 15",
+        "Dalmore Cigar Malt",
+        "Springbank 10",
+        "Springbank 15",
+        "Bruichladdich Classic Laddie",
+        "Bruichladdich Islay Barley",
+        "Bunnahabhain 12",
+        "Bunnahabhain 18",
+        "GlenDronach 12",
+        "GlenDronach 15 Revival",
+        "GlenDronach 18 Allardice",
+        "Glenfarclas 12",
+        "Glenfarclas 17",
+        "Aberlour 12",
+        "Aberlour A'bunadh"
+      ],
+      whiskey: [
+        "Jack Daniel's",
+        "Jack Daniel's Single Barrel",
+        "Jack Daniel's Gentleman Jack",
+        "Jack Daniel's Tennessee Honey",
+        "Jameson Irish Whiskey",
+        "Jameson Black Barrel",
+        "Jameson 18 year",
+        "Redbreast 12",
+        "Redbreast 15",
+        "Redbreast 21",
+        "Green Spot",
+        "Yellow Spot",
+        "Powers Gold Label",
+        "Powers John's Lane",
+        "Tullamore Dew",
+        "Bushmills Original",
+        "Bushmills Black Bush",
+        "Bushmills 10 year",
+        "Teeling Small Batch",
+        "Teeling Single Grain",
+        "Nikka From The Barrel",
+        "Nikka Coffey Grain",
+        "Nikka Coffey Malt",
+        "Hibiki Harmony",
+        "Hibiki 17",
+        "Yamazaki 12",
+        "Yamazaki 18",
+        "Hakushu 12",
+        "Suntory Toki",
+        "Crown Royal",
+        "Crown Royal Reserve",
+        "Crown Royal XO",
+        "Seagram's 7",
+        "Canadian Club",
+        "Pendleton whiskey",
+        "Westward American Single Malt",
+        "Stranahan's",
+        "Balcones Baby Blue",
+        "Balcones Single Malt"
+      ],
+      tequila: [
+        "Don Julio 1942",
+        "Don Julio Blanco",
+        "Don Julio Reposado", 
+        "Don Julio Anejo",
+        "Don Julio 70",
+        "Patron Silver",
+        "Patron Reposado",
+        "Patron Anejo",
+        "Patron Extra Anejo",
+        "Casamigos Blanco",
+        "Casamigos Reposado",
+        "Casamigos Anejo",
+        "Clase Azul Reposado",
+        "Clase Azul Plata",
+        "Clase Azul Anejo",
+        "Herradura Silver",
+        "Herradura Reposado",
+        "Herradura Anejo",
+        "El Tesoro Blanco",
+        "El Tesoro Reposado",
+        "El Tesoro Anejo",
+        "Fortaleza Blanco",
+        "Fortaleza Reposado",
+        "Fortaleza Anejo",
+        "Espolon Blanco",
+        "Espolon Reposado",
+        "Codigo 1530 Rosa",
+        "Codigo 1530 Blanco",
+        "Cazadores Blanco",
+        "Cazadores Reposado",
+        "Milagro Silver",
+        "Milagro Reposado",
+        "1800 Silver",
+        "1800 Reposado",
+        "1800 Anejo",
+        "Hornitos Plata",
+        "Hornitos Reposado",
+        "Casa Noble Crystal",
+        "Casa Noble Reposado",
+        "Avion Silver",
+        "Avion Reposado",
+        "Maestro Dobel Diamante",
+        "Ocho Plata",
+        "Ocho Reposado",
+        "Tapatio Blanco",
+        "Tapatio Reposado",
+        "G4 Blanco",
+        "G4 Reposado",
+        "Pasote Blanco",
+        "Pasote Reposado",
+        "Siete Leguas Blanco",
+        "Siete Leguas Reposado"
+      ],
+      rum: [
+        "Bacardi Superior",
+        "Bacardi Gold",
+        "Bacardi 8",
+        "Captain Morgan Original",
+        "Captain Morgan Private Stock",
+        "Mount Gay Eclipse",
+        "Mount Gay Black Barrel",
+        "Mount Gay XO",
+        "Appleton Estate Signature",
+        "Appleton Estate 12 year",
+        "Appleton Estate 21 year",
+        "Flor de Cana 4",
+        "Flor de Cana 7",
+        "Flor de Cana 12",
+        "Flor de Cana 18",
+        "Diplomatico Reserva Exclusiva",
+        "Diplomatico Mantuano",
+        "Ron Zacapa 23",
+        "Ron Zacapa XO",
+        "El Dorado 12 year",
+        "El Dorado 15 year",
+        "El Dorado 21 year",
+        "Plantation 3 Stars",
+        "Plantation 5 year",
+        "Plantation XO",
+        "Plantation Pineapple",
+        "Kraken Black Spiced Rum",
+        "Sailor Jerry Spiced Rum",
+        "Goslings Black Seal",
+        "Myers's Dark Rum",
+        "Cruzan Aged Light",
+        "Cruzan Black Strap",
+        "Don Q Cristal",
+        "Don Q Gold",
+        "Havana Club 7",
+        "Pyrat XO Reserve",
+        "Bumbu rum",
+        "Malibu Coconut",
+        "Parrot Bay",
+        "Smith & Cross",
+        "Wray & Nephew Overproof",
+        "Foursquare 2007",
+        "Foursquare Sagacity",
+        "Doorly's 12 year",
+        "Real McCoy 5 year",
+        "Real McCoy 12 year"
+      ],
+      gin: [
+        "Tanqueray",
+        "Tanqueray No. Ten",
+        "Tanqueray Rangpur",
+        "Hendrick's Gin",
+        "Hendrick's Orbium",
+        "Hendrick's Amazonia",
+        "Bombay Sapphire",
+        "Bombay Sapphire East",
+        "Beefeater",
+        "Beefeater 24",
+        "Gordon's Gin",
+        "Seagram's Gin",
+        "Plymouth Gin",
+        "The Botanist",
+        "Monkey 47",
+        "Aviation Gin",
+        "Roku Gin",
+        "Nolet's Silver",
+        "St. George Terroir",
+        "St. George Botanivore",
+        "Drumshanbo Gunpowder",
+        "Gray Whale Gin",
+        "Uncle Val's",
+        "Ford's Gin",
+        "Hayman's Old Tom",
+        "Ransom Old Tom",
+        "Sipsmith London Dry",
+        "Martin Miller's",
+        "Citadelle Gin",
+        "Green Mark Vodka", // gin search example - should be gin not vodka
+        "New Amsterdam Gin",
+        "Empress 1908",
+        "Malfy Gin",
+        "Malfy Rosa",
+        "Botanist Islay Dry",
+        "Death's Door Gin",
+        "Bluecoat Gin",
+        "Leopold's Gin",
+        "Spring44 Gin",
+        "Prairie Organic Gin"
+      ],
+      vodka: [
+        "Grey Goose",
+        "Grey Goose L'Orange",
+        "Grey Goose La Poire",
+        "Belvedere",
+        "Belvedere Citrus",
+        "Absolut",
+        "Absolut Citron",
+        "Absolut Vanilla",
+        "Tito's Handmade Vodka",
+        "Ketel One",
+        "Ketel One Botanicals",
+        "Chopin Potato",
+        "Chopin Rye",
+        "Chopin Wheat",
+        "Russian Standard",
+        "Russian Standard Gold",
+        "Stolichnaya",
+        "Stoli Elit",
+        "Smirnoff No. 21",
+        "Smirnoff 100 Proof",
+        "Svedka",
+        "Skyy Vodka",
+        "Finlandia",
+        "Reyka Vodka",
+        "Crystal Head",
+        "Ciroc",
+        "Ciroc Red Berry",
+        "Pinnacle Vodka",
+        "Three Olives",
+        "Deep Eddy",
+        "Deep Eddy Lemon",
+        "Wheatley Vodka",
+        "Western Son",
+        "Hangar 1",
+        "St. George All Purpose",
+        "Boyd & Blair",
+        "Death's Door Vodka",
+        "Prairie Organic Vodka"
+      ],
+      whiskey: [
+        "Jack Daniel's Black Label",
+        "Jack Daniel's Single Barrel",
+        "Jack Daniel's Gentleman Jack",
+        "Jameson Original",
+        "Jameson Black Barrel",
+        "Jameson 18 Year",
+        "Crown Royal",
+        "Crown Royal Reserve",
+        "Crown Royal XO",
+        "Seagram's 7",
+        "Canadian Club",
+        "Pendleton Whiskey",
+        "Westward American Single Malt",
+        "Stranahan's Colorado Whiskey",
+        "Balcones Baby Blue",
+        "Balcones Single Malt",
+        "George Dickel No. 12",
+        "George Dickel Barrel Select",
+        "Uncle Nearest 1856",
+        "Uncle Nearest 1884",
+        "Nikka From The Barrel",
+        "Nikka Coffey Grain",
+        "Nikka Coffey Malt",
+        "Hibiki Harmony",
+        "Hibiki 17",
+        "Yamazaki 12",
+        "Yamazaki 18",
+        "Hakushu 12",
+        "Hakushu 18",
+        "Suntory Toki"
+      ],
+      mezcal: [
+        "Del Maguey Vida",
+        "Del Maguey Chichicapa",
+        "Del Maguey Santo Domingo Albarradas",
+        "Mezcal Vago Elote",
+        "Mezcal Vago Espadin",
+        "Ilegal Joven",
+        "Ilegal Reposado",
+        "Ilegal Anejo",
+        "Montelobos Espadin",
+        "Montelobos Tobala",
+        "Bozal Ensamble",
+        "Bozal Cuishe",
+        "Alipus San Andres",
+        "Alipus San Juan",
+        "El Silencio Espadin",
+        "El Silencio Ensamble",
+        "Dos Hombres Espadin",
+        "Dos Hombres Tobala",
+        "Casamigos Mezcal",
+        "Los Amantes Joven",
+        "Los Amantes Reposado",
+        "Pierde Almas Espadin",
+        "Pierde Almas Wild Tobala",
+        "Rey Campero Espadin",
+        "Rey Campero Tepextate",
+        "Mezcales de Leyenda Guerrero",
+        "Mezcales de Leyenda Oaxaca",
+        "Nuestra Soledad San Luis del Rio",
+        "Nuestra Soledad Zoquitlan",
+        "Union Uno"
+      ]
+    };
+
+    return productSearches[category] || [];
+  }
+
+  /**
+   * Get popular products that people search without site restrictions
+   */
+  private getPopularProducts(category: string): string[] {
+    const popularByCategory: Record<string, string[]> = {
+      bourbon: [
+        "Four Roses Limited Edition",
+        "Old Forester Birthday Bourbon",
+        "Michter's 10 year bourbon",
+        "Booker's 30th Anniversary",
+        "Wild Turkey Master's Keep",
+        "Pappy Van Winkle",
+        "Buffalo Trace Antique Collection",
+        "Blanton's",
+        "Weller 12",
+        "Eagle Rare",
+        "E.H. Taylor Barrel Proof",
+        "Stagg Jr"
+      ],
+      scotch: [
+        "Macallan 18",
+        "Johnnie Walker Blue Label",
+        "Glenfiddich 21",
+        "Balvenie 21 PortWood",
+        "Lagavulin 16",
+        "Ardbeg Uigeadail",
+        "Highland Park 18",
+        "Glenmorangie Signet",
+        "Dalmore 18",
+        "Springbank 18"
+      ],
+      whiskey: [
+        "Redbreast 21",
+        "Midleton Very Rare",
+        "Hibiki 17",
+        "Yamazaki 18",
+        "Whistlepig Boss Hog",
+        "Jack Daniel's Sinatra Select",
+        "Jameson 18 year",
+        "Green Spot Chateau Leoville Barton",
+        "Nikka From The Barrel",
+        "Hakushu 18"
+      ],
+      tequila: [
+        "Don Julio 1942",
+        "Clase Azul Reposado",
+        "Casa Dragones Joven",
+        "Gran Patron Platinum",
+        "Fortaleza Winter Blend",
+        "Rey Sol Anejo",
+        "Tears of Llorona",
+        "El Tesoro Paradiso",
+        "Avion Reserva 44",
+        "Jose Cuervo Reserva de la Familia"
+      ],
+      rum: [
+        "Ron Zacapa XO",
+        "Appleton Estate 21",
+        "Diplomatico Ambassador",
+        "El Dorado 25",
+        "Foursquare Exceptional Cask",
+        "Mount Gay 1703",
+        "Plantation XO 20th Anniversary",
+        "Rhum JM XO",
+        "Clement XO",
+        "Zafra 21"
+      ],
+      gin: [
+        "Monkey 47",
+        "Hendrick's Amazonia", 
+        "Nolet's Reserve",
+        "Ki No Bi Kyoto",
+        "The Botanist 22",
+        "Drumshanbo Gunpowder",
+        "Isle of Harris Gin",
+        "Four Pillars Rare Dry",
+        "Nikka Coffey Gin",
+        "Roku Select Edition"
+      ],
+      vodka: [
+        "Beluga Gold Line",
+        "Stoli Elit",
+        "Grey Goose VX",
+        "Absolut Elyx",
+        "Chopin Family Reserve",
+        "Jewel of Russia",
+        "Kaufmann Luxury Vintage",
+        "Crystal Head Aurora",
+        "Hangar 1 Fog Point",
+        "St. George All Purpose Vodka"
+      ]
+    };
+
+    return popularByCategory[category] || [];
+  }
+
+  /**
+   * Get special releases and limited editions
+   */
+  private getSpecialReleases(category: string): string[] {
+    const currentYear = new Date().getFullYear();
+    const releases: Record<string, string[]> = {
+      bourbon: [
+        `Buffalo Trace Antique Collection ${currentYear}`,
+        `Four Roses Limited Edition ${currentYear}`,
+        `Old Forester Birthday Bourbon ${currentYear}`,
+        `Heaven Hill Heritage Collection ${currentYear}`,
+        `Parker's Heritage Collection ${currentYear}`,
+        `Booker's ${currentYear} releases`,
+        `Elijah Craig Barrel Proof ${currentYear}`,
+        `Wild Turkey Master's Keep ${currentYear}`,
+        `Jim Beam Distiller's Masterpiece`,
+        `Maker's Mark Wood Finishing Series ${currentYear}`
+      ],
+      scotch: [
+        `Diageo Special Releases ${currentYear}`,
+        `Ardbeg Committee Release ${currentYear}`,
+        `Bruichladdich Black Art`,
+        `Glenmorangie Private Edition ${currentYear}`,
+        `Macallan Edition Series`,
+        `Balvenie Stories Collection`,
+        `Highland Park Viking Legend`,
+        `Springbank Local Barley ${currentYear}`,
+        `Glenfiddich Grand Series`,
+        `Lagavulin Feis Ile ${currentYear}`
+      ],
+      whiskey: [
+        `Midleton Very Rare ${currentYear}`,
+        `Redbreast Dream Cask`,
+        `Whistlepig Boss Hog ${currentYear}`,
+        `Jameson Distillery Edition`,
+        `Teeling Brabazon Series`,
+        `Nikka Limited Edition ${currentYear}`,
+        `Hibiki Limited Edition ${currentYear}`,
+        `Jack Daniel's Master Distiller Series`,
+        `Crown Royal Noble Collection`,
+        `Bushmills Causeway Collection`
+      ],
+      tequila: [
+        `Patron Limited Edition ${currentYear}`,
+        `Jose Cuervo 250 Aniversario`,
+        `Don Julio Ultima Reserva`,
+        `Clase Azul Ultra`,
+        `Casa Dragones Barrel Blend`,
+        `Avion Reserva Cristalino`,
+        `Codigo 1530 Origen`,
+        `El Tesoro Extra Anejo ${currentYear}`,
+        `Fortaleza Winter Blend ${currentYear}`,
+        `G4 Extra Anejo ${currentYear}`
+      ]
+    };
+
+    return releases[category] || [];
   }
 
   /**
@@ -631,6 +1138,24 @@ export class EnhancedQueryGenerator extends QueryGenerator {
         descriptors: ['white', 'gold', 'dark', 'spiced', 'aged', 'overproof', 'navy strength'],
         ageStatements: ['8 year', '12 year', '15 year', '18 year', '21 year', '23 year'],
         regions: ['Jamaica', 'Barbados', 'Cuba', 'Puerto Rico', 'Martinique', 'Guyana']
+      },
+      tequila: {
+        brands: ['Don Julio', 'Patron', 'Casamigos', 'Clase Azul', 'Herradura', 'El Tesoro', 'Fortaleza', 'Espolon', 'Codigo 1530', 'Cazadores', 'Milagro', '1800', 'Hornitos', 'Casa Noble', 'Avion', 'Ocho', 'Tapatio', 'G4', 'Pasote', 'Siete Leguas'],
+        descriptors: ['blanco', 'reposado', 'añejo', 'extra añejo', 'cristalino', 'joven', 'highland', 'lowland', '100% agave', 'organic'],
+        ageStatements: ['2 months', '6 months', '1 year', '2 years', '3 years', '5 years'],
+        regions: ['Jalisco', 'Highlands', 'Lowlands', 'Tequila Valley', 'Los Altos']
+      },
+      whiskey: {
+        brands: ['Jack Daniel\'s', 'Jameson', 'Crown Royal', 'Seagram\'s 7', 'Canadian Club', 'Pendleton', 'Westward', 'Stranahan\'s', 'Balcones', 'George Dickel', 'Uncle Nearest', 'Nikka', 'Hibiki', 'Yamazaki', 'Hakushu', 'Suntory Toki'],
+        descriptors: ['tennessee', 'american', 'canadian', 'japanese', 'single malt', 'blended', 'straight', 'bottled in bond'],
+        ageStatements: ['4 year', '7 year', '10 year', '12 year', '15 year', '18 year'],
+        regions: ['Tennessee', 'Japan', 'Canada', 'Texas', 'Colorado', 'Oregon']
+      },
+      mezcal: {
+        brands: ['Del Maguey', 'Mezcal Vago', 'Ilegal', 'Montelobos', 'Bozal', 'Alipus', 'El Silencio', 'Dos Hombres', 'Casamigos', 'Los Amantes', 'Pierde Almas', 'Rey Campero', 'Mezcales de Leyenda', 'Nuestra Soledad', 'Union'],
+        descriptors: ['joven', 'reposado', 'añejo', 'espadin', 'tobala', 'ensamble', 'artesanal', 'ancestral', 'wild agave'],
+        ageStatements: ['joven', '2 months', '6 months', '1 year', '2 years'],
+        regions: ['Oaxaca', 'Durango', 'San Luis Potosi', 'Guerrero', 'Michoacan']
       }
     };
 
