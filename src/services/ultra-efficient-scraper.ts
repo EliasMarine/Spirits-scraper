@@ -849,13 +849,20 @@ export class UltraEfficientScraper {
 
   /**
    * Check if a product name is valid
+   * V2.5.5: Use critical fixes validation to prevent non-product content
    */
   private isValidProductName(name: string, category: string): boolean {
     if (!name || name.length < 5 || name.length > 150) return false;
     
+    // First use V2.5.5 critical fixes validation
+    if (!V25CriticalFixes.isValidProductName(name)) {
+      logger.debug(`❌ Rejected non-product name: "${name}"`);
+      return false;
+    }
+    
     const lowerName = name.toLowerCase();
     
-    // Skip generic/non-product titles
+    // Additional skip patterns specific to scraper
     const skipPatterns = [
       'shop', 'buy', 'browse', 'search', 'collection', 'catalog',
       'all products', 'home page', 'gift card', 'accessories',
@@ -868,7 +875,7 @@ export class UltraEfficientScraper {
       return false;
     }
     
-    // Must contain spirit-related words
+    // Must contain spirit-related words (kept for category matching)
     const spiritWords = ['whiskey', 'whisky', 'bourbon', 'rum', 'vodka', 'gin', 'tequila', 'scotch', 'rye', 'brandy', 'cognac'];
     return spiritWords.some(word => lowerName.includes(word));
   }
@@ -1129,6 +1136,12 @@ export class UltraEfficientScraper {
       // Apply critical fixes before storing
       const fixedSpirit = V25CriticalFixes.applyAllFixes(spirit);
       
+      // V2.5.5: Validate product name before storing
+      if (!V25CriticalFixes.isValidProductName(fixedSpirit.name)) {
+        logger.warn(`❌ Rejected non-product: "${fixedSpirit.name}"`);
+        return false;
+      }
+      
       // Detect proper type
       const typeDetection = detectSpiritType(fixedSpirit.name, fixedSpirit.brand || '', fixedSpirit.description);
       const detectedType = typeDetection?.type || fixedSpirit.type;
@@ -1154,12 +1167,38 @@ export class UltraEfficientScraper {
       // Extract advanced metadata
       const advancedMetadata = this.extractAdvancedMetadata(fixedSpirit);
       
+      // V2.5.5: Extract price from description if not already set
+      let finalPrice = fixedSpirit.price;
+      if (!finalPrice && fixedSpirit.description) {
+        // Try to extract price from description
+        const descPricePatterns = [
+          /\$\s*([\d,]+\.?\d{0,2})(?:\s|$|[^\d])/,
+          /USD\s*([\d,]+\.?\d*)/i,
+          /(?:price|msrp|our\s+price|sale|now):\s*\$?([\d,]+\.?\d*)/i,
+          /\(\$?([\d,]+\.?\d*)\)/,
+          /\d+ml\s*[).\s-]*\s*\$?([\d,]+\.?\d*)/i,
+          /750ml[).\s-]*\s*\$?([\d,]+\.?\d*)/i
+        ];
+        
+        for (const pattern of descPricePatterns) {
+          const match = fixedSpirit.description.match(pattern);
+          if (match) {
+            const price = this.extractPrice(match[1]);
+            if (price) {
+              finalPrice = price;
+              logger.debug(`💰 Extracted price from description: $${price}`);
+              break;
+            }
+          }
+        }
+      }
+      
       const spiritData = {
         name: fixedSpirit.name,
         brand: fixedSpirit.brand || this.extractBrandFromName(fixedSpirit.name),
         type: detectedType,
         category: this.mapTypeToCategory(detectedType),
-        price: fixedSpirit.price,
+        price: finalPrice,
         abv: fixedSpirit.abv || advancedMetadata.abv || this.extractABV(fixedSpirit.description || fixedSpirit.snippet, detectedType),
         proof: fixedSpirit.proof || advancedMetadata.proof,
         volume: fixedSpirit.volume || '750ml',

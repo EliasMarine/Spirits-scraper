@@ -36,6 +36,13 @@ export class V25CriticalFixes {
     // DON'T lowercase or remove punctuation initially
     const originalName = name.trim();
     
+    // V2.5.5: Handle year-prefixed spirits (1988 Wild Turkey, 2021 William Larue Weller)
+    const yearPrefixMatch = originalName.match(/^(\d{4})\s+(.+)/);
+    if (yearPrefixMatch) {
+      // Recursively extract brand from the part after the year
+      return this.extractBrandFromName(yearPrefixMatch[2]);
+    }
+    
     // V2.5.4: Invalid single-word brands that should be rejected
     const invalidSingleWords = new Set([
       'old', 'new', 'four', 'wild', 'king', 'best', 'discover', 
@@ -50,7 +57,7 @@ export class V25CriticalFixes {
       'Russell\'s Reserve', 'Buffalo Trace', 'Wild Turkey', 'Four Roses',
       'Old Forester', 'Maker\'s Mark', 'Elijah Craig', 'Evan Williams',
       'Henry McKenna', 'Very Old Barton', 'Old Grand-Dad', 'Old Ezra',
-      'I.W. Harper', 'W.L. Weller', 'George T. Stagg', 'E.H. Taylor',
+      'I.W. Harper', 'W.L. Weller', 'William Larue Weller', 'George T. Stagg', 'E.H. Taylor',
       'Joseph Magnus', 'High West', 'WhistlePig', 'Angel\'s Envy',
       'Michter\'s', 'Jack Daniel\'s', 'George Dickel', 'Uncle Nearest',
       'Garrison Brothers', 'Balcones', 'Westland', 'Stranahan\'s',
@@ -407,6 +414,47 @@ export class V25CriticalFixes {
     } else {
       console.log('  ✅ No duplicate found');
     }
+  }
+
+  /**
+   * V2.5.5: Validate if a string is a valid product name (not an article/guide)
+   */
+  static isValidProductName(name: string): boolean {
+    if (!name) return false;
+    
+    const invalidPatterns = [
+      /^discover\s+the/i,
+      /^best\s+bourbon/i,
+      /^top\s+\d+/i,
+      /^how\s+to/i,
+      /guide$/i,
+      /^the\s+most\s+popular/i,
+      /available\s+in\s+\w+,\s+\w+$/i,
+      /^buy\s+/i,
+      /^shop\s+/i,
+      /^find\s+/i,
+      /^learn\s+about/i,
+      /^explore\s+our/i,
+      /collection$/i,
+      /^compare\s+prices/i
+    ];
+    
+    // Reject if matches any invalid pattern
+    if (invalidPatterns.some(pattern => pattern.test(name))) {
+      return false;
+    }
+    
+    // Reject if too long (likely a sentence/description)
+    if (name.length > 100) {
+      return false;
+    }
+    
+    // Reject if contains question marks (likely a question/title)
+    if (name.includes('?')) {
+      return false;
+    }
+    
+    return true;
   }
 
   /**
