@@ -262,11 +262,17 @@ const BRAND_LOOKUP = createBrandLookup();
 
 /**
  * Normalize text by removing special characters and extra whitespace
+ * FIXED: Preserve original casing for better brand recognition
  */
-function normalizeText(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^\w\s]/g, ' ') // Replace special chars with spaces
+function normalizeText(text: string, preserveCase: boolean = false): string {
+  let result = text;
+  
+  if (!preserveCase) {
+    result = result.toLowerCase();
+  }
+  
+  return result
+    .replace(/[^\w\s.']/g, ' ') // Keep apostrophes and dots for brands like W.L. Weller
     .replace(/\s+/g, ' ') // Normalize whitespace
     .trim();
 }

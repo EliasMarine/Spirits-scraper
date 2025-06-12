@@ -196,6 +196,11 @@ export class DataValidator {
     // Remove years in parentheses (vintage years)
     normalized = normalized.replace(/\s*\(\d{4}\)\s*/g, ' ');
     
+    // CRITICAL FIX: Remove empty parentheses after volume removal
+    normalized = normalized.replace(/\(\s*\)/g, ''); // Remove ( )
+    normalized = normalized.replace(/\[\s*\]/g, ''); // Remove [ ]
+    normalized = normalized.replace(/\{\s*\}/g, ''); // Remove { }
+    
     // Remove price info
     normalized = normalized.replace(/\$[\d,]+\.?\d*/g, '');
     

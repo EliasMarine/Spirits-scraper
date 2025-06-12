@@ -5,9 +5,11 @@ import { detectSpiritType } from '../config/spirit-types';
 import { logger } from '../utils/logger';
 import { apiCallTracker } from './api-call-tracker';
 import { createMultipleKeys } from './normalization-keys';
+import { scrapeSessionTracker } from './scrape-session-tracker';
 // Enhanced price extraction will be integrated after compilation
 import axios from 'axios';
 import * as cheerio from 'cheerio';
+import { V25CriticalFixes } from '../fixes/v2.5-critical-fixes';
 
 export interface UltraEfficientOptions {
   category: string;
@@ -56,6 +58,27 @@ export class UltraEfficientScraper {
     
     logger.info(`🚀 Ultra-Efficient Scraping Mode - Target: ${targetEfficiency}% efficiency`);
     
+    // Check if we should skip this category entirely
+    const skipCheck = await scrapeSessionTracker.shouldSkipCategory(category, limit);
+    if (skipCheck.skip) {
+      logger.info(`📊 ${skipCheck.reason}`);
+      logger.info(`✅ Skipping API calls - requirement already satisfied`);
+      
+      // Return metrics showing we already have enough
+      return {
+        apiCalls: 0,
+        spiritsFound: skipCheck.existingCount || 0,
+        spiritsStored: skipCheck.existingCount || 0,
+        efficiency: 0,
+        catalogPagesFound: 0,
+        averageSpiritsPerCatalog: 0,
+        topPerformingQueries: []
+      };
+    }
+    
+    // Initialize new session
+    const session = scrapeSessionTracker.initSession(category);
+    
     // Reset metrics
     this.metrics = {
       apiCalls: 0,
@@ -89,6 +112,9 @@ export class UltraEfficientScraper {
       try {
         logger.info(`\n🔍 Query ${this.metrics.apiCalls + 1}: ${query}`);
         
+        // Track this query in the session
+        scrapeSessionTracker.recordQuery(category, query);
+        
         const searchResults = await this.googleClient.search({ query });
         this.metrics.apiCalls++;
 
@@ -121,7 +147,16 @@ export class UltraEfficientScraper {
             const key = this.createSpiritKey(spirit);
             if (!processedSpirits.has(key)) {
               processedSpirits.add(key);
+              
+              // Check if already stored in a previous session
+              const alreadyStored = await scrapeSessionTracker.isAlreadyStored(category, key);
+              if (alreadyStored) {
+                logger.debug(`⏭️ Skipping already stored: ${spirit.name}`);
+                continue;
+              }
+              
               this.metrics.spiritsFound++;
+              scrapeSessionTracker.recordSpiritFound(category);
               queryYield++;
               
               // Add the search result URL as source
@@ -130,9 +165,19 @@ export class UltraEfficientScraper {
               const stored = await this.storeSpirit(spirit);
               if (stored) {
                 this.metrics.spiritsStored++;
+                scrapeSessionTracker.recordSpiritStored(category, key);
                 logger.info(`✅ Stored: ${spirit.name} (${spirit.price ? '$' + spirit.price : 'no price'})`);
               } else {
                 logger.warn(`❌ Failed to store: ${spirit.name}`);
+                // Add debug info
+                logger.debug(`  Spirit data: ${JSON.stringify({
+                  name: spirit.name,
+                  brand: spirit.brand,
+                  type: spirit.type,
+                  price: spirit.price,
+                  abv: spirit.abv,
+                  source_url: spirit.source_url
+                })}`);
               }
             }
           }
@@ -178,6 +223,15 @@ export class UltraEfficientScraper {
     this.metrics.topPerformingQueries = this.metrics.topPerformingQueries.slice(0, 10);
 
     this.logFinalMetrics();
+    
+    // Save the session for future reference
+    await scrapeSessionTracker.saveSession(category);
+    
+    // Log session stats
+    const sessionStats = scrapeSessionTracker.getSessionStats(category);
+    if (sessionStats) {
+      logger.info(`📝 Session tracked: ${sessionStats.spiritsStored} spirits stored, ${sessionStats.uniqueSpirits} unique keys`);
+    }
     
     return this.metrics;
   }
@@ -611,15 +665,37 @@ export class UltraEfficientScraper {
     if (snippet && spirits.length > 0 && !spirits[0].price) {
       // Extract price from snippet with enhanced patterns
       const pricePatterns = [
+        // Standard price patterns
         /(?:price|msrp|our\s+price|sale|now):\s*\$?([\d,]+\.?\d*)/i,
+        /\$\s*([\d,]+\.?\d{0,2})(?:\s|$|[^\d])/,
+        
+        // Price near volume (750ml - $29.99)
+        /(?:750ml|1L|1\.75L)\s*[-–—]\s*\$?([\d,]+\.?\d*)/i,
         /\d+ml\s*[.-]*\s*\$?([\d,]+\.?\d*)/i,
-        /\$\s*([\d,]+\.?\d{0,2})(?:\s|$|[^\d])/
+        
+        // Price range patterns
+        /\$?([\d,]+\.?\d*)\s*-\s*\$?\d+\.?\d*/,
+        /USD\s*([\d,]+\.?\d*)/i,
+        
+        // Retail/regular price
+        /(?:retail|regular)\s+price[:\s]*\$?([\d,]+\.?\d*)/i,
+        /priced?\s+at\s+\$?([\d,]+\.?\d*)/i,
+        
+        // Price in parentheses or after colon
+        /\(\$?([\d,]+\.?\d*)\)/,
+        /:\s*\$?([\d,]+\.?\d*)(?:\s|$)/,
+        
+        // Price with currency words
+        /(\d+\.?\d*)\s*(?:dollars|bucks)/i,
+        
+        // Special Total Wine pattern from their snippets
+        /(?:was|now|only)\s+\$?([\d,]+\.?\d*)/i
       ];
       
       for (const pattern of pricePatterns) {
         const match = snippet.match(pattern);
         if (match) {
-          const price = this.extractPrice(match[1]);
+          const price = this.extractPrice(match[1], snippet);
           if (price) {
             spirits[0].price = price;
             break;
@@ -649,25 +725,126 @@ export class UltraEfficientScraper {
       spirits[0].image_url = pagemap.cse_image[0].src;
     }
     
-    // 8. Extract description from metatags or snippet
-    if (spirits.length > 0 && !spirits[0].description) {
-      const metaDescription = pagemap?.metatags?.[0]?.['og:description'] || 
-                             pagemap?.metatags?.[0]?.['description'];
-      if (metaDescription && metaDescription.length > 20 && !metaDescription.includes('JavaScript')) {
-        spirits[0].description = metaDescription;
-      } else if (snippet && snippet.length > 50) {
-        // Clean up snippet to use as description
-        const cleanedSnippet = snippet
-          .replace(/\.\.\./g, '')
-          .replace(/\s+/g, ' ')
-          .trim();
-        if (cleanedSnippet.length > 30 && !cleanedSnippet.includes('Buy now')) {
-          spirits[0].description = cleanedSnippet;
-        }
+    // 8. Enhanced description extraction with better cleaning
+    if (spirits.length > 0) {
+      const enhancedDescription = this.extractEnhancedDescription(pagemap, snippet, spirits[0].description);
+      if (enhancedDescription) {
+        spirits[0].description = enhancedDescription;
       }
     }
 
     return spirits;
+  }
+
+  /**
+   * Enhanced description extraction with better cleaning and prioritization
+   */
+  private extractEnhancedDescription(pagemap: any, snippet: string, existingDescription?: string): string | undefined {
+    const descriptions: string[] = [];
+    
+    // 1. Extract FULL meta descriptions (no truncation)
+    const metaDescriptions = [
+      pagemap?.metatags?.[0]?.['og:description'],
+      pagemap?.metatags?.[0]?.['description'],
+      pagemap?.metatags?.[0]?.['twitter:description'],
+      pagemap?.metatags?.[0]?.['product:description']
+    ].filter(Boolean);
+    
+    for (const metaDesc of metaDescriptions) {
+      const cleaned = this.cleanDescription(metaDesc);
+      if (cleaned && cleaned.length > 50) {
+        descriptions.push(cleaned);
+      }
+    }
+    
+    // 2. Add existing structured description if good quality
+    if (existingDescription && existingDescription.length > 50 && !existingDescription.includes('JavaScript')) {
+      const cleaned = this.cleanDescription(existingDescription);
+      if (cleaned) descriptions.push(cleaned);
+    }
+    
+    // 3. Add cleaned snippet as supplementary info
+    if (snippet && snippet.length > 50) {
+      const cleanedSnippet = this.cleanDescription(snippet);
+      if (cleanedSnippet && cleanedSnippet.length > 40) {
+        descriptions.push(cleanedSnippet);
+      }
+    }
+    
+    // 4. Combine descriptions intelligently
+    if (descriptions.length === 0) return existingDescription;
+    
+    // Remove duplicates and combine
+    const uniqueDescriptions = [...new Set(descriptions)];
+    
+    // If we have multiple good descriptions, combine them
+    if (uniqueDescriptions.length > 1) {
+      // Take the longest one as primary, add others as additional info
+      const primary = uniqueDescriptions.sort((a, b) => b.length - a.length)[0];
+      const additional = uniqueDescriptions.slice(1).filter(d => 
+        // Only add if it contains unique information
+        !primary.toLowerCase().includes(d.toLowerCase().substring(0, 30))
+      );
+      
+      if (additional.length > 0) {
+        return `${primary} | ${additional.join(' | ')}`;
+      }
+      return primary;
+    }
+    
+    return uniqueDescriptions[0];
+  }
+  
+  /**
+   * Clean and enhance description text
+   */
+  private cleanDescription(text: string): string | undefined {
+    if (!text || text.length < 20) return undefined;
+    
+    let cleaned = text
+      // Remove ellipsis and truncation marks
+      .replace(/\.\.\./g, ' ')
+      .replace(/…/g, ' ')
+      
+      // Remove common e-commerce junk
+      .replace(/\b(buy now|add to cart|shop online|free shipping|in stock|out of stock)\b/gi, '')
+      .replace(/\b(price|msrp|sale|discount|save \$\d+)\b/gi, '')
+      .replace(/\$\d+\.?\d*\s*(off|savings?)/gi, '')
+      
+      // Remove JavaScript errors and technical text
+      .replace(/javascript/gi, '')
+      .replace(/\berror\b/gi, '')
+      .replace(/\b(loading|please wait|404|not found)\b/gi, '')
+      
+      // Remove repeated characters and fix spacing
+      .replace(/([.!?])\1+/g, '$1')
+      .replace(/\s+/g, ' ')
+      .replace(/\s*[|\-–—]\s*$/, '') // Remove trailing separators
+      
+      // Capitalize first letter if needed
+      .trim();
+    
+    // Start with capital letter
+    if (cleaned.length > 0) {
+      cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+    }
+    
+    // Validate quality
+    const qualityChecks = [
+      cleaned.length >= 30,
+      cleaned.length <= 500, // Not too long
+      !cleaned.toLowerCase().includes('buy'),
+      !cleaned.toLowerCase().includes('cart'),
+      !cleaned.toLowerCase().includes('shipping'),
+      !cleaned.includes('???'),
+      !cleaned.includes('undefined')
+    ];
+    
+    if (qualityChecks.every(check => check)) {
+      return cleaned;
+    }
+    
+    return undefined;
   }
 
   /**
@@ -708,6 +885,9 @@ export class UltraEfficientScraper {
       .replace(/\s*[-–—]\s*$/, '') // Remove trailing dashes
       .replace(/\s+Spirits\s*$/i, '') // Remove "Spirits" suffix
       .trim();
+    
+    // Apply critical fix for empty parentheses
+    cleaned = V25CriticalFixes.removeEmptyParentheses(cleaned);
     
     return TextProcessor.fixTextSpacing(cleaned);
   }
@@ -808,13 +988,150 @@ export class UltraEfficientScraper {
   }
 
   /**
+   * Extract advanced metadata (age, style, proof) from spirit name and description
+   */
+  private extractAdvancedMetadata(spirit: any): any {
+    const text = `${spirit.name || ''} ${spirit.description || ''}`.toLowerCase();
+    const metadata: any = {};
+    
+    // Extract age statements
+    const agePatterns = [
+      /(\d{1,2})\s*year(?:s?)?\s*old/,
+      /(\d{1,2})\s*yr\b/,
+      /(\d{1,2})\s*years?\b/,
+      /aged\s*(\d{1,2})\s*years?/,
+      /(\d{1,2})\s*year/
+    ];
+    
+    for (const pattern of agePatterns) {
+      const match = text.match(pattern);
+      if (match) {
+        const age = parseInt(match[1]);
+        if (age >= 3 && age <= 50) { // Reasonable age range
+          // Convert age number to formatted string
+          metadata.age_statement = `${age} Year${age > 1 ? 's' : ''}`;
+          break;
+        }
+      }
+    }
+    
+    // Extract whiskey styles
+    const stylePatterns = [
+      { pattern: /single\s*barrel/, style: 'Single Barrel' },
+      { pattern: /small\s*batch/, style: 'Small Batch' },
+      { pattern: /cask\s*strength/, style: 'Cask Strength' },
+      { pattern: /barrel\s*(?:strength|proof)/, style: 'Barrel Strength' },
+      { pattern: /bottled[\s-]*in[\s-]*bond|BiB/, style: 'Bottled-in-Bond' },
+      { pattern: /straight\s*bourbon/, style: 'Straight Bourbon' },
+      { pattern: /straight\s*rye/, style: 'Straight Rye' },
+      { pattern: /straight\s*whiskey/, style: 'Straight Whiskey' },
+      { pattern: /single\s*malt/, style: 'Single Malt' },
+      { pattern: /double\s*oak/, style: 'Double Oaked' },
+      { pattern: /(?:port|sherry|wine|rum|cognac)\s*(?:cask\s*)?finish/, style: 'Finished' },
+      { pattern: /reserve(?!\s*(?:bar|restaurant))/, style: 'Reserve' },
+      { pattern: /limited\s*edition|special\s*release/, style: 'Limited Edition' },
+      { pattern: /private\s*(?:selection|barrel|pick)/, style: 'Private Selection' },
+      { pattern: /store\s*pick|exclusive/, style: 'Store Pick' },
+      { pattern: /vintage\s*\d{4}/, style: 'Vintage' },
+      { pattern: /full\s*proof/, style: 'Full Proof' },
+      { pattern: /wheated/, style: 'Wheated' },
+      { pattern: /high\s*rye/, style: 'High Rye' },
+      { pattern: /toasted\s*barrel/, style: 'Toasted Barrel' },
+      { pattern: /triple\s*cask/, style: 'Triple Cask' },
+      { pattern: /peated/, style: 'Peated' },
+      { pattern: /cask\s*finish/, style: 'Cask Finished' },
+      { pattern: /select|selection/, style: 'Select' }
+    ];
+    
+    const detectedStyles: string[] = [];
+    for (const { pattern, style } of stylePatterns) {
+      if (pattern.test(text)) {
+        detectedStyles.push(style);
+      }
+    }
+    
+    if (detectedStyles.length > 0) {
+      metadata.whiskey_style = detectedStyles.join(', ');
+    }
+    
+    // Extract proof alongside ABV
+    const proofPatterns = [
+      /(\d{2,3}(?:\.\d+)?)\s*proof/,
+      /proof[\s:](\d{2,3}(?:\.\d+)?)/,
+      /(\d{2,3}(?:\.\d+)?)°?\s*proof/
+    ];
+    
+    for (const pattern of proofPatterns) {
+      const match = text.match(pattern);
+      if (match) {
+        const proof = parseFloat(match[1]);
+        if (proof >= 80 && proof <= 200) { // Reasonable proof range
+          metadata.proof = proof;
+          // Also calculate ABV if not already present
+          if (!spirit.abv) {
+            metadata.abv = proof / 2;
+          }
+          break;
+        }
+      }
+    }
+    
+    // Extract region/origin
+    const regionPatterns = [
+      { pattern: /kentucky/i, region: 'Kentucky' },
+      { pattern: /tennessee/i, region: 'Tennessee' },
+      { pattern: /highland/i, region: 'Highland' },
+      { pattern: /islay/i, region: 'Islay' },
+      { pattern: /speyside/i, region: 'Speyside' },
+      { pattern: /lowland/i, region: 'Lowland' },
+      { pattern: /campbeltown/i, region: 'Campbeltown' },
+      { pattern: /irish/i, region: 'Ireland' },
+      { pattern: /japanese/i, region: 'Japan' },
+      { pattern: /canadian/i, region: 'Canada' }
+    ];
+    
+    for (const { pattern, region } of regionPatterns) {
+      if (pattern.test(text)) {
+        metadata.origin_region = region;
+        break;
+      }
+    }
+    
+    // Extract cask type
+    const caskPatterns = [
+      { pattern: /ex[\s-]*bourbon/, cask: 'Ex-Bourbon' },
+      { pattern: /sherry\s*cask/, cask: 'Sherry' },
+      { pattern: /port\s*cask/, cask: 'Port' },
+      { pattern: /wine\s*cask/, cask: 'Wine' },
+      { pattern: /cognac\s*cask/, cask: 'Cognac' },
+      { pattern: /rum\s*cask/, cask: 'Rum' },
+      { pattern: /virgin\s*oak/, cask: 'Virgin Oak' },
+      { pattern: /charred\s*oak/, cask: 'Charred Oak' },
+      { pattern: /toasted/, cask: 'Toasted' },
+      { pattern: /mizunara/, cask: 'Mizunara' }
+    ];
+    
+    for (const { pattern, cask } of caskPatterns) {
+      if (pattern.test(text)) {
+        metadata.cask_type = cask;
+        break;
+      }
+    }
+    
+    return metadata;
+  }
+
+  /**
    * Store spirit in database
    */
   private async storeSpirit(spirit: any): Promise<boolean> {
     try {
+      // Apply critical fixes before storing
+      const fixedSpirit = V25CriticalFixes.applyAllFixes(spirit);
+      
       // Detect proper type
-      const typeDetection = detectSpiritType(spirit.name, spirit.brand || '', spirit.description);
-      const detectedType = typeDetection?.type || spirit.type;
+      const typeDetection = detectSpiritType(fixedSpirit.name, fixedSpirit.brand || '', fixedSpirit.description);
+      const detectedType = typeDetection?.type || fixedSpirit.type;
       
       // Skip if the detected type doesn't match the category we're searching for
       // Allow some flexibility (e.g., "Whiskey" matches "Bourbon")
@@ -828,41 +1145,50 @@ export class UltraEfficientScraper {
         'gin': ['Gin', 'London Dry Gin', 'Navy Strength Gin']
       };
       
-      const allowedTypes = categoryMap[spirit.type.toLowerCase()] || [spirit.type];
+      const allowedTypes = categoryMap[fixedSpirit.type.toLowerCase()] || [fixedSpirit.type];
       if (!allowedTypes.some(allowed => detectedType?.includes(allowed))) {
-        logger.debug(`⏭️ Skipping ${spirit.name} - type mismatch: ${detectedType} not in [${allowedTypes.join(', ')}]`);
+        logger.debug(`⏭️ Skipping ${fixedSpirit.name} - type mismatch: ${detectedType} not in [${allowedTypes.join(', ')}]`);
         return false;
       }
       
+      // Extract advanced metadata
+      const advancedMetadata = this.extractAdvancedMetadata(fixedSpirit);
+      
       const spiritData = {
-        name: spirit.name,
-        brand: spirit.brand || this.extractBrandFromName(spirit.name),
+        name: fixedSpirit.name,
+        brand: fixedSpirit.brand || this.extractBrandFromName(fixedSpirit.name),
         type: detectedType,
         category: this.mapTypeToCategory(detectedType),
-        price: spirit.price,
-        abv: spirit.abv || this.extractABV(spirit.description || spirit.snippet, detectedType),
-        proof: spirit.proof,
-        volume: spirit.volume || '750ml',
-        image_url: spirit.image_url,
-        description: spirit.description,
-        source_url: spirit.source_url,
-        data_source: spirit.data_source,
-        data_quality_score: this.calculateQualityScore(spirit),
-        // Add metadata if we have extra info
-        metadata: spirit.abv || spirit.proof || spirit.age ? {
-          abv: spirit.abv,
-          proof: spirit.proof,
-          age: spirit.age
-        } : undefined
+        price: fixedSpirit.price,
+        abv: fixedSpirit.abv || advancedMetadata.abv || this.extractABV(fixedSpirit.description || fixedSpirit.snippet, detectedType),
+        proof: fixedSpirit.proof || advancedMetadata.proof,
+        volume: fixedSpirit.volume || '750ml',
+        image_url: fixedSpirit.image_url,
+        description: fixedSpirit.description,
+        source_url: fixedSpirit.source_url,
+        data_source: fixedSpirit.data_source,
+        data_quality_score: this.calculateQualityScore(fixedSpirit),
+        // Enhanced metadata with advanced extraction
+        age_statement: advancedMetadata.age_statement,
+        whiskey_style: advancedMetadata.whiskey_style,
+        origin_region: advancedMetadata.origin_region,
+        cask_type: advancedMetadata.cask_type,
+        metadata: {
+          ...advancedMetadata,
+          extraction_version: 'v2.5_enhanced'
+        }
       };
 
       const result = await this.storage.storeSpirit(spiritData);
       
       if (result.success) {
-        logger.debug(`✅ Stored: ${spirit.name}`);
+        logger.debug(`✅ Stored: ${fixedSpirit.name}`);
         return true;
       } else {
-        logger.warn(`❌ Failed to store: ${spirit.name} - Error: ${result.error || 'Unknown error'}`);
+        logger.warn(`❌ Failed to store: ${fixedSpirit.name} - Error: ${result.error || 'Unknown error'}`);
+        if (result.isDuplicate) {
+          logger.debug(`  Marked as duplicate`);
+        }
         return false;
       }
     } catch (error) {
@@ -1008,17 +1334,11 @@ export class UltraEfficientScraper {
   }
 
   /**
-   * Extract brand from spirit name
+   * Enhanced brand extraction from spirit name
    */
   private extractBrandFromName(name: string): string {
-    // Simple extraction - take first 2-3 words
-    const words = name.split(/\s+/);
-    
-    if (words.length >= 3) {
-      return words.slice(0, 2).join(' ');
-    }
-    
-    return words[0] || 'Unknown';
+    // Use the improved brand extraction from V25CriticalFixes
+    return V25CriticalFixes.extractBrandFromName(name);
   }
 
   /**
@@ -1041,7 +1361,7 @@ export class UltraEfficientScraper {
   }
 
   /**
-   * Calculate quality score for spirit data
+   * Enhanced quality score calculation including advanced metadata
    */
   private calculateQualityScore(spirit: any): number {
     let score = 0; // Start from 0
@@ -1091,6 +1411,28 @@ export class UltraEfficientScraper {
     const trustedSources = ['totalwine.com', 'klwines.com', 'thewhiskyexchange.com', 'wine.com', 'masterofmalt.com'];
     if (spirit.source_url && trustedSources.some(domain => spirit.source_url.includes(domain))) {
       score += 5;
+    }
+    
+    // Advanced metadata bonus points (up to 15 additional points)
+    const advancedMetadata = this.extractAdvancedMetadata(spirit);
+    
+    // Age statement (5 points)
+    if (advancedMetadata.age_statement) {
+      score += 5;
+    }
+    
+    // Whiskey style (5 points)
+    if (advancedMetadata.whiskey_style) {
+      score += 5;
+    }
+    
+    // Region/cask info (3 points each)
+    if (advancedMetadata.origin_region) {
+      score += 3;
+    }
+    
+    if (advancedMetadata.cask_type) {
+      score += 2;
     }
     
     return Math.min(score, 100);

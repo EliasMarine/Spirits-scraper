@@ -87,8 +87,9 @@ function normalizeText(text: string, config: FuzzyMatchConfig): string {
     normalized = normalized.toLowerCase();
   }
   
-  // Remove special characters but keep spaces and alphanumeric
-  normalized = normalized.replace(/[^\w\s]/g, ' ');
+  // Remove special characters but keep spaces, alphanumeric, apostrophes, and dots
+  // This preserves brands like W.L. Weller and Maker's Mark
+  normalized = normalized.replace(/[^\w\s.']/g, ' ');
   
   // Normalize whitespace
   normalized = normalized.replace(/\s+/g, ' ').trim();

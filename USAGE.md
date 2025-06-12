@@ -297,6 +297,59 @@ npm run cache -- --stats
 # - Cache age statistics
 ```
 
+### 10. Complete Fresh Start (Clear Database & All Caches)
+
+When you need to start completely fresh with a clean database and no cached data:
+
+```bash
+# 1. Clear all local caches and temporary files
+npm run clear-caches
+
+# 2. Clear the database (run in Supabase SQL Editor)
+# See: sql/clear-all-spirits-data.sql
+
+# 3. Start fresh scraping
+npm run scrape -- --categories bourbon --limit 10
+```
+
+**What `clear-caches` does:**
+- Removes the `./cache` directory (file-based cache)
+- Clears temporary CSV and JSON files
+- Removes test files
+- Clears hidden cache directories
+
+**Note:** Redis/Upstash session data will expire naturally after 24 hours. To force fresh API calls immediately, use the `--bypass-cache` flag.
+
+**Complete Fresh Start Workflow:**
+```bash
+# 1. Create a final backup before clearing
+npm run backup -- --description "Before complete reset"
+
+# 2. Clear all caches
+npm run clear-caches
+
+# 3. Run the database cleanup SQL in Supabase
+# This will TRUNCATE all spirits-related tables
+
+# 4. Verify everything is clean
+npm run stats  # Should show 0 spirits
+
+# 5. Start fresh scraping
+npm run scrape -- --categories bourbon --limit 50
+```
+
+**Why you might need a fresh start:**
+- Testing the scraper from scratch
+- Corrupted data in the database
+- Major changes to scraping logic
+- Starting a new project
+
+**Important Notes:**
+- The first scrape after clearing will have NO duplicates (empty database)
+- All API calls will be fresh (no cached responses)
+- Session tracker won't skip categories
+- This process is irreversible - always backup first!
+
 ## 🧠 Smart Features (All Automatic)
 
 ### Enhanced Spirit Type Detection

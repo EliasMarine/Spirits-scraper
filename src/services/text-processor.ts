@@ -171,6 +171,9 @@ export class TextProcessor {
     // Clean up multiple spaces
     result = result.replace(/\s+/g, ' ').trim();
     
+    // Remove empty parentheses that might remain after volume extraction
+    result = result.replace(/\s*\(\s*\)\s*/g, ' ').trim();
+    
     return result;
   }
 

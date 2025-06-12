@@ -1,7 +1,7 @@
 {
   "name": "spirits-scraper",
-  "version": "2.2.0",
-  "description": "High-efficiency spirits scraper with catalog-focused scraping (10+ spirits per API call)",
+  "version": "2.5.3",
+  "description": "Ultra-efficient spirits scraper with critical accuracy fixes - proper brand extraction & duplicate detection",
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
@@ -15,6 +15,7 @@
     "stats": "tsx src/cli.ts stats",
     "cache": "tsx src/cli.ts cache",
     "clear-cache-all": "tsx src/clear-cache-comprehensive.ts",
+    "clear-caches": "tsx clear-all-caches-simple.ts",
     "fix-csv": "tsx src/scripts/fix-spirits-csv.ts",
     "test": "tsx src/test-enhanced-features.ts",
     "test-dry-run": "tsx src/test-dry-run-deduplication.ts",

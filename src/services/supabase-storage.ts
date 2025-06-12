@@ -3,6 +3,7 @@ import { config } from '../config/index.js';
 import { SpiritData } from '../types/index.js';
 import { dataValidator } from './data-validator.js';
 import { logger } from '../utils/logger.js';
+import { V25CriticalFixes } from '../fixes/v2.5-critical-fixes.js';
 
 export interface StorageResult {
   success: boolean;
@@ -45,6 +46,12 @@ export class SupabaseStorage {
       // Check for duplicates
       const duplicate = await this.checkDuplicate(spiritData);
       if (duplicate) {
+        // Log detailed duplicate info for debugging
+        logger.info(`\n❌ DUPLICATE DETECTED:`);
+        logger.info(`  New spirit: "${spiritData.name}" by "${spiritData.brand}"`);
+        logger.info(`  Existing: "${duplicate.name}" by "${duplicate.brand}"`);
+        logger.info(`  Existing ID: ${duplicate.id}`);
+        
         return {
           success: false,
           isDuplicate: true,
@@ -149,7 +156,20 @@ export class SupabaseStorage {
 
     if (candidates && candidates.length > 0) {
       for (const candidate of candidates) {
-        if (dataValidator.isDuplicate(spirit, candidate)) {
+        // Use the improved duplicate detection with logging
+        const duplicateCheck = V25CriticalFixes.isDuplicateWithLogging(spirit, candidate, 0.90);
+        
+        // Log the duplicate check for debugging
+        if (duplicateCheck.similarity > 0.7) {
+          logger.info(`Duplicate check: "${spirit.name}" vs "${candidate.name}"`);
+          logger.info(`  Similarity: ${(duplicateCheck.similarity * 100).toFixed(1)}%`);
+          logger.info(`  Is duplicate: ${duplicateCheck.isDuplicate}`);
+          logger.info(`  Reason: ${duplicateCheck.reason}`);
+        }
+        
+        if (duplicateCheck.isDuplicate) {
+          // Log why it was considered a duplicate
+          V25CriticalFixes.logStorageAttempt(spirit, candidate, duplicateCheck);
           return candidate;
         }
       }
@@ -311,6 +331,38 @@ export class SupabaseStorage {
       byCategory: byCategory || [],
       needsEnrichment: missingData?.[0]?.count || 0,
     };
+  }
+  
+  /**
+   * Get count of spirits by category or type
+   */
+  async getSpiritCountByCategory(category: string): Promise<number> {
+    try {
+      // Try matching by category field first
+      const { data: categoryCount, error: categoryError } = await this.client
+        .from('spirits')
+        .select('count', { count: 'exact' })
+        .ilike('category', category);
+      
+      if (!categoryError && categoryCount?.[0]?.count) {
+        return categoryCount[0].count;
+      }
+      
+      // Also try matching by type field for broader matching
+      const { data: typeCount, error: typeError } = await this.client
+        .from('spirits')
+        .select('count', { count: 'exact' })
+        .ilike('type', category);
+      
+      if (!typeError && typeCount?.[0]?.count) {
+        return typeCount[0].count;
+      }
+      
+      return 0;
+    } catch (error) {
+      logger.error(`Error counting spirits for category ${category}:`, error);
+      return 0;
+    }
   }
 
   /**
