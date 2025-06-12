@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**IMPORTANT**: Always reference `CLAUDE_LEARNINGS.md` before responding to queries to avoid repeated mistakes and apply learned best practices.
+**IMPORTANT**: Always reference `docs/CLAUDE_LEARNINGS.md` before responding to queries to avoid repeated mistakes and apply learned best practices.
 
 ## Mem0 Integration (Claude Code Development Tool Only)
 **IMPORTANT**: Mem0 is configured ONLY as a development tool for Claude Code to maintain persistent memory across sessions. It is NOT part of the project code and should NEVER be integrated into the frontend or scraper applications.
