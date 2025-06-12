@@ -61,6 +61,7 @@ export class V25CriticalFixes {
       'Joseph Magnus', 'High West', 'WhistlePig', 'Angel\'s Envy',
       'Michter\'s', 'Jack Daniel\'s', 'George Dickel', 'Uncle Nearest',
       'Garrison Brothers', 'Balcones', 'Westland', 'Stranahan\'s',
+      'King of Kentucky', 'Orphan Barrel', 'Old Carter', 'New Riff',
       
       // Rye brands
       'Sagamore Spirit', 'Templeton', 'Rittenhouse', 'Sazerac',
@@ -217,6 +218,21 @@ export class V25CriticalFixes {
     }
     
     const lowerBrand = brand.toLowerCase();
+    
+    // Special case for known multi-word brands containing "invalid" words
+    const validMultiWordExceptions = [
+      'king of kentucky',
+      'old forester',
+      'old grand-dad',
+      'old carter',
+      'new riff',
+      'four roses',
+      'wild turkey'
+    ];
+    
+    if (validMultiWordExceptions.includes(lowerBrand)) {
+      return true;
+    }
     
     // Check invalid single words
     const invalidSingleWords = new Set([
@@ -436,7 +452,13 @@ export class V25CriticalFixes {
       /^learn\s+about/i,
       /^explore\s+our/i,
       /collection$/i,
-      /^compare\s+prices/i
+      /^compare\s+prices/i,
+      /^a\s+to\s+z\s+of/i,
+      /brands\s*:\s*the\s+whisky\s+exchange$/i,
+      /FAQ$/i,
+      /^unlock\s+exclusive/i,
+      /\s+-\s*$/,  // Names ending with " -"
+      /^[a-z]/  // Names starting with lowercase (usually not products)
     ];
     
     // Reject if matches any invalid pattern
@@ -451,6 +473,11 @@ export class V25CriticalFixes {
     
     // Reject if contains question marks (likely a question/title)
     if (name.includes('?')) {
+      return false;
+    }
+    
+    // Reject if it's just a single word with a dash (like "Savannah -")
+    if (name.match(/^\w+\s*-\s*$/)) {
       return false;
     }
     
