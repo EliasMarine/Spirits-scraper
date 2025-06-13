@@ -9,6 +9,7 @@ export interface ParsedContent {
   description: string;
   price?: string;
   abv?: number;
+  proof?: number;
   volume?: string;
   category?: string;
   brand?: string;
@@ -71,6 +72,12 @@ export class ContentParser {
     const abvMatch = this.extractABV(result.snippet);
     if (abvMatch) {
       parsed.abv = abvMatch;
+    }
+
+    // Extract proof from snippet
+    const proofMatch = this.extractProof(result.snippet);
+    if (proofMatch) {
+      parsed.proof = proofMatch;
     }
 
     // Extract volume from snippet
@@ -150,6 +157,12 @@ export class ContentParser {
       const abv = this.extractABV(bodyText);
       if (abv) {
         parsed.abv = abv;
+      }
+
+      // Extract proof
+      const proof = this.extractProof(bodyText);
+      if (proof) {
+        parsed.proof = proof;
       }
 
       // Extract volume
@@ -296,6 +309,39 @@ export class ContentParser {
     }
     
     return false;
+  }
+
+  /**
+   * Extract proof value from text (without converting to ABV)
+   */
+  private extractProof(text: string): number | null {
+    if (!text) return null;
+
+    // Patterns for proof extraction - specific to avoid false positives
+    const patterns = [
+      /(\d+(?:\.\d+)?)\s*proof\b/i,
+      /\bproof\s*:?\s*(\d+(?:\.\d+)?)\b/i,
+      /bottled\s*at\s*(\d+(?:\.\d+)?)\s*proof/i,
+      /\b(\d+(?:\.\d+)?)\s*°\s*proof/i,
+    ];
+
+    for (const pattern of patterns) {
+      const match = text.match(pattern);
+      if (match) {
+        const value = parseFloat(match[1]);
+        
+        // Validate proof range (typically 40-200 for spirits)
+        if (value >= 40 && value <= 200) {
+          // Skip if it's likely a mash bill percentage
+          if (this.isProbablyMashBill(text, value)) {
+            continue;
+          }
+          return value;
+        }
+      }
+    }
+
+    return null;
   }
 
   /**

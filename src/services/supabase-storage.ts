@@ -68,11 +68,12 @@ export class SupabaseStorage {
       // Prepare data for insertion
       const insertData = this.prepareForDatabase(spiritData);
       
-      // Debug logging for ABV and price
-      if (spiritData.abv || spiritData.price) {
+      // Debug logging for ABV, proof, and price
+      if (spiritData.abv || spiritData.proof || spiritData.price) {
         logger.info(`🔧 Database insert data:`);
         logger.info(`  Name: ${insertData.name}`);
         logger.info(`  ABV: ${insertData.abv} (type: ${typeof insertData.abv})`);
+        logger.info(`  Proof: ${insertData.proof} (type: ${typeof insertData.proof})`);
         logger.info(`  Price: ${insertData.price} (type: ${typeof insertData.price})`);
       }
 
@@ -187,6 +188,7 @@ export class SupabaseStorage {
       brand: spirit.brand || null,
       type: spirit.type || null,
       abv: spirit.abv || null,
+      proof: spirit.proof || null,
       price: spirit.price || null,
       description: spirit.description || null,
       origin_country: spirit.origin_country || null,

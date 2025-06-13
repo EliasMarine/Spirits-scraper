@@ -48,8 +48,22 @@ export const SPIRIT_TYPE_CONFIG: SpiritTypeConfig = {
         /\bamerican\s+single\s+malt\b/i,
         /\bsingle\s+malt\s+whiskey.*(?:usa|america|us)\b/i,
         /\b(?:westland|balcones|stranahan)\b/i,
+        /\bsingle\s+malt\b.*\b(?:american|usa|us)\b/i,
       ],
-      brandIndicators: ['Westland', 'Balcones', 'Stranahan\'s', 'Copperworks'],
+      brandIndicators: ['Westland', 'Balcones', 'Stranahan\'s', 'Copperworks', 'Westward'],
+    },
+    
+    'Single Malt': {
+      priority: 2.5,  // After American Single Malt but before Bourbon
+      patterns: [
+        /\bsingle\s+malt\b/i,
+        /\b100%\s+malted\s+barley\b/i,
+      ],
+      brandIndicators: ['Balcones', 'Westland', 'Stranahan\'s', 'Copperworks', 'Westward'],
+      excludePatterns: [
+        /\bscotch\b/i,  // Handled by Scotch type
+        /\birish\b/i,   // Handled by Irish type
+      ]
     },
     
     'Bourbon': {
@@ -391,6 +405,14 @@ export const SPIRIT_TYPE_CONFIG: SpiritTypeConfig = {
   
   // Direct brand to type mapping for common brands
   brandToType: {
+    // American Single Malt brands
+    'Balcones': 'American Single Malt',
+    'Westland': 'American Single Malt',
+    'Stranahan\'s': 'American Single Malt',
+    'Stranahans': 'American Single Malt',
+    'Copperworks': 'American Single Malt',
+    'Westward': 'American Single Malt',
+    
     // Bourbon brands
     'Buffalo Trace': 'Bourbon',
     'Maker\'s Mark': 'Bourbon',

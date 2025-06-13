@@ -1,6 +1,6 @@
-# Spirits Scraper Usage Guide (v2.4 - Ultra-Efficient Edition)
+# Spirits Scraper Usage Guide (v2.5.7 - Enhanced Data Quality Edition)
 
-This document provides usage instructions for the Smart Spirits Scraper with ULTRA-EFFICIENT catalog scraping now DEFAULT for ALL commands!
+This document provides usage instructions for the Smart Spirits Scraper with ULTRA-EFFICIENT catalog scraping and V2.5.7 data quality improvements!
 
 ## 🚀 Quick Start
 
@@ -16,7 +16,8 @@ npm run scrape -- --distillery "Buffalo Trace"       # Already ultra-efficient!
 npm run scrape -- --categories "bourbon,whiskey,scotch" --limit 200
 
 # Alternative catalog command (also high-efficiency)
-npm run scrape-catalogs -- --distilleries "Buffalo Trace" --max-products 5000
+npm run scrape-catalogs -- --api-calls 50
+npm run scrape-catalogs -- --distilleries "Buffalo Trace" --max-products 100
 ```
 
 ## 📝 Core Commands
@@ -26,20 +27,17 @@ npm run scrape-catalogs -- --distilleries "Buffalo Trace" --max-products 5000
 **The default scraping method now uses optimized catalog scraping - achieving 3-5 spirits per API call!**
 
 ```bash
-# Scrape Buffalo Trace catalog from multiple retailers
-npm run scrape-catalogs -- --distilleries "Buffalo Trace"
+# Using regular scrape command with distillery option (RECOMMENDED)
+npm run scrape -- --distillery "Buffalo Trace" --limit 50
 
 # Scrape multiple distilleries
-npm run scrape-catalogs -- --distilleries "Buffalo Trace,Wild Turkey,Maker's Mark"
+npm run scrape -- --distillery "Buffalo Trace,Wild Turkey,Maker's Mark" --limit 100
 
-# Scrape ALL distilleries using catalog pages
-npm run scrape-catalogs
+# Clear cache first for fresh data
+npm run scrape -- --distillery "Buffalo Trace" --limit 50 --clear-cache
 
-# Control how many products to get per distillery (default: 100, max: unlimited)
-npm run scrape-catalogs -- --max-products 5000   # Yes, you can set it to 5000!
-
-# Resume from a specific distillery index (useful for interruptions)
-npm run scrape-catalogs -- --start-index 100
+# Force fresh API calls
+npm run scrape -- --distillery "Buffalo Trace" --limit 50 --force-refresh
 ```
 
 **Why Catalog-Focused Scraping is Superior:**
@@ -57,14 +55,26 @@ npm run scrape-catalogs -- --start-index 100
 
 ### 2. Alternative Catalog Command (scrape-catalogs)
 
-**An alternative way to use the catalog scraper with more options:**
+**The catalog scraper command uses API call limits and max products per distillery:**
 
 ```bash
-# Scrape specific distilleries with high limits
-npm run scrape-catalogs -- --distilleries "Buffalo Trace,Wild Turkey" --max-products 5000
+# Scrape with specific number of API calls (default: 100)
+npm run scrape-catalogs -- --api-calls 50
 
-# Resume from specific index
-npm run scrape-catalogs -- --start-index 100
+# Scrape specific distilleries
+npm run scrape-catalogs -- --distilleries "Buffalo Trace,Wild Turkey" --max-products 100
+
+# Control max products per distillery (default: 100)
+npm run scrape-catalogs -- --max-products 200
+
+# Smart selection options
+npm run scrape-catalogs -- --prefer-unscraped --all-types
+
+# Clear tracking data and start fresh
+npm run scrape-catalogs -- --clear-tracking
+
+# Quiet mode
+npm run scrape-catalogs -- --quiet
 ```
 
 ### 3. Original Systematic Distillery Scraping (Legacy)
@@ -237,8 +247,9 @@ The scraper uses Redis (Upstash) cache to avoid duplicate API calls and improve 
 # Show cache statistics
 npm run cache -- --stats
 
-# Clear ALL cache (Upstash Redis)
-npm run cache -- --clear
+# Clear ALL cache (Upstash Redis + local files)
+npm run clear-caches    # Simple version (recommended)
+npm run clear-cache-all # Comprehensive version
 
 # Clear specific cache types
 npm run cache -- --clear-type search_query    # Clear search queries only
@@ -305,10 +316,14 @@ When you need to start completely fresh with a clean database and no cached data
 # 1. Clear all local caches and temporary files
 npm run clear-caches
 
-# 2. Clear the database (run in Supabase SQL Editor)
-# See: sql/clear-all-spirits-data.sql
+# 2. Clear tracking data (IMPORTANT when database is cleared!)
+npm run scrape-catalogs -- --clear-tracking
 
-# 3. Start fresh scraping
+# 3. Clear the database (run in Supabase SQL Editor)
+# See: sql/clear-all-spirits-data.sql
+TRUNCATE TABLE spirits CASCADE;
+
+# 4. Start fresh scraping
 npm run scrape -- --categories bourbon --limit 10
 ```
 
@@ -318,7 +333,10 @@ npm run scrape -- --categories bourbon --limit 10
 - Removes test files
 - Clears hidden cache directories
 
-**Note:** Redis/Upstash session data will expire naturally after 24 hours. To force fresh API calls immediately, use the `--bypass-cache` flag.
+**What `--clear-tracking` does:**
+- Clears Redis/Upstash tracking data that remembers which distilleries were scraped
+- Essential when you clear your database but want to re-scrape the same distilleries
+- Without this, scraper will think "I already scraped Buffalo Trace" and skip it
 
 **Complete Fresh Start Workflow:**
 ```bash
@@ -328,14 +346,19 @@ npm run backup -- --description "Before complete reset"
 # 2. Clear all caches
 npm run clear-caches
 
-# 3. Run the database cleanup SQL in Supabase
+# 3. Clear tracking data
+npm run scrape-catalogs -- --clear-tracking
+
+# 4. Run the database cleanup SQL in Supabase
 # This will TRUNCATE all spirits-related tables
 
-# 4. Verify everything is clean
+# 5. Verify everything is clean
 npm run stats  # Should show 0 spirits
 
-# 5. Start fresh scraping
+# 6. Start fresh scraping (will treat all distilleries as new)
 npm run scrape -- --categories bourbon --limit 50
+# OR use catalog scraper with intelligent selection
+npm run scrape-catalogs -- --api-calls 100
 ```
 
 **Why you might need a fresh start:**
@@ -343,12 +366,20 @@ npm run scrape -- --categories bourbon --limit 50
 - Corrupted data in the database
 - Major changes to scraping logic
 - Starting a new project
+- Database was cleared but tracking wasn't
 
 **Important Notes:**
 - The first scrape after clearing will have NO duplicates (empty database)
 - All API calls will be fresh (no cached responses)
-- Session tracker won't skip categories
+- Tracking system will treat all distilleries as unscraped
 - This process is irreversible - always backup first!
+
+**Alternative: Force Specific Distilleries**
+If you don't want to clear all tracking data:
+```bash
+# Override tracking by specifying distilleries directly
+npm run scrape-catalogs -- --distilleries "Buffalo Trace,Wild Turkey" --api-calls 50
+```
 
 ## 🧠 Smart Features (All Automatic)
 
@@ -649,10 +680,13 @@ SEARCH_ENGINE_ID=your_search_engine_id
 - `--limit` - Number of API calls to make (default: 50)
 
 **For Catalog Scraping (`npm run scrape-catalogs`):**
-- `--distilleries` - Specific distillery names (comma-separated)
-- `--max-products` - Max products per distillery (default: 100, can be set to 5000+)
-- `--start-index` - Start from distillery index (for resuming)
-- `--skip-existing` - Skip products already in database
+- `--api-calls <number>` - Number of API calls to make (default: 100)
+- `--max-products <number>` - Max products per distillery (default: 100)
+- `--distilleries <names>` - Specific distillery names (comma-separated)
+- `--prefer-unscraped` - Prioritize distilleries never scraped before (default: true)
+- `--all-types` - Ensure coverage across all spirit types (default: true)
+- `--clear-tracking` - Clear all tracking data and start fresh
+- `--quiet` - Reduce output verbosity
 
 **For Deduplication (`npm run dedup`):**
 - `--dry-run` - Preview mode without merging
@@ -1159,13 +1193,14 @@ Current status: **Bronze Data** (needs significant improvement)
 Next milestone: **Silver Data** (85+ quality score)
 Final goal: **Golden Data** (90+ quality score with all fields)
 
-## 📊 What's New in v2.3?
+## 📊 What's New in v2.5.7?
 
-- **OPTIMIZED SCRAPER IS NOW DEFAULT** - No need for --optimized flag!
-- **Improved Data Quality** - Better price extraction, cleaner names
-- **Smarter Validation** - Excludes non-spirit items (cigars, accessories)
-- **Simplified Queries** - Reduced exclusions for better results
-- **3-5 spirits per API call** - Consistent high efficiency
+- **Enhanced Data Quality** - V2.5.7 fixes for proof calculation, brand extraction
+- **Improved Product Validation** - Rejects food items, fragments, broken names
+- **Better Type Detection** - Single Malt properly classified
+- **Proof Calculation** - Now calculated from ABV (proof = ABV * 2)
+- **Brand Name Fixes** - "Ba Lcones" → "Balcones", weight prefixes removed
+- **Stricter Name Validation** - Rejects fragments like ". Bourbon. Result"
 
 ## 📊 What's New in v2.2?
 

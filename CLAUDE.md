@@ -4,6 +4,35 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **IMPORTANT**: Always reference `docs/CLAUDE_LEARNINGS.md` before responding to queries to avoid repeated mistakes and apply learned best practices.
 
+## 🚨 HIGH IMPORTANCE - SCRAPER FIXES DOCUMENTATION 🚨
+**CRITICAL**: When working on the spirits scraper, you MUST check these documents FIRST:
+- `docs/V2.5.6_FIXES_SUMMARY.md` - Contains all critical fixes for data quality issues
+- `docs/V2.5.7-FIXES.md` - Current and planned improvements
+- `docs/CATALOG_SCRAPER_ISSUES.md` - Known issues and their solutions
+
+These documents contain essential information about:
+- ✅ What has been fixed (don't re-implement)
+- ❌ What issues existed (don't reintroduce)
+- 🎯 What improvements are planned (build upon these)
+- 📊 Quality metrics and testing approaches
+
+**ALWAYS** review these documents before making ANY changes to the scraper to ensure you're building on top of existing improvements rather than undoing them.
+
+## 📁 HIGH IMPORTANCE - FILE ORGANIZATION 📁
+**CRITICAL**: All documentation and SQL files MUST be placed in their designated directories:
+- **Documentation files (`.md`)**: Place ALL markdown files in `/docs/` directory
+  - Example: `/docs/V2.5.7-FIXES.md`, `/docs/CLAUDE_LEARNINGS.md`
+  - NEVER place .md files in the root directory (except CLAUDE.md and README.md)
+- **SQL scripts (`.sql`)**: Place ALL SQL files in `/sql-scripts/` directory
+  - Example: `/sql-scripts/clear-bad-v2.5.6-data.sql`
+  - NEVER place .sql files in the root directory or other locations
+
+This organization ensures:
+- Easy discovery of documentation and scripts
+- Clean project root directory
+- Consistent file structure across the project
+- Better git history tracking
+
 ## Mem0 Integration (Claude Code Development Tool Only)
 **IMPORTANT**: Mem0 is configured ONLY as a development tool for Claude Code to maintain persistent memory across sessions. It is NOT part of the project code and should NEVER be integrated into the frontend or scraper applications.
 

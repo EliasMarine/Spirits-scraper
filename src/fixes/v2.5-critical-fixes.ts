@@ -166,6 +166,16 @@ export class V25CriticalFixes {
         return 'Unknown';
       }
       
+      // V2.5.7: Check if it's just a weight
+      if (words[0].match(/^\d+$/) && words[1] && words[1].toLowerCase() === 'g') {
+        // Skip the weight and extract from remaining words
+        const remainingWords = words.slice(2);
+        if (remainingWords.length > 0) {
+          return this.extractBrandFromName(remainingWords.join(' '));
+        }
+        return 'Unknown';
+      }
+      
       // Check if second word is a descriptor or number (for age statements)
       const descriptors = ['Bourbon', 'Whiskey', 'Whisky', 'Rye', 'Single', 'Barrel', 'Year', 'Old', 'Proof'];
       const descriptorsLower = descriptors.map(d => d.toLowerCase());
@@ -435,9 +445,62 @@ export class V25CriticalFixes {
   /**
    * V2.5.5: Validate if a string is a valid product name (not an article/guide)
    * ENHANCED 2025-06-12: Much stricter validation to prevent garbage entries
+   * V2.5.7: Added more edge case detection from latest CSV analysis
    */
   static isValidProductName(name: string): boolean {
     if (!name) return false;
+    
+    // V2.5.7: Reject single word products that are just punctuation or fragments
+    if (name.match(/^[.\s]+bourbon[.\s]*$/i) || name.match(/^\.\s*\w+\.\s*$/) || name.match(/^\.\s*\w+\.\s*\w+$/)) {
+      console.log(`❌ Rejected single word fragment: "${name}"`);
+      return false;
+    }
+    
+    // V2.5.7: Reject names that are just punctuation and a word
+    if (name.match(/^[.\s]*\w+[.\s]+\w+[.\s]*$/)) {
+      // Check if it's a real spirit name pattern
+      if (!name.match(/\b(whiskey|bourbon|rum|vodka|gin|tequila|scotch|rye|brandy|cognac)\b/i)) {
+        console.log(`❌ Rejected fragment pattern: "${name}"`);
+        return false;
+      }
+    }
+    
+    // V2.5.7: Reject food and non-beverage products
+    const foodPatterns = [
+      /biscuit/i,
+      /cookie/i,
+      /cake/i,
+      /coffee/i,
+      /sauce/i,
+      /glazed\s+pork/i,
+      /pork\s+belly/i,
+      /recipe/i,
+      /food/i,
+      /barrel\s+aged\s+coffee/i
+    ];
+    
+    if (foodPatterns.some(pattern => pattern.test(name))) {
+      console.log(`❌ Rejected food product: "${name}"`);
+      return false;
+    }
+    
+    // V2.5.7: Reject broken/fragmented names
+    if (name.match(/^ba\s+lcones/i) || name.match(/^buffa\s+lo\s+trace/i)) {
+      console.log(`❌ Rejected broken name: "${name}"`);
+      return false;
+    }
+    
+    // V2.5.7: Reject names that start with weights/measurements
+    if (name.match(/^\d+\s*g\s+/i) || name.match(/^\d+\s*ml\s+/i) || name.match(/^\d+\s*oz\s+/i)) {
+      console.log(`❌ Rejected weight-prefixed name: "${name}"`);
+      return false;
+    }
+    
+    // V2.5.7: Reject names that are too short (likely fragments)
+    if (name.length < 10 && !name.match(/^(gin|rum|vodka)$/i)) {
+      console.log(`❌ Rejected too short: "${name}" (${name.length} chars)`);
+      return false;
+    }
     
     // CRITICAL: Reject truncated names
     if (name.includes('...') || name.endsWith(' .') || name.match(/\s+\d+\.\s*$/)) {
@@ -568,12 +631,35 @@ export class V25CriticalFixes {
 
   /**
    * Clean store artifacts from names
+   * V2.5.7: Enhanced to fix broken brand names
    */
   static cleanStoreArtifacts(name: string): string {
     if (!name) return name;
     
-    let cleaned = name
-      // Remove store names at end
+    let cleaned = name;
+    
+    // V2.5.7: Fix broken brand names FIRST
+    cleaned = cleaned
+      .replace(/\bBa\s+Lcones\b/gi, 'Balcones')
+      .replace(/\bBuffa\s+Lo\s+Trace\b/gi, 'Buffalo Trace')
+      .replace(/\bJack\s+Daniel\s+s\b/gi, "Jack Daniel's")
+      .replace(/\bMaker\s+s\s+Mark\b/gi, "Maker's Mark");
+    
+    // V2.5.7: Remove weight prefixes at start
+    cleaned = cleaned.replace(/^\d+\s*g\s+/i, '');
+    
+    // V2.5.7: Also fix the brand if it's just a weight
+    if (cleaned.match(/^\d+\s*g$/i)) {
+      // Extract the actual brand from the rest of the name
+      const parts = name.split(/\s+/);
+      const realBrandIndex = parts.findIndex(part => !part.match(/^\d+$/) && !part.match(/^g$/i));
+      if (realBrandIndex >= 0) {
+        cleaned = parts.slice(realBrandIndex).join(' ');
+      }
+    }
+    
+    // Remove store names at end
+    cleaned = cleaned
       .replace(/\s*[-–]\s*Bottega\s+Whiskey\s*$/i, '')
       .replace(/\s*[-–]\s*Crown\s+Wine\s*$/i, '')
       .replace(/\s*[-–]\s*Total\s+Wine\s*$/i, '')
@@ -613,6 +699,12 @@ export class V25CriticalFixes {
     
     // Fix 2: Better brand extraction
     if (!fixed.brand || fixed.brand === 'Unknown' || fixed.brand.length < 3) {
+      fixed.brand = this.extractBrandFromName(fixed.name);
+    }
+    
+    // V2.5.7: Check if brand is just a weight (e.g., "53 g")
+    if (fixed.brand && fixed.brand.match(/^\d+\s*g$/i)) {
+      // Try to extract brand from the cleaned name
       fixed.brand = this.extractBrandFromName(fixed.name);
     }
     

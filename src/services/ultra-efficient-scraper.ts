@@ -1313,14 +1313,18 @@ export class UltraEfficientScraper {
         }
       }
       
+      // Calculate ABV and proof
+      const calculatedAbv = fixedSpirit.abv || advancedMetadata.abv || this.extractABV(fixedSpirit.description || fixedSpirit.snippet, detectedType);
+      const calculatedProof = calculatedAbv ? Math.round(calculatedAbv * 2) : null;
+      
       const spiritData = {
         name: fixedSpirit.name,
         brand: fixedSpirit.brand || this.extractBrandFromName(fixedSpirit.name),
         type: detectedType,
         category: this.mapTypeToCategory(detectedType),
         price: finalPrice,
-        abv: fixedSpirit.abv || advancedMetadata.abv || this.extractABV(fixedSpirit.description || fixedSpirit.snippet, detectedType),
-        proof: fixedSpirit.proof || advancedMetadata.proof,
+        abv: calculatedAbv,
+        proof: calculatedProof,  // V2.5.7 FIX: Calculate proof from ABV
         volume: fixedSpirit.volume || '750ml',
         image_url: fixedSpirit.image_url,
         description: fixedSpirit.description,
