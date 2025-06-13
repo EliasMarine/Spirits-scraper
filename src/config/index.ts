@@ -8,7 +8,7 @@ dotenv.config();
 
 export const config: ScraperConfig = {
   googleApiKey: process.env.GOOGLE_API_KEY || '',
-  searchEngineId: process.env.GOOGLE_SEARCH_ENGINE_ID || '',
+  searchEngineId: process.env.SEARCH_ENGINE_ID || process.env.GOOGLE_SEARCH_ENGINE_ID || '',
   supabaseUrl: process.env.SUPABASE_URL || '',
   supabaseServiceKey: process.env.SUPABASE_SERVICE_KEY || '',
   batchSize: parseInt(process.env.BATCH_SIZE || '10', 10),

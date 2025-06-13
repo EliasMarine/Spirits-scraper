@@ -434,17 +434,48 @@ export class V25CriticalFixes {
 
   /**
    * V2.5.5: Validate if a string is a valid product name (not an article/guide)
+   * ENHANCED 2025-06-12: Much stricter validation to prevent garbage entries
    */
   static isValidProductName(name: string): boolean {
     if (!name) return false;
     
-    const invalidPatterns = [
+    // CRITICAL: Reject truncated names
+    if (name.includes('...') || name.endsWith(' .') || name.match(/\s+\d+\.\s*$/)) {
+      console.log(`❌ Rejected truncated name: "${name}"`);
+      return false;
+    }
+    
+    // CRITICAL: Reject website domains and URLs
+    if (name.match(/\.(com|net|org|co\.uk|shop|store)$/i) || name.includes('-whisky.com')) {
+      console.log(`❌ Rejected website/domain: "${name}"`);
+      return false;
+    }
+    
+    // CRITICAL: Reject article titles and content
+    const articlePatterns = [
+      /^the\s+history\s+of/i,
       /^discover\s+the/i,
       /^best\s+bourbon/i,
       /^top\s+\d+/i,
       /^how\s+to/i,
       /guide$/i,
       /^the\s+most\s+popular/i,
+      /^what\s+is\s+/i,
+      /^why\s+/i,
+      /^when\s+/i,
+      /distillery\s*[-–]\s*whisky\.com$/i,
+      /crown\s+wine\s*\.\.\.$/i,
+      /same-day\s+delivery/i,
+      /delivery\s*\.\.\.$/i
+    ];
+    
+    if (articlePatterns.some(pattern => pattern.test(name))) {
+      console.log(`❌ Rejected article/content: "${name}"`);
+      return false;
+    }
+    
+    // Original invalid patterns
+    const invalidPatterns = [
       /available\s+in\s+\w+,\s+\w+$/i,
       /^buy\s+/i,
       /^shop\s+/i,
@@ -463,25 +494,106 @@ export class V25CriticalFixes {
     
     // Reject if matches any invalid pattern
     if (invalidPatterns.some(pattern => pattern.test(name))) {
+      console.log(`❌ Rejected invalid pattern: "${name}"`);
       return false;
     }
     
     // Reject if too long (likely a sentence/description)
     if (name.length > 100) {
+      console.log(`❌ Rejected too long: "${name}" (${name.length} chars)`);
       return false;
     }
     
     // Reject if contains question marks (likely a question/title)
     if (name.includes('?')) {
+      console.log(`❌ Rejected question: "${name}"`);
       return false;
     }
     
     // Reject if it's just a single word with a dash (like "Savannah -")
     if (name.match(/^\w+\s*-\s*$/)) {
+      console.log(`❌ Rejected incomplete: "${name}"`);
+      return false;
+    }
+    
+    // POSITIVE VALIDATION: Must contain spirit-related indicators
+    const mustContainPatterns = [
+      /whisky|whiskey|bourbon|scotch|rum|vodka|gin|tequila|mezcal|brandy|cognac/i,
+      /\d+\s*(year|yr|yo)\s/i,  // Age statements
+      /\d+ml|\d+\s*liter|bottle/i,  // Volume indicators
+      /single\s+malt|blended|straight|bottled|cask|barrel/i,  // Production terms
+      /grand\s+cru|grande\s+couronne|experimental\s+series/i,  // Special editions
+      /limited\s+edition|special\s+release|reserve/i  // Premium indicators
+    ];
+    
+    // Known distillery names that indicate a spirit product
+    const knownDistilleries = [
+      'Glenfiddich', 'Macallan', 'Glenlivet', 'Buffalo Trace', 'Jack Daniel',
+      'Maker\'s Mark', 'Wild Turkey', 'Jameson', 'Bushmills', 'Hennessy'
+    ];
+    
+    // Check if it's from a known distillery (more lenient)
+    const isKnownDistillery = knownDistilleries.some(distillery => 
+      name.toLowerCase().includes(distillery.toLowerCase())
+    );
+    
+    // At least ONE of these patterns must match OR it's from a known distillery
+    const hasValidIndicator = mustContainPatterns.some(pattern => pattern.test(name));
+    
+    if (!hasValidIndicator && !isKnownDistillery) {
+      console.log(`❌ Rejected - no spirit indicators: "${name}"`);
       return false;
     }
     
     return true;
+  }
+
+  /**
+   * Clean truncated names
+   */
+  static cleanTruncatedName(name: string): string {
+    if (!name) return name;
+    
+    // Remove truncation indicators
+    let cleaned = name
+      .replace(/\s+\d+\.\s+Crown\s+Wine\s*\.\.\.$/, '')  // Remove "1. Crown Wine ..."
+      .replace(/\s+Crown\s+Wine\s*\.\.\.$/, '')  // Remove "Crown Wine ..."
+      .replace(/\s+Same-day\s+Delivery\s*\.\.\.$/, '')  // Remove delivery text
+      .replace(/\s*\.\.\.\s*$/, '')  // Remove trailing ...
+      .replace(/\s+\d+\.\s*$/, '')    // Remove trailing "1."
+      .trim();
+    
+    return cleaned;
+  }
+
+  /**
+   * Clean store artifacts from names
+   */
+  static cleanStoreArtifacts(name: string): string {
+    if (!name) return name;
+    
+    let cleaned = name
+      // Remove store names at end
+      .replace(/\s*[-–]\s*Bottega\s+Whiskey\s*$/i, '')
+      .replace(/\s*[-–]\s*Crown\s+Wine\s*$/i, '')
+      .replace(/\s*[-–]\s*Total\s+Wine\s*$/i, '')
+      .replace(/\s*[-–]\s*K&L\s+Wines\s*$/i, '')
+      .replace(/\s*[-–]\s*The\s+Whisky\s+Exchange\s*$/i, '')
+      // Remove store names anywhere in string
+      .replace(/\s+Bottega\s+Whiskey\s*/gi, '')
+      // Remove weird formatting
+      .replace(/\s*\(\s*\d+%\s*\)\s*/g, ' ')  // Remove (43%)
+      .replace(/Series-(\w)/g, (match, p1) => 'Series ' + p1.toUpperCase())  // Fix Series-orchard to Series Orchard
+      .replace(/Series\s+(\w)/g, (match, p1) => 'Series ' + p1.toUpperCase())  // Ensure capitalization after Series
+      .replace(/\s+700ml\s*$/i, '')  // Remove volume at end
+      .replace(/\s+750ml\s*$/i, '')  // Remove volume at end
+      .replace(/\s+1L\s*$/i, '')  // Remove volume at end
+      .replace(/\s+1\.75L\s*$/i, '')  // Remove volume at end
+      // Fix spacing but don't mess with capitalization if name already has proper caps
+      .replace(/\s{2,}/g, ' ')  // Multiple spaces to single
+      .trim();
+    
+    return cleaned;
   }
 
   /**
@@ -493,6 +605,10 @@ export class V25CriticalFixes {
     // Fix 1: Remove empty parentheses
     if (fixed.name) {
       fixed.name = this.removeEmptyParentheses(fixed.name);
+      // NEW: Clean truncated names
+      fixed.name = this.cleanTruncatedName(fixed.name);
+      // NEW: Clean store artifacts
+      fixed.name = this.cleanStoreArtifacts(fixed.name);
     }
     
     // Fix 2: Better brand extraction

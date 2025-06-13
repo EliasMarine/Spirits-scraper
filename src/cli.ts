@@ -26,6 +26,7 @@ import { logger } from './utils/logger.js';
 import { apiCallTracker } from './services/api-call-tracker.js';
 import { isExcludedDomain } from './config/excluded-domains.js';
 import { smartSiteSelector } from './services/smart-site-selector.js';
+import { distilleryScrapeTracker } from './services/distillery-scrape-tracker.js';
 import ora from 'ora';
 
 // Load environment variables
@@ -1119,91 +1120,314 @@ program
 // NEW: Catalog-focused distillery scraping command for HIGH EFFICIENCY
 program
   .command('scrape-catalogs')
-  .description('🚀 HIGH EFFICIENCY: Scrape distillery products from retailer catalogs (10+ spirits per API call)')
+  .description('🚀 V2.5.6 INTELLIGENT DISTILLERY SCRAPER: Smart selection across all spirit types with cache awareness')
+  .option('-a, --api-calls <number>', 'Number of API calls to make (default: 100)', '100')
   .option('-m, --max-products <number>', 'Max products per distillery', '100')
-  .option('-s, --start-index <number>', 'Start from distillery index', '0')
-  .option('-d, --distilleries <names>', 'Specific distilleries (comma-separated)')
-  .option('--skip-existing', 'Skip products already in database', true)
+  .option('-d, --distilleries <names>', 'Specific distilleries (comma-separated, overrides smart selection)')
+  .option('--prefer-unscraped', 'Prioritize distilleries never scraped before', true)
+  .option('--all-types', 'Ensure coverage across all spirit types', true)
+  .option('--clear-tracking', 'Clear all tracking data and start fresh')
   .option('-q, --quiet', 'Reduce output verbosity')
   .action(async (options) => {
     // Set log level if quiet mode
     if (options.quiet) {
       process.env.LOG_LEVEL = 'warn';
     }
-    const spinner = ora('🚀 Initializing CATALOG-FOCUSED distillery scraper...').start();
+    
+    const apiCallLimit = parseInt(options.apiCalls);
+    const maxProducts = parseInt(options.maxProducts);
+    const distilleryNames = options.distilleries ? options.distilleries.split(',').map((d: string) => d.trim()) : [];
+    
+    // Handle clear tracking option
+    if (options.clearTracking) {
+      const spinner = ora('Clearing all tracking data...').start();
+      await distilleryScrapeTracker.clearAllTracking();
+      spinner.succeed('Tracking data cleared');
+      return;
+    }
+    
+    const spinner = ora(`🧠 V2.5.6 Intelligent Distillery Scraper - ${apiCallLimit} API calls`).start();
     
     try {
-      const maxProducts = parseInt(options.maxProducts);
-      const startIndex = parseInt(options.startIndex);
-      const distilleryNames = options.distilleries ? options.distilleries.split(',').map((d: string) => d.trim()) : [];
+      // Start a new scraping session
+      const sessionId = await distilleryScrapeTracker.startSession();
       
-      spinner.succeed('Catalog-focused scraper initialized');
+      // Show current stats
+      spinner.text = 'Analyzing scraping history...';
+      const stats = await distilleryScrapeTracker.getScrapingStats();
+      spinner.succeed('Scraping history analyzed');
       
-      logger.info(`Max products per distillery: ${maxProducts}`);
-      logger.info(`Starting from index: ${startIndex}`);
-      logger.info(`Skip existing: ${options.skipExisting}`);
-      
-      if (distilleryNames.length > 0) {
-        logger.info(`Specific distilleries: ${distilleryNames.join(', ')}`);
+      console.log('\n📊 Scraping Statistics:');
+      console.log(`  Previously scraped: ${stats.totalDistilleriesScraped} distilleries`);
+      console.log(`  Average efficiency: ${stats.averageEfficiency.toFixed(1)} spirits/call`);
+      if (Object.keys(stats.topSpiritTypes).length > 0) {
+        console.log(`  Spirit types found: ${Object.entries(stats.topSpiritTypes)
+          .sort(([,a], [,b]) => b - a)
+          .slice(0, 5)
+          .map(([type, count]) => `${type} (${count})`)
+          .join(', ')}`);
       }
       
-      // Run catalog-focused scraping
-      spinner.text = 'Starting CATALOG-FOCUSED distillery scraping...';
+      let selectedDistilleries: any[] = [];
       
-      const results = await catalogFocusedScraper.scrapeAllDistilleries({
-        maxProductsPerDistillery: maxProducts,
-        startFromDistilleryIndex: startIndex,
-        distilleryNames,
-        skipExisting: options.skipExisting
-      });
-      
-      spinner.succeed('Catalog scraping complete!');
-      
-      // Calculate overall efficiency
-      const totalProducts = results.reduce((sum, r) => sum + r.productsFound, 0);
-      const totalQueries = results.reduce((sum, r) => sum + r.queries.length, 0);
-      const overallEfficiency = totalQueries > 0 ? totalProducts / totalQueries : 0;
-      
-      // Display summary
-      console.log('\n📊 CATALOG SCRAPING SUMMARY');
-      console.log('─'.repeat(50));
-      console.log(`🏭 Distilleries processed: ${results.length}`);
-      console.log(`🥃 Total products found: ${totalProducts}`);
-      console.log(`💾 Total products stored: ${results.reduce((sum, r) => sum + r.productsStored, 0)}`);
-      console.log(`📈 Overall efficiency: ${overallEfficiency.toFixed(2)} spirits per API call`);
-      console.log(`❌ Total errors: ${results.reduce((sum, r) => sum + r.errors, 0)}`);
-      
-      // Show efficiency champions
-      const efficientDistilleries = results
-        .filter(r => r.efficiency > 0)
-        .sort((a, b) => b.efficiency - a.efficiency)
-        .slice(0, 10);
-      
-      console.log('\n🏆 EFFICIENCY CHAMPIONS');
-      console.log('─'.repeat(60));
-      console.log('Distillery'.padEnd(30) + 'Products'.padEnd(10) + 'Queries'.padEnd(10) + 'Efficiency');
-      console.log('─'.repeat(60));
-      efficientDistilleries.forEach(result => {
-        console.log(
-          result.distillery.padEnd(30) +
-          result.productsFound.toString().padEnd(10) +
-          result.queries.length.toString().padEnd(10) +
-          result.efficiency.toFixed(2) + ' spirits/call'
+      if (distilleryNames.length > 0) {
+        // Use specific distilleries if provided
+        spinner.text = `Finding specified distilleries: ${distilleryNames.join(', ')}`;
+        
+        selectedDistilleries = distilleryNames.map((name: string) => {
+          const distillery = ALL_DISTILLERIES.find((d: any) => 
+            d.name.toLowerCase() === name.toLowerCase() ||
+            d.variations.some((v: any) => v.toLowerCase() === name.toLowerCase())
+          );
+          
+          if (!distillery) {
+            spinner.warn(`⚠️  Distillery "${name}" not found`);
+            return null;
+          }
+          return distillery;
+        }).filter((d: any) => d !== null);
+        
+        if (selectedDistilleries.length === 0) {
+          spinner.fail('No valid distilleries found');
+          return;
+        }
+      } else {
+        // Use intelligent selection
+        spinner.text = `Intelligently selecting from ${ALL_DISTILLERIES.length} distilleries...`;
+        
+        selectedDistilleries = await distilleryScrapeTracker.getIntelligentDistillerySelection(
+          ALL_DISTILLERIES,
+          apiCallLimit,
+          {
+            preferUnscraped: options.preferUnscraped,
+            spiritTypeDistribution: options.allTypes,
+            priorityWeighting: true,
+            avoidRecentlyCached: true,
+          }
         );
+      }
+      
+      spinner.succeed(`Selected ${selectedDistilleries.length} distilleries for scraping`);
+      
+      // Show spirit type distribution
+      const typeDistribution: Record<string, number> = {};
+      selectedDistilleries.forEach((d: any) => {
+        d.type.forEach((t: string) => {
+          typeDistribution[t] = (typeDistribution[t] || 0) + 1;
+        });
       });
       
-      // Show failed distilleries
-      const failedDistilleries = results.filter(r => r.errors > 0 || r.productsStored === 0);
-      if (failedDistilleries.length > 0) {
-        console.log('\n⚠️  DISTILLERIES WITH ISSUES');
-        console.log('─'.repeat(50));
-        failedDistilleries.forEach(result => {
-          console.log(`- ${result.distillery}: ${result.errors} errors, ${result.productsStored} stored`);
+      console.log('\n🏭 Selected Distilleries:');
+      for (let i = 0; i < selectedDistilleries.length; i++) {
+        const d = selectedDistilleries[i];
+        const record = await distilleryScrapeTracker.getDistilleryRecord(d.name);
+        const lastScraped = record ? ` (last: ${new Date(record.lastScrapedAt).toLocaleDateString()})` : ' (never scraped)';
+        console.log(`  ${i + 1}. ${d.name} (${d.country}) - ${d.type.join(', ')}${lastScraped}`);
+      }
+      
+      console.log('\n🍷 Spirit Type Coverage:');
+      Object.entries(typeDistribution)
+        .sort(([,a], [,b]) => b - a)
+        .forEach(([type, count]) => {
+          console.log(`  ${type}: ${count} distilleries`);
+        });
+      
+      // Initialize tracking
+      let totalApiCalls = 0;
+      let totalSpiritsFound = 0;
+      let totalSpiritsStored = 0;
+      let cachedQueries = 0;
+      const results: any[] = [];
+      const spiritTypesFound: Set<string> = new Set();
+      
+      console.log('\n🚀 Starting V2.5.6 Ultra-Efficient Scraping with Cache Awareness...\n');
+      
+      // Process each distillery
+      for (const distillery of selectedDistilleries) {
+        if (totalApiCalls >= apiCallLimit) {
+          console.log(`\n📊 API call limit reached (${apiCallLimit} calls)`);
+          break;
+        }
+        
+        const remainingCalls = apiCallLimit - totalApiCalls;
+        console.log(`\n🥃 Scraping ${distillery.name} (${distillery.type.join(', ')}) - ${remainingCalls} API calls remaining...`);
+        
+        try {
+          // Check if we have recent data for this distillery
+          const existingRecord = await distilleryScrapeTracker.getDistilleryRecord(distillery.name);
+          if (existingRecord && new Date(existingRecord.lastScrapedAt) > new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)) {
+            console.log(`  ⚡ Recently scraped (${new Date(existingRecord.lastScrapedAt).toLocaleDateString()}) - checking for new products only`);
+          }
+          
+          // Generate smart queries based on distillery type and products
+          const queries: string[] = [];
+          
+          // Add base queries
+          if (distillery.base_queries) {
+            queries.push(...distillery.base_queries);
+          } else {
+            // Generate type-specific queries
+            distillery.type.forEach(type => {
+              queries.push(`"${distillery.name}" ${type}`);
+            });
+          }
+          
+          // Add product line queries if available
+          if (distillery.product_lines) {
+            distillery.product_lines.slice(0, 3).forEach((line: any) => {
+              queries.push(`"${distillery.name}" "${line.name}"`);
+            });
+          }
+          
+          let distilleryApiCalls = 0;
+          let distillerySpiritsFound = 0;
+          let distillerySpiritsStored = 0;
+          let distilleryCachedQueries = 0;
+          const distillerySpiritTypes: string[] = [];
+          
+          // Process queries for this distillery
+          for (const query of queries) {
+            if (totalApiCalls >= apiCallLimit) break;
+            
+            // Check if this query is already cached
+            const cacheKey = `search:${query}`;
+            const cachedResult = await cacheService.get(cacheKey);
+            
+            if (cachedResult) {
+              console.log(`  ⚡ Using cached results for: ${query}`);
+              distilleryCachedQueries++;
+              cachedQueries++;
+              // Still process cached results to check for new storage opportunities
+            }
+            
+            const searchResult = await ultraEfficientScraper.searchAndExtract(
+              query,
+              Math.min(maxProducts, remainingCalls - distilleryApiCalls)
+            );
+            
+            distilleryApiCalls += searchResult.apiCalls;
+            distillerySpiritsFound += searchResult.spiritsFound;
+            distillerySpiritsStored += searchResult.spiritsStored;
+            totalApiCalls += searchResult.apiCalls;
+            
+            // Track spirit types found
+            if (searchResult.spiritTypes) {
+              distillerySpiritTypes.push(...searchResult.spiritTypes);
+              searchResult.spiritTypes.forEach(t => spiritTypesFound.add(t));
+            }
+          }
+          
+          totalSpiritsFound += distillerySpiritsFound;
+          totalSpiritsStored += distillerySpiritsStored;
+          
+          const efficiency = distilleryApiCalls > 0 ? distillerySpiritsFound / distilleryApiCalls : 0;
+          
+          // Record this scrape
+          await distilleryScrapeTracker.recordDistilleryScrape(
+            distillery,
+            distillerySpiritsFound,
+            distillerySpiritsStored,
+            distilleryApiCalls,
+            [...new Set(distillerySpiritTypes)]
+          );
+          
+          // Update session
+          await distilleryScrapeTracker.updateSession(
+            sessionId,
+            distillery.name,
+            distilleryApiCalls,
+            distillerySpiritsFound,
+            distillerySpiritsStored
+          );
+          
+          results.push({
+            distillery: distillery.name,
+            types: distillery.type,
+            apiCalls: distilleryApiCalls,
+            spiritsFound: distillerySpiritsFound,
+            spiritsStored: distillerySpiritsStored,
+            efficiency: efficiency,
+            cachedQueries: distilleryCachedQueries
+          });
+          
+          console.log(`  ✅ Found: ${distillerySpiritsFound}, Stored: ${distillerySpiritsStored}, Efficiency: ${efficiency.toFixed(1)} spirits/call`);
+          if (distilleryCachedQueries > 0) {
+            console.log(`  ⚡ Cached queries used: ${distilleryCachedQueries}/${queries.length}`);
+          }
+          
+        } catch (error) {
+          console.error(`  ❌ Error scraping ${distillery.name}:`, error);
+          results.push({
+            distillery: distillery.name,
+            types: distillery.type,
+            apiCalls: 0,
+            spiritsFound: 0,
+            spiritsStored: 0,
+            efficiency: 0,
+            error: true
+          });
+        }
+      }
+      
+      // Display final summary
+      console.log('\n' + '='.repeat(70));
+      console.log('📊 V2.5.6 INTELLIGENT DISTILLERY SCRAPING SUMMARY');
+      console.log('='.repeat(70));
+      console.log(`🧠 Session ID: ${sessionId}`);
+      console.log(`🏭 Distilleries scraped: ${results.length}`);
+      console.log(`📞 Total API calls: ${totalApiCalls}/${apiCallLimit}`);
+      console.log(`⚡ Cached queries used: ${cachedQueries}`);
+      console.log(`🥃 Total spirits found: ${totalSpiritsFound}`);
+      console.log(`💾 Total spirits stored: ${totalSpiritsStored}`);
+      console.log(`📈 Overall efficiency: ${totalApiCalls > 0 ? (totalSpiritsFound / totalApiCalls).toFixed(1) : '0'} spirits/call`);
+      console.log(`🍷 Spirit types discovered: ${spiritTypesFound.size} (${Array.from(spiritTypesFound).join(', ')})`);
+      
+      // Show top performers
+      const topPerformers = results
+        .filter(r => !r.error && r.efficiency > 0)
+        .sort((a, b) => b.efficiency - a.efficiency)
+        .slice(0, 5);
+      
+      if (topPerformers.length > 0) {
+        console.log('\n🏆 TOP PERFORMERS:');
+        console.log('─'.repeat(70));
+        console.log('Distillery'.padEnd(30) + 'Types'.padEnd(20) + 'Efficiency'.padEnd(15) + 'Spirits');
+        console.log('─'.repeat(70));
+        topPerformers.forEach((r, i) => {
+          console.log(
+            `${i + 1}. ${r.distillery.padEnd(28)} ${r.types.join(', ').padEnd(18)} ${r.efficiency.toFixed(1).padEnd(13)} ${r.spiritsFound} found`
+          );
         });
       }
       
+      // Show cache savings
+      if (cachedQueries > 0) {
+        console.log('\n💰 CACHE SAVINGS:');
+        console.log(`  API calls saved: ${cachedQueries}`);
+        console.log(`  Cost saved: ~$${(cachedQueries * 0.01).toFixed(2)} (assuming $0.01/call)`);
+        console.log(`  Time saved: ~${(cachedQueries * 2).toFixed(0)} seconds`);
+      }
+      
+      // Auto-deduplication check
+      if (totalSpiritsStored >= 50) {
+        console.log('\n🔍 Running auto-deduplication check...');
+        const dedupeConfig = getConfigSummary();
+        if (dedupeConfig && dedupeConfig.enabled) {
+          const dedupeResult = await autoDeduplicationService.processSpirits('all');
+          if (dedupeResult.duplicatesFound > 0) {
+            console.log(`✅ Processed ${dedupeResult.duplicatesFound} potential duplicates`);
+          }
+        }
+      }
+      
+      // Show next recommended run
+      console.log('\n📅 NEXT RUN RECOMMENDATION:');
+      const unscrapedCount = (await distilleryScrapeTracker.getUnscrapedDistilleries(ALL_DISTILLERIES, 7)).length;
+      console.log(`  Unscraped distilleries: ${unscrapedCount}`);
+      console.log(`  Recommended API calls: ${Math.min(100, unscrapedCount * 7)}`);
+      
     } catch (error) {
-      spinner.fail('Catalog scraping failed');
+      spinner.fail('Intelligent distillery scraping failed');
       logger.error('Fatal error:', error);
       process.exit(1);
     }

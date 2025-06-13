@@ -30,6 +30,7 @@ export interface ScrapingMetrics {
     spiritsYield: number;
     efficiency: number;
   }>;
+  spiritTypes?: string[];
 }
 
 export class UltraEfficientScraper {
@@ -42,12 +43,81 @@ export class UltraEfficientScraper {
     efficiency: 0,
     catalogPagesFound: 0,
     averageSpiritsPerCatalog: 0,
-    topPerformingQueries: []
+    topPerformingQueries: [],
+    spiritTypes: []
   };
+  private spiritTypesSet = new Set<string>();
 
   constructor() {
     this.googleClient = new GoogleSearchClient();
     this.storage = new SupabaseStorage();
+  }
+  
+  /**
+   * Reset metrics for a new session
+   */
+  private resetMetrics(): void {
+    this.metrics = {
+      apiCalls: 0,
+      spiritsFound: 0,
+      spiritsStored: 0,
+      efficiency: 0,
+      catalogPagesFound: 0,
+      averageSpiritsPerCatalog: 0,
+      topPerformingQueries: [],
+      spiritTypes: []
+    };
+    this.spiritTypesSet.clear();
+  }
+
+  /**
+   * Search and extract method for external use (e.g., CLI)
+   */
+  async searchAndExtract(query: string, limit: number = 50): Promise<ScrapingMetrics> {
+    // Reset metrics for this search
+    this.resetMetrics();
+    
+    try {
+      // Process single query directly
+      const searchResults = await this.googleClient.search({ query });
+      this.metrics.apiCalls++;
+      
+      if (!searchResults || !searchResults.items || searchResults.items.length === 0) {
+        logger.warn(`No results found for query: ${query}`);
+        return this.metrics;
+      }
+      
+      // Process the results
+      if (searchResults.items && searchResults.items.length > 0) {
+        for (const result of searchResults.items) {
+          // Extract spirits from the search result
+          // Use 'whiskey' as default category for searchAndExtract since it's the most inclusive
+          const spirits = this.extractSpiritsFromSearchResult(result, 'whiskey');
+          
+          for (const spirit of spirits) {
+            this.metrics.spiritsFound++;
+            
+            const stored = await this.storeSpirit(spirit);
+            if (stored) {
+              this.metrics.spiritsStored++;
+            }
+          }
+        }
+      }
+      
+      // Calculate efficiency
+      this.metrics.efficiency = this.metrics.apiCalls > 0 
+        ? this.metrics.spiritsFound / this.metrics.apiCalls 
+        : 0;
+      
+      // Add spirit types to metrics
+      this.metrics.spiritTypes = Array.from(this.spiritTypesSet);
+      
+    } catch (error) {
+      logger.error(`Error in searchAndExtract: ${error}`);
+    }
+    
+    return this.metrics;
   }
 
   /**
@@ -222,6 +292,9 @@ export class UltraEfficientScraper {
     this.metrics.topPerformingQueries.sort((a, b) => b.efficiency - a.efficiency);
     this.metrics.topPerformingQueries = this.metrics.topPerformingQueries.slice(0, 10);
 
+    // Add spirit types to metrics
+    this.metrics.spiritTypes = Array.from(this.spiritTypesSet);
+    
     this.logFinalMetrics();
     
     // Save the session for future reference
@@ -1158,10 +1231,29 @@ export class UltraEfficientScraper {
         'gin': ['Gin', 'London Dry Gin', 'Navy Strength Gin']
       };
       
-      const allowedTypes = categoryMap[fixedSpirit.type.toLowerCase()] || [fixedSpirit.type];
-      if (!allowedTypes.some(allowed => detectedType?.includes(allowed))) {
-        logger.debug(`⏭️ Skipping ${fixedSpirit.name} - type mismatch: ${detectedType} not in [${allowedTypes.join(', ')}]`);
-        return false;
+      // For searchAndExtract, be more flexible with type matching
+      // If fixedSpirit.type is 'whiskey' (from searchAndExtract), accept all whiskey types
+      const categoryKey = fixedSpirit.type.toLowerCase();
+      const allowedTypes = categoryMap[categoryKey] || [fixedSpirit.type];
+      
+      // Special handling for generic searches (searchAndExtract)
+      // If the detected type is any valid spirit type, allow it
+      if (categoryKey === 'whiskey' || categoryKey === 'spirits') {
+        // Accept any valid spirit type when doing generic searches
+        const allValidTypes = Object.values(categoryMap).flat();
+        if (detectedType && allValidTypes.some(validType => detectedType.includes(validType))) {
+          // Type is valid, continue with storage
+          logger.debug(`✓ Accepting ${fixedSpirit.name} - detected type: ${detectedType}`);
+        } else if (!detectedType) {
+          // No type detected, but allow storage for generic searches
+          logger.debug(`✓ Accepting ${fixedSpirit.name} - no specific type detected`);
+        }
+      } else {
+        // Strict type checking for category-specific searches
+        if (!allowedTypes.some(allowed => detectedType?.includes(allowed))) {
+          logger.debug(`⏭️ Skipping ${fixedSpirit.name} - type mismatch: ${detectedType} not in [${allowedTypes.join(', ')}]`);
+          return false;
+        }
       }
       
       // Extract advanced metadata
@@ -1189,6 +1281,34 @@ export class UltraEfficientScraper {
               logger.debug(`💰 Extracted price from description: $${price}`);
               break;
             }
+          }
+        }
+      }
+      
+      // PRICE VALIDATION: Ensure price is reasonable for spirits
+      if (finalPrice) {
+        // Check if price is in a reasonable range ($10-$5000)
+        if (finalPrice < 10) {
+          logger.warn(`⚠️ Suspiciously low price: $${finalPrice} for ${fixedSpirit.name}`);
+          // Might be wrong decimal place (e.g., 20 instead of 200)
+          if (finalPrice * 10 >= 30 && finalPrice * 10 <= 5000) {
+            finalPrice = finalPrice * 10;
+            logger.info(`💰 Adjusted price: $${finalPrice}`);
+          } else {
+            // Too low, ignore it
+            finalPrice = null;
+            logger.warn(`❌ Rejected unrealistic price`);
+          }
+        } else if (finalPrice > 5000) {
+          logger.warn(`⚠️ Suspiciously high price: $${finalPrice} for ${fixedSpirit.name}`);
+          // Might be in different currency or wrong decimal
+          if (finalPrice / 100 >= 30 && finalPrice / 100 <= 500) {
+            finalPrice = finalPrice / 100;
+            logger.info(`💰 Adjusted price: $${finalPrice}`);
+          } else {
+            // Too high, ignore it
+            finalPrice = null;
+            logger.warn(`❌ Rejected unrealistic price`);
           }
         }
       }
@@ -1222,6 +1342,12 @@ export class UltraEfficientScraper {
       
       if (result.success) {
         logger.debug(`✅ Stored: ${fixedSpirit.name}`);
+        
+        // Track spirit type
+        if (detectedType) {
+          this.spiritTypesSet.add(detectedType);
+        }
+        
         return true;
       } else {
         logger.warn(`❌ Failed to store: ${fixedSpirit.name} - Error: ${result.error || 'Unknown error'}`);
