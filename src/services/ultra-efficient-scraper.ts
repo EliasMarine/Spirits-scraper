@@ -10,6 +10,7 @@ import { scrapeSessionTracker } from './scrape-session-tracker';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import { V25CriticalFixes } from '../fixes/v2.5-critical-fixes';
+import { smartProductValidator } from './smart-product-validator';
 
 export interface UltraEfficientOptions {
   category: string;
@@ -1209,9 +1210,32 @@ export class UltraEfficientScraper {
       // Apply critical fixes before storing
       const fixedSpirit = V25CriticalFixes.applyAllFixes(spirit);
       
-      // V2.5.5: Validate product name before storing
+      // V2.6: Use smart NLP-based validation
+      const validationResult = await smartProductValidator.validateProductName(fixedSpirit.name);
+      
+      if (!validationResult.isValid) {
+        logger.warn(`❌ Smart validator rejected: "${fixedSpirit.name}"`);
+        logger.debug(`   Confidence: ${validationResult.confidence.toFixed(2)}`);
+        logger.debug(`   Issues: ${validationResult.issues.join(', ')}`);
+        if (validationResult.suggestions.length > 0) {
+          logger.debug(`   Suggestions: ${validationResult.suggestions.join(', ')}`);
+        }
+        
+        // Learn from this rejection
+        smartProductValidator.learnFromFeedback(fixedSpirit.name, false, validationResult.issues[0]);
+        
+        return false;
+      }
+      
+      // If validation suggests a normalized name, use it
+      if (validationResult.normalizedName) {
+        logger.debug(`📝 Normalized name: "${fixedSpirit.name}" → "${validationResult.normalizedName}"`);
+        fixedSpirit.name = validationResult.normalizedName;
+      }
+      
+      // Also run the existing V2.5.5 validation as a backup
       if (!V25CriticalFixes.isValidProductName(fixedSpirit.name)) {
-        logger.warn(`❌ Rejected non-product: "${fixedSpirit.name}"`);
+        logger.warn(`❌ V2.5.5 validator also rejected: "${fixedSpirit.name}"`);
         return false;
       }
       
@@ -1324,7 +1348,7 @@ export class UltraEfficientScraper {
         category: this.mapTypeToCategory(detectedType),
         price: finalPrice,
         abv: calculatedAbv,
-        proof: calculatedProof,  // V2.5.7 FIX: Calculate proof from ABV
+        proof: calculatedProof,  // V2.6: Calculate proof from ABV
         volume: fixedSpirit.volume || '750ml',
         image_url: fixedSpirit.image_url,
         description: fixedSpirit.description,
@@ -1351,6 +1375,9 @@ export class UltraEfficientScraper {
         if (detectedType) {
           this.spiritTypesSet.add(detectedType);
         }
+        
+        // V2.6: Learn from successful storage
+        smartProductValidator.learnFromFeedback(spiritData.name, true, 'valid_product');
         
         return true;
       } else {

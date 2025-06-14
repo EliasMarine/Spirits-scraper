@@ -4,6 +4,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **IMPORTANT**: Always reference `docs/CLAUDE_LEARNINGS.md` before responding to queries to avoid repeated mistakes and apply learned best practices.
 
+## 🚨 CRITICAL: ALWAYS TEST BEFORE DECLARING COMPLETE 🚨
+**You MUST thoroughly test ALL implementations before telling the user they are complete. This includes:**
+- Running the code with various test cases
+- Verifying all features work as expected
+- Checking for edge cases and error handling
+- Ensuring no regression of existing functionality
+- Testing with real data when possible
+
+**NEVER** claim something is "done" or "complete" without actually testing it. If you haven't tested, say "I've implemented the changes, let me test them now" or similar.
+
 ## 🚨 HIGH IMPORTANCE - SCRAPER FIXES DOCUMENTATION 🚨
 **CRITICAL**: When working on the spirits scraper, you MUST check these documents FIRST:
 - `docs/V2.5.6_FIXES_SUMMARY.md` - Contains all critical fixes for data quality issues

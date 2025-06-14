@@ -36,8 +36,8 @@ const program = new Command();
 
 program
   .name('spirits-scraper')
-  .description('Smart spirits data scraper with enhanced intelligence')
-  .version('2.0.0');
+  .description('Smart spirits data scraper with NLP-based validation and adaptive learning')
+  .version('2.6.0');
 
 // Main scrape command - smart by default
 program
@@ -1120,7 +1120,7 @@ program
 // NEW: Catalog-focused distillery scraping command for HIGH EFFICIENCY
 program
   .command('scrape-catalogs')
-  .description('🚀 V2.5.6 INTELLIGENT DISTILLERY SCRAPER: Smart selection across all spirit types with cache awareness')
+  .description('🚀 V2.6 INTELLIGENT DISTILLERY SCRAPER: Smart NLP validation with adaptive learning across all spirit types')
   .option('-a, --api-calls <number>', 'Number of API calls to make (default: 100)', '100')
   .option('-m, --max-products <number>', 'Max products per distillery', '100')
   .option('-d, --distilleries <names>', 'Specific distilleries (comma-separated, overrides smart selection)')
@@ -1146,7 +1146,7 @@ program
       return;
     }
     
-    const spinner = ora(`🧠 V2.5.6 Intelligent Distillery Scraper - ${apiCallLimit} API calls`).start();
+    const spinner = ora(`🧠 V2.6 Intelligent Distillery Scraper - ${apiCallLimit} API calls`).start();
     
     try {
       // Start a new scraping session
@@ -1240,7 +1240,7 @@ program
       const results: any[] = [];
       const spiritTypesFound: Set<string> = new Set();
       
-      console.log('\n🚀 Starting V2.5.6 Ultra-Efficient Scraping with Cache Awareness...\n');
+      console.log('\n🚀 Starting V2.6 Ultra-Efficient Scraping with Smart NLP Validation...\n');
       
       // Process each distillery
       for (const distillery of selectedDistilleries) {
@@ -1371,7 +1371,7 @@ program
       
       // Display final summary
       console.log('\n' + '='.repeat(70));
-      console.log('📊 V2.5.6 INTELLIGENT DISTILLERY SCRAPING SUMMARY');
+      console.log('📊 V2.6 INTELLIGENT DISTILLERY SCRAPING SUMMARY');
       console.log('='.repeat(70));
       console.log(`🧠 Session ID: ${sessionId}`);
       console.log(`🏭 Distilleries scraped: ${results.length}`);

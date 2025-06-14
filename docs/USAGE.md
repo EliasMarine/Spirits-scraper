@@ -1,6 +1,6 @@
-# Spirits Scraper Usage Guide (v2.5.7 - Enhanced Data Quality Edition)
+# Spirits Scraper Usage Guide (v2.6 - Smart NLP Validation Edition)
 
-This document provides usage instructions for the Smart Spirits Scraper with ULTRA-EFFICIENT catalog scraping and V2.5.7 data quality improvements!
+This document provides usage instructions for the Smart Spirits Scraper with ULTRA-EFFICIENT catalog scraping and V2.6 smart NLP-based validation with adaptive learning!
 
 ## 🚀 Quick Start
 
@@ -1193,14 +1193,43 @@ Current status: **Bronze Data** (needs significant improvement)
 Next milestone: **Silver Data** (85+ quality score)
 Final goal: **Golden Data** (90+ quality score with all fields)
 
-## 📊 What's New in v2.5.7?
+## 📊 What's New in v2.6?
 
-- **Enhanced Data Quality** - V2.5.7 fixes for proof calculation, brand extraction
-- **Improved Product Validation** - Rejects food items, fragments, broken names
-- **Better Type Detection** - Single Malt properly classified
+### 🧠 Smart NLP-Based Validation
+- **Compromise.js Integration** - Natural language processing for intelligent pattern recognition
+- **WinkNLP Integration** - Advanced entity extraction and part-of-speech tagging
+- **Adaptive Learning** - Validator learns from every product, improving over time
+- **Confidence Scoring** - Each validation includes a confidence score (0-100%)
+- **Smart Suggestions** - Provides specific suggestions for fixing invalid names
+
+### 🎯 Enhanced Detection Capabilities
+- **Grammar Analysis** - Detects non-product sentence structures ("Available for purchase...")
+- **Entity Recognition** - Identifies and rejects emails, URLs, phone numbers
+- **POS Tagging** - Ensures product names have proper noun-heavy structure
+- **Context Understanding** - Recognizes reviews, comparisons, educational content
+- **Smart Normalization** - Automatically fixes spacing, punctuation, formatting
+
+### 📚 Learning & Pattern Management
+```bash
+# Export learned patterns for backup/sharing
+npm run validator-patterns export
+
+# Import previously learned patterns
+npm run validator-patterns import
+
+# View learning statistics
+npm run validator-patterns stats
+
+# Test validation on sample names
+npm run validator-patterns test
+```
+
+### 🔧 Additional V2.6 Improvements
 - **Proof Calculation** - Now calculated from ABV (proof = ABV * 2)
-- **Brand Name Fixes** - "Ba Lcones" → "Balcones", weight prefixes removed
-- **Stricter Name Validation** - Rejects fragments like ". Bourbon. Result"
+- **Better Type Detection** - Single Malt, Tennessee Whiskey properly classified
+- **Brand Name Fixes** - "Ba Lcones" → "Balcones", intelligent spacing
+- **Food Item Rejection** - Detects and rejects biscuits, coffee, recipes
+- **Review Detection** - Identifies and skips comparison articles and reviews
 
 ## 📊 What's New in v2.2?
 
