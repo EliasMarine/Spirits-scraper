@@ -1,0 +1,249 @@
+🔬 Testing V2.6.2 Validator with Real CSV Edge Cases
+
+====================================================================================================
+
+📁 EVENT VENUE (CSV)
+--------------------------------------------------------------------------------
+✅ Bbc Bourbon Barrel Loft Event Space In Louisville Ky The ... [0.00]
+
+📁 ARCHITECTURE (CSV)
+--------------------------------------------------------------------------------
+✅ Bardstown Bourbon Co Bottling Joseph & Joseph Architects     [0.00]
+
+📁 TOUR (CSV)
+--------------------------------------------------------------------------------
+✅ Bourbon Experience Belle Meade Winery Nashville's Oldest ... [0.00]
+
+📁 FOOD (CSV)
+--------------------------------------------------------------------------------
+✅ Colonel De New Riff Barrel Smoked Spices                     [0.00]
+
+📁 RECIPE (CSV)
+--------------------------------------------------------------------------------
+✅ Bourbon Honey Gold Rush                                      [0.00]
+
+📁 ARTICLE (CSV)
+--------------------------------------------------------------------------------
+✅ Bourbon The Well Known Bourbons With Sweeter Notes           [0.00]
+
+📁 TAGLINE (CSV)
+--------------------------------------------------------------------------------
+✅ Discovery Series 1 The Bardstown Bourbon Company A New Bl... [0.00]
+✅ Fusion Series A New Blend Of Bourbon Makers                  [0.00]
+
+📁 EVENT (CSV)
+--------------------------------------------------------------------------------
+✅ Drink Belle Meade Bourbon W/ Charlie Of Nelson's Green Br... [0.00]
+
+📁 WEBSITE (CSV)
+--------------------------------------------------------------------------------
+✅ High West American Whiskey The Whisky Exchange               [0.00]
+
+📁 TRAIL (CSV)
+--------------------------------------------------------------------------------
+✅ Four Roses Distillery Kentucky Bourbon Trail                 [0.00]
+
+📁 ACADEMY (CSV)
+--------------------------------------------------------------------------------
+✅ Bourbon Academy At Woodford Reserve                          [0.00]
+
+📁 EDUCATION
+--------------------------------------------------------------------------------
+✅ 1 Ky-jim Beam Whiskey University                             [0.00]
+
+📁 AWARD NEWS
+--------------------------------------------------------------------------------
+✅ 2024 World's Most Admired Whiskey-michter's Distillery       [0.00]
+
+📁 ABOUT PAGE
+--------------------------------------------------------------------------------
+✅ About Whistle Pig Whistle Pig Whiskey                        [0.00]
+
+📁 STORE LISTING
+--------------------------------------------------------------------------------
+✅ Available For Purchase Are A Selection Of Bourbons           [0.00]
+
+📁 BOOK/ARTICLE
+--------------------------------------------------------------------------------
+✅ Bourbon Belles And Whiskey Women                             [0.00]
+
+📁 CONTACT INFO
+--------------------------------------------------------------------------------
+✅ Bourbon Spirits Call (323) 655 9995                          [0.00]
+
+📁 ARTICLE TITLE
+--------------------------------------------------------------------------------
+✅ It's All About The Whiskey                                   [0.00]
+
+📁 STORE NAME
+--------------------------------------------------------------------------------
+✅ Kentucky Remedy Liquor                                       [0.00]
+
+📁 STORE FRAGMENT
+--------------------------------------------------------------------------------
+❌ -free Range Wine &                                           [1.00]
+   Expected: REJECT, Got: ACCEPT
+
+📁 VALID PRODUCT
+--------------------------------------------------------------------------------
+✅ Buffalo Trace Kentucky Straight Bourbon Whiskey              [1.00]
+✅ Four Roses Single Barrel Kentucky Straight Bourbon Whiskey   [1.00]
+✅ Bardstown Bourbon Company Origin Series Bottled In Bond 4... [1.00]
+
+📁 VALID WITH PROOF
+--------------------------------------------------------------------------------
+✅ High West Double Rye Whiskey (92 Proof)                      [1.00]
+✅ High West A Midwinter Night's Dram Whiskey (98.6 Proof)      [1.00]
+
+📁 SERIES PRODUCT
+--------------------------------------------------------------------------------
+✅ Bardstown Bourbon Company Discovery Series 10 Spring 2023    [1.00]
+✅ Bardstown Bourbon Company Fusion Series 6                    [1.00]
+✅ Bardstown Origin Series Kentucky Straight Bourbon Whiskey    [1.00]
+
+📁 SERIES NAME ONLY
+--------------------------------------------------------------------------------
+✅ Discovery Series 10 Spring 2023                              [1.00]
+
+📁 LONG NAME
+--------------------------------------------------------------------------------
+✅ Four Roses Limited Edition Small Batch Barrel Strength Ke... [1.00]
+
+📁 RESERVE PRODUCT
+--------------------------------------------------------------------------------
+✅ Belle Meade Cask Strength Reserve Bourbon Whiskey            [1.00]
+
+📁 RYE WHISKEY
+--------------------------------------------------------------------------------
+✅ High West Rendezvous Rye Whiskey                             [1.00]
+
+📁 SINGLE MALT
+--------------------------------------------------------------------------------
+✅ Cedar Ridge The Quint Essential American Single Malt Whiskey [1.00]
+
+📁 STORE PICK
+--------------------------------------------------------------------------------
+✅ Four Roses Private Selection Single Barrel Bourbon Oesf      [1.00]
+✅ Four Roses Store Pick Single Barrel                          [1.00]
+
+📁 BAD SPACING
+--------------------------------------------------------------------------------
+✅ Ba Lcones Whiskey                                            [1.00]
+✅ Unc Le Nearest                                               [1.00]
+✅ Sma Ll Batch                                                 [1.00]
+
+📁 NO SPACES
+--------------------------------------------------------------------------------
+✅ WhistlePig                                                   [1.00]
+   ➤ Normalized: "Whistle Pig"
+
+📁 WITH SPACE
+--------------------------------------------------------------------------------
+✅ Whistle Pig                                                  [1.00]
+
+📁 LOWERCASE
+--------------------------------------------------------------------------------
+✅ whistlepig                                                   [1.00]
+
+📁 WITH STORE
+--------------------------------------------------------------------------------
+✅ Buffalo Trace - BevMo!                                       [1.00]
+   ➤ Normalized: "Buffalo Trace Bev Mo"
+
+📁 FROM STORE
+--------------------------------------------------------------------------------
+✅ Four Roses from Total Wine                                   [1.00]
+
+📁 AT STORE
+--------------------------------------------------------------------------------
+✅ Maker's Mark at K&L Wines                                    [1.00]
+
+📁 TRUNCATED
+--------------------------------------------------------------------------------
+✅ Four Roses Limited Edition Small Batch Barrel Strength Ke... [1.00]
+   ➤ Normalized: "Four Roses Limited Edition Small Batch Barrel Strength Kentucky Straight"
+✅ High West A Midwinter Night's Dram Act 11 Scene...           [1.00]
+   ➤ Normalized: "High West A Midwinter Night's Dram Act 11 Scene"
+
+📁 APOSTROPHE
+--------------------------------------------------------------------------------
+✅ Maker's Mark                                                 [1.00]
+
+📁 HTML APOSTROPHE
+--------------------------------------------------------------------------------
+✅ Maker&apos;s Mark                                            [1.00]
+
+📁 MULTIPLE PRODUCTS
+--------------------------------------------------------------------------------
+✅ Buffalo Trace &amp; Benchmark                                [0.00]
+
+📁 HYPHENATED
+--------------------------------------------------------------------------------
+✅ High West-vermont Oak                                        [1.00]
+   ➤ Normalized: "High West vermont Oak"
+
+📁 LOWERCASE BRAND
+--------------------------------------------------------------------------------
+✅ bardstown bourbon company discovery series 10                [1.00]
+✅ high west double rye                                         [1.00]
+✅ four roses small batch                                       [1.00]
+
+📁 TENNESSEE WHISKEY
+--------------------------------------------------------------------------------
+✅ Jack Daniel's Tennessee Whiskey                              [1.00]
+✅ Uncle Nearest Premium Tennessee Whiskey                      [1.00]
+
+📁 TENNESSEE WHISKY
+--------------------------------------------------------------------------------
+✅ George Dickel Tennessee Whisky                               [1.00]
+
+📁 AMERICAN SINGLE MALT
+--------------------------------------------------------------------------------
+✅ Westland American Single Malt                                [1.00]
+✅ Balcones Texas Single Malt                                   [1.00]
+✅ Stranahan's American Single Malt                             [1.00]
+
+📁 FRAGMENT
+--------------------------------------------------------------------------------
+✅ . Bourbon. Result                                            [0.00]
+
+📁 FOOD PRODUCT
+--------------------------------------------------------------------------------
+✅ Bourbon Biscuits                                             [0.00]
+✅ Bourbon-glazed Pork Belly Chunks                             [0.00]
+✅ Bourbon Barrel Aged Coffee                                   [0.00]
+
+📁 WEIGHT PREFIX
+--------------------------------------------------------------------------------
+✅ 53 G Heaven Hill Distillery...                               [0.00]
+
+📁 INVALID BRAND
+--------------------------------------------------------------------------------
+✅ Core Bourbon                                                 [0.00]
+✅ Unknown Bourbon                                              [0.00]
+
+📁 BUNDLE
+--------------------------------------------------------------------------------
+✅ Bundles Whiskey Collection                                   [0.00]
+
+====================================================================================================
+
+📊 CSV Edge Case Test Results: 67 passed, 1 failed
+Success Rate: 98.5%
+
+❌ Failed CSV Edge Cases:
+
+1. [Store fragment] "-free Range Wine &"
+   Expected: REJECT, Got: ACCEPT
+   Confidence: 1.00
+
+🔧 Validator needs adjustment for these real-world cases.
+
+📈 Validator Stats:
+Patterns learned: 0
+Valid patterns: 0
+Invalid patterns: 0
+
+📋 Data Quality Summary:
+✅ Non-product rejection rate: 0.0%
+✅ Valid product acceptance rate: 0.0%

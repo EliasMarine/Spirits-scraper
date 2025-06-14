@@ -1,0 +1,304 @@
+🔬 Testing V2.6.2 Validator with Comprehensive Edge Cases
+
+====================================================================================================
+
+📁 ARCHITECTURE
+--------------------------------------------------------------------------------
+✅ Bardstown Bourbon Co Bottling Joseph & Joseph Architects     [0.00]
+✅ Joseph & Joseph Architects - Bardstown Bourbon Company       [0.00]
+✅ Distillery Design by Smith Architecture LLC                  [0.00]
+
+📁 CONSTRUCTION
+--------------------------------------------------------------------------------
+✅ Bourbon Distillery Construction Services                     [0.00]
+
+📁 EVENT VENUE
+--------------------------------------------------------------------------------
+✅ Bbc Bourbon Barrel Loft Event Space In Louisville Ky The ... [0.00]
+✅ Private Event Space at Buffalo Trace                         [0.00]
+
+📁 TOUR
+--------------------------------------------------------------------------------
+✅ Bourbon Experience Belle Meade Winery Nashville's Oldest ... [0.00]
+✅ Kentucky Bourbon Trail Experience Package                    [0.00]
+✅ VIP Distillery Tour and Tasting                              [0.00]
+
+📁 ACADEMY
+--------------------------------------------------------------------------------
+✅ Bourbon Academy At Woodford Reserve                          [0.00]
+
+📁 WORKSHOP
+--------------------------------------------------------------------------------
+✅ Master Distiller Workshop Experience                         [0.00]
+
+📁 CLASS
+--------------------------------------------------------------------------------
+✅ Bourbon Making Class for Beginners                           [0.00]
+
+📁 FOOD
+--------------------------------------------------------------------------------
+✅ Colonel De New Riff Barrel Smoked Spices                     [0.00]
+✅ Bourbon Barrel Aged Coffee Beans                             [0.00]
+✅ Buffalo Trace Bourbon Brittle Candy                          [0.00]
+✅ Bourbon Infused BBQ Sauce                                    [0.00]
+✅ Whiskey Barrel Aged Maple Syrup                              [0.00]
+✅ Four Roses Bourbon Chicken Marinade                          [0.00]
+
+📁 RECIPE
+--------------------------------------------------------------------------------
+✅ Bourbon Honey Gold Rush Recipe                               [0.00]
+
+📁 NON-BEVERAGE
+--------------------------------------------------------------------------------
+✅ Bourbon Scented Candles                                      [0.00]
+
+📁 FURNITURE
+--------------------------------------------------------------------------------
+✅ Whiskey Barrel Furniture Collection                          [0.00]
+
+📁 ARTICLE
+--------------------------------------------------------------------------------
+✅ Bourbon The Well Known Bourbons With Sweeter Notes           [0.00]
+✅ Everything You Need to Know About Bourbon                    [0.00]
+✅ Bourbon vs Whiskey: What's the Difference?                   [0.00]
+
+📁 GUIDE
+--------------------------------------------------------------------------------
+✅ The Ultimate Guide to Kentucky Bourbon                       [0.00]
+✅ How to Choose the Perfect Bourbon Gift                       [0.00]
+✅ The Complete Bourbon Beginner's Guide                        [0.00]
+
+📁 LISTICLE
+--------------------------------------------------------------------------------
+✅ Top 10 Best Bourbon Whiskeys of 2024                         [0.00]
+
+📁 TAGLINE
+--------------------------------------------------------------------------------
+✅ Discovery Series 1 The Bardstown Bourbon Company A New Bl... [0.00]
+✅ A New Blend of Traditional and Modern                        [0.40]
+✅ The Spirit of Innovation Since 1870                          [0.00]
+✅ Crafted for the Discerning Palate                            [0.00]
+
+📁 STORE LISTING
+--------------------------------------------------------------------------------
+✅ Available For Purchase Are A Selection Of Bourbons           [0.00]
+
+📁 STORE PAGE
+--------------------------------------------------------------------------------
+✅ Shop Our Premium Bourbon Collection                          [0.00]
+✅ Buy Bourbon Online - Free Shipping                           [0.00]
+✅ Visit Our Online Whiskey Store                               [0.00]
+
+📁 CONTACT INFO
+--------------------------------------------------------------------------------
+✅ Bourbon Spirits Call (323) 655 9995                          [0.00]
+
+📁 WEBSITE
+--------------------------------------------------------------------------------
+✅ High West American Whiskey The Whisky Exchange               [0.00]
+
+📁 MEETUP
+--------------------------------------------------------------------------------
+✅ Drink Belle Meade Bourbon W/ Charlie Of Nelson's Green Br... [0.00]
+
+📁 EVENT
+--------------------------------------------------------------------------------
+✅ Join Us for Bourbon Wednesday Nights                         [0.00]
+✅ Bourbon & Jazz Evening at the Lounge                         [0.00]
+
+📁 CLUB EVENT
+--------------------------------------------------------------------------------
+✅ Monthly Bourbon Club Meeting                                 [0.00]
+
+📁 EDUCATION
+--------------------------------------------------------------------------------
+✅ 1 Ky-jim Beam Whiskey University                             [0.00]
+✅ Learn About Bourbon History                                  [0.00]
+✅ Bourbon Production Process Explained                         [0.00]
+✅ Understanding Bourbon Mash Bills                             [0.00]
+
+📁 AWARD NEWS
+--------------------------------------------------------------------------------
+✅ 2024 World's Most Admired Whiskey-michter's Distillery       [0.00]
+✅ Buffalo Trace Wins Double Gold Medal                         [0.00]
+
+📁 NEWS
+--------------------------------------------------------------------------------
+✅ Breaking: New Distillery Opens in Kentucky                   [0.00]
+
+📁 ABOUT PAGE
+--------------------------------------------------------------------------------
+✅ About Whistle Pig Whistle Pig Whiskey                        [0.00]
+
+📁 COMPANY INFO
+--------------------------------------------------------------------------------
+✅ Our Story - Four Roses Distillery                            [0.00]
+
+📁 HISTORY PAGE
+--------------------------------------------------------------------------------
+✅ The History of Buffalo Trace                                 [0.00]
+
+📁 TRAIL INFO
+--------------------------------------------------------------------------------
+✅ Four Roses Distillery Kentucky Bourbon Trail                 [0.00]
+
+📁 LOCATION
+--------------------------------------------------------------------------------
+✅ Visit Buffalo Trace Visitor Center                           [0.00]
+✅ Bardstown Bourbon Capital of the World                       [0.00]
+
+📁 PRODUCT WITH STORE
+--------------------------------------------------------------------------------
+✅ Buffalo Trace Bourbon - Available at Total Wine              [1.00]
+
+📁 PRODUCT FROM STORE
+--------------------------------------------------------------------------------
+✅ Four Roses Single Barrel from K&L Wines                      [1.00]
+
+📁 PRODUCT AT STORE
+--------------------------------------------------------------------------------
+✅ Maker's Mark - Now at BevMo!                                 [1.00]
+
+📁 PRODUCT WITH DESCRIPTION
+--------------------------------------------------------------------------------
+✅ Wild Turkey 101 - Bold and Spicy                             [1.00]
+
+📁 PRODUCT WITH TAGLINE
+--------------------------------------------------------------------------------
+✅ Woodford Reserve - A Taste of Kentucky Heritage              [1.00]
+
+📁 PRODUCT WITH AWARD
+--------------------------------------------------------------------------------
+✅ Buffalo Trace - Award Winning Kentucky Straight Bourbon      [1.00]
+
+📁 SERIES PRODUCT
+--------------------------------------------------------------------------------
+✅ Bardstown Bourbon Company Discovery Series #10               [1.00]
+
+📁 LIMITED EDITION
+--------------------------------------------------------------------------------
+✅ Four Roses Limited Edition Small Batch 2024 Release          [1.00]
+
+📁 SPECIAL RELEASE
+--------------------------------------------------------------------------------
+✅ High West A Midwinter Night's Dram Act 11 Scene 5            [1.00]
+
+📁 BATCH PRODUCT
+--------------------------------------------------------------------------------
+✅ Maker's Mark Cask Strength Batch 23-01                       [1.00]
+
+📁 SINGLE BARREL
+--------------------------------------------------------------------------------
+✅ Russell's Reserve Single Barrel #2023-045                    [1.00]
+
+📁 AGED PRODUCT
+--------------------------------------------------------------------------------
+✅ Eagle Rare 10 Year Barrel #5678                              [1.00]
+
+📁 SINGLE MALT
+--------------------------------------------------------------------------------
+✅ Balcones Texas Single Malt Whisky                            [1.00]
+
+📁 RYE WHISKEY
+--------------------------------------------------------------------------------
+✅ WhistlePig 10 Year Straight Rye Whiskey                      [1.00]
+
+📁 TENNESSEE WHISKEY
+--------------------------------------------------------------------------------
+✅ Jack Daniel's Tennessee Whiskey                              [1.00]
+
+📁 AMERICAN SINGLE MALT
+--------------------------------------------------------------------------------
+✅ Westland American Single Malt Peated                         [1.00]
+
+📁 GIFT SET
+--------------------------------------------------------------------------------
+✅ Buffalo Trace Gift Set with Glasses                          [0.00]
+✅ Maker's Mark Holiday Gift Pack                               [0.00]
+
+📁 SAMPLE SET
+--------------------------------------------------------------------------------
+✅ Bourbon Tasting Set 5x50ml                                   [0.00]
+
+📁 MINI COLLECTION
+--------------------------------------------------------------------------------
+✅ Four Roses Mini Bottle Collection                            [0.00]
+
+📁 STORE PICK
+--------------------------------------------------------------------------------
+✅ Four Roses OESF K&L Wines Private Selection                  [1.00]
+✅ Russell's Reserve Seelbach's Pick                            [1.00]
+
+📁 NO SPACES
+--------------------------------------------------------------------------------
+✅ BuffaloTraceBourbon                                          [1.00]
+
+📁 EXTRA SPACES
+--------------------------------------------------------------------------------
+✅ Four   Roses    Small    Batch                               [1.00]
+
+📁 LOWERCASE
+--------------------------------------------------------------------------------
+✅ maker's mark bourbon                                         [1.00]
+
+📁 UPPERCASE
+--------------------------------------------------------------------------------
+✅ WILD TURKEY 101                                              [1.00]
+
+📁 TRADEMARK SYMBOL
+--------------------------------------------------------------------------------
+✅ Maker's Mark® Bourbon                                        [1.00]
+
+📁 TRADEMARK
+--------------------------------------------------------------------------------
+✅ Buffalo Trace™ Kentucky Straight Bourbon                     [1.00]
+
+📁 HYPHEN SEPARATOR
+--------------------------------------------------------------------------------
+✅ Four Roses - Small Batch                                     [1.00]
+
+📁 BULLET SEPARATOR
+--------------------------------------------------------------------------------
+✅ High West • Double Rye                                       [1.00]
+
+📁 TRUNCATED
+--------------------------------------------------------------------------------
+✅ Four Roses Small Batch Kentucky Straight...                  [1.00]
+✅ Buffalo Trace Kentucky Straight Bourbon Whi...               [1.00]
+
+📁 HTML ENTITY
+--------------------------------------------------------------------------------
+✅ Maker&apos;s Mark Bourbon                                    [1.00]
+
+📁 MULTIPLE PRODUCTS
+--------------------------------------------------------------------------------
+❌ Buffalo Trace &amp; Four Roses                               [1.00]
+   Expected: REJECT, Got: ACCEPT
+
+📁 HTML QUOTES
+--------------------------------------------------------------------------------
+✅ High West &quot;Double Rye&quot;                             [1.00]
+
+====================================================================================================
+
+📊 Edge Case Test Results: 89 passed, 1 failed
+Success Rate: 98.9%
+
+❌ Failed Edge Cases:
+
+1. [Multiple products] "Buffalo Trace &amp; Four Roses"
+   Expected: REJECT, Got: ACCEPT
+   Confidence: 1.00
+   Normalized to: "Buffalo Trace &amp Four Roses"
+
+📈 Failure Analysis:
+
+Multiple products: 1 failures
+  - "Buffalo Trace &amp; Four Roses..."
+
+📈 Validator Stats:
+Patterns learned: 0
+Valid patterns: 0
+Invalid patterns: 0
+
+🔧 Recommendations:

@@ -16,8 +16,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 🚨 HIGH IMPORTANCE - SCRAPER FIXES DOCUMENTATION 🚨
 **CRITICAL**: When working on the spirits scraper, you MUST check these documents FIRST:
+- `docs/V2.6-FIXES.md` - **MOST IMPORTANT** - Latest V2.6 issues, emergency fixes, and current state
 - `docs/V2.5.6_FIXES_SUMMARY.md` - Contains all critical fixes for data quality issues
-- `docs/V2.5.7-FIXES.md` - Current and planned improvements
+- `docs/V2.5.7-FIXES.md` - Previous improvements (now superseded by V2.6)
 - `docs/CATALOG_SCRAPER_ISSUES.md` - Known issues and their solutions
 
 These documents contain essential information about:
