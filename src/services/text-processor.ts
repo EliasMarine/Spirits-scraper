@@ -146,15 +146,25 @@ export class TextProcessor {
 
     let result = text;
 
-    // Fix camelCase by adding spaces before capitals (except consecutive capitals)
-    result = result.replace(/([a-z])([A-Z])/g, '$1 $2');
+    // CRITICAL FIX: Don't break up words that are already properly spaced!
+    // Check if text already has proper spacing (contains spaces between words)
+    const hasProperSpacing = /\s/.test(text.trim());
     
-    // Fix lowercase followed by uppercase in product names
-    result = result.replace(/([a-z])([A-Z][a-z])/g, '$1 $2');
+    // Only apply aggressive spacing fixes if text appears concatenated
+    if (!hasProperSpacing || /[a-z][A-Z]/.test(text)) {
+      // Fix camelCase by adding spaces before capitals (except consecutive capitals)
+      // But skip if it would break up valid words like "Baller"
+      result = result.replace(/([a-z])([A-Z])(?![a-z]{1,2}\s|ller\s)/g, '$1 $2');
+    }
     
-    // Fix numbers concatenated with text
-    result = result.replace(/(\d)([A-Za-z])/g, '$1 $2');
+    // Fix numbers concatenated with text (but not ordinals like 40th)
+    result = result.replace(/(\d)(?!st|nd|rd|th)([A-Za-z])/g, '$1 $2');
     result = result.replace(/([A-Za-z])(\d)/g, '$1 $2');
+    
+    // Fix ordinal numbers that got broken (40 Th -> 40th)
+    result = result.replace(/(\d+)\s+(st|nd|rd|th)\b/gi, (match, num, suffix) => {
+      return num + suffix.toLowerCase();
+    });
     
     // Fix common concatenations in spirit names
     result = result.replace(/(\w)(Year|Years|YO|Yr|Proof|ABV|ML|ml|L)(?=[A-Z\s]|$)/g, '$1 $2');
@@ -162,17 +172,135 @@ export class TextProcessor {
     // Fix specific patterns
     result = result.replace(/SingleMalt/g, 'Single Malt');
     result = result.replace(/SmallBatch/g, 'Small Batch');
+    result = result.replace(/StraightBourbon/g, 'Straight Bourbon');
     result = result.replace(/LimitedEdition/g, 'Limited Edition');
     result = result.replace(/SpecialRelease/g, 'Special Release');
     result = result.replace(/CaskStrength/g, 'Cask Strength');
     result = result.replace(/DoubleOaked/g, 'Double Oaked');
     result = result.replace(/TripleDistilled/g, 'Triple Distilled');
+    result = result.replace(/BottledInBond/g, 'Bottled in Bond');
+    result = result.replace(/SingleBarrel/g, 'Single Barrel');
+    
+    // Fix specific broken words we've seen
+    result = result.replace(/\bBa Ller\b/g, 'Baller');
+    result = result.replace(/\bMa Lt\b/g, 'Malt');
+    result = result.replace(/\bSma Ll\b/g, 'Small');
+    result = result.replace(/\bSing Le\b/g, 'Single');
+    result = result.replace(/\bCa Lifornia\b/g, 'California');
+    result = result.replace(/\bCast Le\b/gi, 'Castle');
     
     // Clean up multiple spaces
     result = result.replace(/\s+/g, ' ').trim();
     
     // Remove empty parentheses that might remain after volume extraction
     result = result.replace(/\s*\(\s*\)\s*/g, ' ').trim();
+    
+    return result;
+  }
+
+  /**
+   * Remove store names and artifacts from product names
+   */
+  public static removeStoreNames(text: string): string {
+    if (!text) return '';
+    
+    let result = text;
+    
+    // Common store name patterns to remove
+    const storePatterns = [
+      // Specific store names
+      /\s*(at\s+)?Bev\s*Mo!?$/i,
+      /\s*(at\s+)?Total\s+Wine(\s*&\s*More)?$/i,
+      /\s*(at\s+)?K\s*&\s*L\s+Wine(s)?$/i,
+      /\s*(at\s+)?Astor\s+Wine(s)?(\s*&)?$/i,
+      /\s*(at\s+)?Cask\s+Store$/i,
+      /\s*(at\s+)?Wine\.com$/i,
+      /\s*(at\s+)?ReserveBar$/i,
+      /\s*(at\s+)?Drizly$/i,
+      /\s*(at\s+)?Master\s+of\s+Malt$/i,
+      /\s*(at\s+)?The\s+Whisky\s+Exchange$/i,
+      /\s*(at\s+)?Wine\s+Chateau$/i,
+      /\s*(at\s+)?Caskers$/i,
+      /\s*(at\s+)?Flaviar$/i,
+      /\s*(at\s+)?Seelbach'?s?$/i,
+      /\s*(at\s+)?Breaking\s+Bourbon$/i,
+      /\s*(at\s+)?Mission\s+Wine\s*&\s*Spirits$/i,
+      /\s*(at\s+)?Binny's$/i,
+      /\s*(at\s+)?Spec's$/i,
+      /\s*(at\s+)?ABC\s+(Fine\s+)?Wine\s*&\s*Spirits$/i,
+      /\s*(at\s+)?Liquor\s+Barn$/i,
+      /\s*(at\s+)?Lisa's\s+Liquor\s+Barn$/i,
+      /\s*(at\s+)?Remedy\s+Liquor$/i,
+      /\s*(at\s+)?Crown\s+Wine$/i,
+      /\s*Crown\s+Wine\s+and$/i,
+      /\s*(at\s+)?Vine\s+Republic$/i,
+      /\s*Vine\s+Republic$/i,
+      /\s*(at\s+)?Paragon\s+Spirits?$/i,
+      /\s*(at\s+)?Fine\s+Drams$/i,
+      /\s*(at\s+)?Hi\s+Time\s+Wine$/i,
+      /\s*(at\s+)?Free\s+Range\s+Wine\s*&?$/i,
+      /\s*-?\s*free\s+Range\s+Wine\s*&?$/i,
+      /\s*(at\s+)?Musthave\s+Malts?$/i,
+      /\s*(at\s+)?J\s*L\s+Gill$/i,
+      
+      // Generic patterns
+      /\s+Available\s+at\s+.+$/i,
+      /\s+Now\s+at\s+.+$/i,
+      /\s+Shop\s+at\s+.+$/i,
+      /\s+Buy\s+at\s+.+$/i,
+      /\s+From\s+\$\d+.*$/i,
+      /\s+On\s+Sale.*$/i,
+      /\s+In\s+Stock.*$/i,
+      /\s+Free\s+Shipping.*$/i,
+      /\s+Ships\s+to.*$/i,
+      /\s+Delivered.*$/i,
+      
+      // Shopping cart / e-commerce artifacts
+      /^Add\s+To\s+Cart\.?\s*/i,
+      /\s+Add\s+To\s+Cart$/i,
+      /^Buy\s+Now\.?\s*/i,
+      /\s+Buy\s+Now$/i,
+      /\s+View\s+Details$/i,
+      /\s+Learn\s+More$/i,
+      /\s+See\s+More$/i,
+      /\s+Read\s+More$/i,
+      
+      // Price/sale artifacts
+      /\s+\$\d+\.?\d*$/,
+      /\s+USD\s*\$?\d+\.?\d*$/i,
+      /\s+MSRP.*$/i,
+      /\s+Sale\s+Price.*$/i,
+      /\s+Regular\s+Price.*$/i,
+      /\s+Save\s+\$?\d+.*$/i,
+      /\s+\d+%\s+Off$/i,
+      /\s+Clearance\s+Sale$/i,
+      /\s+Limited\s+Time.*$/i,
+      
+      // Other artifacts
+      /\s+\(\d+\s*Reviews?\)$/i,
+      /\s+★+$/,
+      /\s+\d+\s*Stars?$/i,
+      /\s+Rated\s+\d+.*$/i,
+      /\s+Paragon$/i,  // Remove specific store "Paragon" at end
+      /\s+Category:.*$/i,
+      /\s+SKU:.*$/i,
+      /\s+Item\s+#.*$/i,
+      /\s+Product\s+Code.*$/i,
+      
+      // Incomplete fragments
+      /\s+&\s*$/,
+      /\s+-\s*$/,
+      /\s+\.\s*$/,
+      /\s+,\s*$/
+    ];
+    
+    // Apply all patterns
+    for (const pattern of storePatterns) {
+      result = result.replace(pattern, '');
+    }
+    
+    // Clean up any remaining artifacts
+    result = result.replace(/\s+/g, ' ').trim();
     
     return result;
   }
@@ -497,6 +625,10 @@ export class TextProcessor {
     result = result.replace(/\s*'\s*/g, "'");
     result = result.replace(/\s+'s\s*/g, "'s");
     
+    // Fix common apostrophe capitalizations BEFORE checking brand fixes
+    result = result.replace(/(?<=[a-z])'S\b/g, "'s");  // Fix "michter'S" to "michter's"
+    result = result.replace(/(?<=[A-Z][a-z]+)'S\b/g, "'s");  // Also fix "Michter'S" to "Michter's"
+    
     // Common brand name fixes
     const brandFixes: Record<string, string> = {
       "jack daniels": "Jack Daniel's",
@@ -596,11 +728,77 @@ export class TextProcessor {
       "e&j": "E&J",
       "ej": "E&J",
       "christian brothers": "Christian Brothers",
-      "paul masson": "Paul Masson"
+      "paul masson": "Paul Masson",
+      // St. George variations
+      "st george": "St. George Spirits",
+      "st. george": "St. George Spirits",
+      "st george spirits": "St. George Spirits",
+      "st. george spirits": "St. George Spirits",
+      "st george spirit": "St. George Spirits",
+      "st. george spirit": "St. George Spirits",
+      // Castle & Key variations
+      "castle": "Castle & Key",
+      "castle & key": "Castle & Key",
+      "castle and key": "Castle & Key",
+      "cast le": "Castle & Key",  // For broken spacing
+      // High West variations
+      "high west": "High West",
+      "high": "High West",  // Only if standalone
+      // WhistlePig variations
+      "whistlepig": "WhistlePig",
+      "whistle pig": "WhistlePig",
+      // Old Grand-Dad
+      "old grand dad": "Old Grand-Dad",
+      "old grand-dad": "Old Grand-Dad",
+      // Basil Hayden's
+      "basil haydens": "Basil Hayden's",
+      "basil hayden s": "Basil Hayden's",
+      "basil hayden": "Basil Hayden's",
+      // Henry McKenna
+      "henry mckenna": "Henry McKenna",
+      "henry mc kenna": "Henry McKenna",
+      // Uncle Nearest
+      "uncle nearest": "Uncle Nearest",
+      "unc le nearest": "Uncle Nearest",
+      // Russell's Reserve
+      "russells reserve": "Russell's Reserve",
+      "russell s reserve": "Russell's Reserve",
+      // Very Old Barton
+      "very old barton": "Very Old Barton",
+      "vob": "Very Old Barton",
+      // Old Fitzgerald
+      "old fitzgerald": "Old Fitzgerald",
+      "old fitz": "Old Fitzgerald",
+      // Redemption
+      "redemption": "Redemption",
+      // Smooth Ambler
+      "smooth ambler": "Smooth Ambler",
+      // Town Branch
+      "town branch": "Town Branch",
+      // Green River
+      "green river": "Green River",
+      // Widow Jane
+      "widow jane": "Widow Jane",
+      // Smoke Wagon
+      "smoke wagon": "Smoke Wagon",
+      // Calumet
+      "calumet": "Calumet",
+      // Penelope
+      "penelope": "Penelope",
+      // Bardstown
+      "bardstown": "Bardstown Bourbon Company",
+      "bardstown bourbon company": "Bardstown Bourbon Company",
+      "bardstown bourbon co": "Bardstown Bourbon Company"
     };
 
     // Check for exact matches (case-insensitive)
     const lowerResult = result.toLowerCase();
+    
+    // Special handling for "st." - only normalize if it seems to be St. George
+    if (lowerResult === "st." || lowerResult === "st") {
+      // Don't normalize standalone "st." - too ambiguous
+      return result;
+    }
     if (brandFixes[lowerResult]) {
       return brandFixes[lowerResult];
     }
@@ -653,12 +851,23 @@ export class TextProcessor {
     age: string | null;
   } {
     // Fix text spacing in name
-    const fixedName = this.fixTextSpacing(spirit.name);
+    let fixedName = this.fixTextSpacing(spirit.name);
+    
+    // Remove store names and artifacts
+    fixedName = this.removeStoreNames(fixedName);
     
     // Normalize brand
-    const normalizedBrand = spirit.brand 
-      ? this.normalizeBrandName(spirit.brand)
-      : this.extractBrandFromName(fixedName);
+    let normalizedBrand: string;
+    if (spirit.brand) {
+      normalizedBrand = this.normalizeBrandName(spirit.brand);
+      // If we have a generic brand like "st." but the name contains a better brand, extract from name
+      if ((spirit.brand.toLowerCase() === 'st.' || spirit.brand.toLowerCase() === 'st') && 
+          fixedName.toLowerCase().includes('george')) {
+        normalizedBrand = this.extractBrandFromName(fixedName);
+      }
+    } else {
+      normalizedBrand = this.extractBrandFromName(fixedName);
+    }
     
     // Normalize category
     const normalizedCategory = this.normalizeCategory(fixedName, spirit.category);
@@ -669,7 +878,9 @@ export class TextProcessor {
     // Validate and clean description
     let validDescription: string | null = null;
     if (spirit.description) {
-      const fixedDescription = this.fixTextSpacing(spirit.description);
+      let fixedDescription = this.fixTextSpacing(spirit.description);
+      // Also remove store names from descriptions
+      fixedDescription = this.removeStoreNames(fixedDescription);
       if (this.isValidProductDescription(fixedDescription)) {
         validDescription = fixedDescription;
       }
@@ -688,11 +899,20 @@ export class TextProcessor {
    * Extract brand from spirit name (helper method)
    */
   private static extractBrandFromName(name: string): string {
+    // Special cases for known brand patterns
+    if (/^st\.?\s*george/i.test(name)) {
+      return this.normalizeBrandName('St. George');
+    }
+    if (/^castle\s*&?\s*key/i.test(name)) {
+      return this.normalizeBrandName('Castle & Key');
+    }
+    
     // Common patterns where brand appears first
     const brandPatterns = [
       /^([A-Z][a-zA-Z\s&'.-]+?)(?:\s+\d+\s*Year|\s+Single\s+Malt|\s+Bourbon|\s+Whiskey|\s+Vodka|\s+Rum|\s+Gin|\s+Tequila)/i,
       /^([A-Z][a-zA-Z\s&'.-]+?)(?:\s+Reserve|\s+Select|\s+Special|\s+Limited|\s+Edition)/i,
-      /^([A-Z][a-zA-Z\s&'.-]+?)(?:\s+XO|\s+VSOP|\s+VS|\s+Napoleon)/i
+      /^([A-Z][a-zA-Z\s&'.-]+?)(?:\s+XO|\s+VSOP|\s+VS|\s+Napoleon)/i,
+      /^([A-Z][a-zA-Z\s&'.-]+?)(?:\s+Baller|\s+Breaking|\s+Terroir)/i  // St. George product names
     ];
 
     for (const pattern of brandPatterns) {
@@ -716,6 +936,7 @@ export class TextProcessor {
 // Export individual functions for convenience
 export const {
   fixTextSpacing,
+  removeStoreNames,
   normalizeCategory,
   extractValidAge,
   isValidProductDescription,
