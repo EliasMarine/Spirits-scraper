@@ -188,7 +188,8 @@ export class SupabaseStorage {
       brand: spirit.brand || null,
       type: spirit.type || null,
       abv: spirit.abv || null,
-      proof: spirit.proof || null,
+      // V2.6.3: Ensure proof is never null - use 0 if not provided or if ABV is null
+      proof: spirit.proof !== null && spirit.proof !== undefined ? spirit.proof : (spirit.abv ? Math.round(spirit.abv * 2) : 0),
       price: spirit.price || null,
       description: spirit.description || null,
       origin_country: spirit.origin_country || null,

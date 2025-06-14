@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 
-import { Command } from 'commander';
 import { config } from 'dotenv';
+// Load environment variables BEFORE any other imports
+config();
+
+import { Command } from 'commander';
 import { spiritExtractor } from './services/spirit-extractor.js';
 import { QueryGenerator } from './services/query-generator.js';
 import { EnhancedQueryGenerator } from './services/enhanced-query-generator.js';
@@ -29,15 +32,12 @@ import { smartSiteSelector } from './services/smart-site-selector.js';
 import { distilleryScrapeTracker } from './services/distillery-scrape-tracker.js';
 import ora from 'ora';
 
-// Load environment variables
-config();
-
 const program = new Command();
 
 program
   .name('spirits-scraper')
   .description('Smart spirits data scraper with NLP-based validation and adaptive learning')
-  .version('2.6.0');
+  .version('2.6.3');
 
 // Main scrape command - smart by default
 program
@@ -63,6 +63,13 @@ program
   .option('--target-efficiency <number>', 'Target spirits per API call (default: 3.0)', '3.0')
   .option('--optimized', 'DEPRECATED - Optimized scraper is now the default for distillery mode')
   .action(async (options) => {
+    // Show immediate feedback
+    const startupSpinner = ora({
+      text: 'Starting Spirits Scraper v2.6.2...',
+      spinner: 'dots',
+      color: 'cyan'
+    }).start();
+    
     // Set log level based on options
     if (options.quiet) {
       process.env.LOG_LEVEL = 'error';
@@ -73,7 +80,7 @@ program
       process.env.LOG_LEVEL = 'warn';
     }
     
-    const spinner = ora('Initializing smart scraper...').start();
+    startupSpinner.text = 'Initializing smart scraper...';
     
     try {
       // Parse options
@@ -81,14 +88,20 @@ program
       const limit = parseInt(options.limit);
       const batchSize = parseInt(options.batchSize);
       
-      spinner.succeed('Smart scraper initialized');
+      startupSpinner.text = 'Loading configuration...';
+      await new Promise(resolve => setTimeout(resolve, 100)); // Small delay to show spinner
+      
+      startupSpinner.succeed('Smart scraper initialized');
       logger.info(`Categories: ${categories.join(', ')}`);
       logger.info(`Limit: ${limit} spirits`);
       logger.info(`Batch size: ${batchSize}`);
       
       // Initialize services
+      const spinner = ora('Connecting to database...').start();
       const storage = new SupabaseStorage();
+      spinner.text = 'Initializing cache service...';
       await cacheService.initialize();
+      spinner.succeed('Services initialized');
       
       // Handle cache management options
       if (options.clearCache) {
@@ -131,7 +144,11 @@ program
       
       // Always use optimized scraper for distillery mode (default behavior)
       if (options.distillery) {
-        spinner.text = '🚀 Starting HIGH-EFFICIENCY catalog scraping (60%+ efficiency)...';
+        const scraperSpinner = ora({
+          text: '🚀 Starting HIGH-EFFICIENCY catalog scraping (60%+ efficiency)...',
+          spinner: 'dots',
+          color: 'yellow'
+        }).start();
         
         // Optimized distillery scraping
         const distilleryNames = options.distillery.split(',').map((d: string) => d.trim());
@@ -147,7 +164,7 @@ program
             continue;
           }
           
-          console.log(`\n📊 Optimized scraping for ${distillery.name}...`);
+          scraperSpinner.text = `📊 Optimized scraping for ${distillery.name}...`;
           
           const result = await optimizedCatalogScraper.scrapeDistilleryOptimized(
             distillery,
@@ -166,7 +183,7 @@ program
           }
         }
         
-        spinner.succeed('Optimized scraping complete!');
+        scraperSpinner.succeed('Optimized scraping complete!');
         return;
       }
       
@@ -262,7 +279,12 @@ program
         console.log(`💡 Estimated yield: ${avgPotential.toFixed(1)} spirits per query`);
       } else {
         // DEFAULT: Use ultra-efficient scraper for ALL category-based scraping
-        spinner.text = '🚀 Starting ULTRA-EFFICIENT scraping (60%+ efficiency)...';
+        const ultraSpinner = ora({
+          text: '🚀 Starting ULTRA-EFFICIENT scraping (60%+ efficiency)...',
+          spinner: 'dots',
+          color: 'magenta'
+        }).start();
+        
         console.log('\\n📊 Using ultra-efficient catalog scraping for maximum API efficiency');
         
         // Process each category with ultra-efficient scraper
@@ -273,7 +295,7 @@ program
         for (const category of categories) {
           const categoryLimit = Math.ceil(limit / categories.length);
           
-          console.log(`\\n🔍 Scraping ${category} with ultra-efficient mode...`);
+          ultraSpinner.text = `🔍 Scraping ${category} with ultra-efficient mode...`;
           
           const result = await ultraEfficientScraper.scrapeWithUltraEfficiency({
             category,
@@ -304,7 +326,7 @@ program
         console.log(`Total Spirits Stored: ${totalSpiritsStored}`);
         console.log(`Overall Efficiency: ${(overallEfficiency * 100).toFixed(1)}% (${overallEfficiency.toFixed(1)} spirits/call)`);
         
-        spinner.succeed('Ultra-efficient scraping complete!');
+        ultraSpinner.succeed('Ultra-efficient scraping complete!');
         return;
       }
       
@@ -1193,7 +1215,7 @@ program
         }
       } else {
         // Use intelligent selection
-        spinner.text = `Intelligently selecting from ${ALL_DISTILLERIES.length} distilleries...`;
+        spinner.text = `Checking ${ALL_DISTILLERIES.length} distilleries for scraping history (this may take a moment)...`;
         
         selectedDistilleries = await distilleryScrapeTracker.getIntelligentDistillerySelection(
           ALL_DISTILLERIES,

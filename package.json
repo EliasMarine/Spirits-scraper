@@ -1,7 +1,7 @@
 {
   "name": "spirits-scraper",
-  "version": "2.6.1",
-  "description": "Ultra-efficient spirits scraper with V2.6.1 smart NLP validation (fixed) - adaptive learning, enhanced brand extraction & intelligent product detection",
+  "version": "2.6.3",
+  "description": "Ultra-efficient spirits scraper with V2.6.3 smart NLP validation - fixed proof validation, news article rejection & improved data quality",
   "main": "dist/index.js",
   "type": "module",
   "scripts": {

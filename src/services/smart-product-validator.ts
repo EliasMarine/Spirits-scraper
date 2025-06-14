@@ -30,6 +30,17 @@ export class SmartProductValidator {
   
   // V2.6.2: Hard rejection patterns for non-products
   private readonly HARD_REJECT_PATTERNS = [
+    // V2.6.3: News articles and press releases
+    /\b(announced|announces|introducing|introduces|launching|launches|unveils?|reveals?)\b.*\b(new|ahead\s+of|for\s+its|brand)\b/i,
+    /\bjust\s+announced\b/i,
+    /\bahead\s+of\s+new\s+product\s+launches?\b/i,
+    /\bfor\s+its\s+permanent\s+range\b/i,
+    
+    // V2.6.3: Merchandise and collaborations
+    /\b\w+\s+X\s+\w+\b/i,  // Buffalo Trace X Bettinardi
+    /\b(dry\s+goods|merchandise|merch|apparel|clothing)\b/i,
+    /\bhard\s+to\s+find\s+\w+\s+htfw\b/i,  // Website/service names
+    
     // Event/venue patterns
     /\b(event\s+space|loft|venue|theater|theatre)\b/i,
     /\bthe\s+vendry\b/i,
@@ -235,6 +246,16 @@ export class SmartProductValidator {
         confidence: 0,
         issues: ['Product name is too short or fragment'],
         suggestions: ['Provide complete product name']
+      };
+    }
+    
+    // V2.6.3: Check for overly long names (likely headlines/articles)
+    if (name.length > 100) {
+      return {
+        isValid: false,
+        confidence: 0,
+        issues: ['Product name too long - likely a headline or article title'],
+        suggestions: ['Product names should be concise']
       };
     }
 

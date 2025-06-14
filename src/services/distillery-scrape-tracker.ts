@@ -89,14 +89,29 @@ export class DistilleryScrapeTracker {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - daysSinceLastScrape);
 
-    for (const distillery of allDistilleries) {
-      const record = await this.getDistilleryRecord(distillery.name);
+    // Batch fetch all distillery records to avoid N+1 queries
+    logger.info(`Checking ${allDistilleries.length} distilleries for scraping history...`);
+    
+    // Get all keys at once
+    const keys = allDistilleries.map(d => `${this.TRACKER_PREFIX}${d.name}`);
+    
+    // Use Redis pipeline for batch fetching
+    const pipeline = this.redis.pipeline();
+    keys.forEach(key => pipeline.get(key));
+    
+    const results = await pipeline.exec();
+    
+    // Process results
+    for (let i = 0; i < allDistilleries.length; i++) {
+      const distillery = allDistilleries[i];
+      const record = results[i] as DistilleryScrapeRecord | null;
       
       if (!record || new Date(record.lastScrapedAt) < cutoffDate) {
         unscraped.push(distillery);
       }
     }
 
+    logger.info(`Found ${unscraped.length} unscraped distilleries`);
     return unscraped;
   }
 

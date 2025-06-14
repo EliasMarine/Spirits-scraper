@@ -11,6 +11,7 @@ import axios from 'axios';
 import * as cheerio from 'cheerio';
 import { V25CriticalFixes } from '../fixes/v2.5-critical-fixes';
 import { smartProductValidator } from './smart-product-validator';
+import ora from 'ora';
 
 export interface UltraEfficientOptions {
   category: string;
@@ -186,8 +187,17 @@ export class UltraEfficientScraper {
         // Track this query in the session
         scrapeSessionTracker.recordQuery(category, query);
         
+        // Show loading spinner for API call
+        const apiSpinner = ora({
+          text: `Making Google API call: ${query}`,
+          spinner: 'dots',
+          color: 'blue'
+        }).start();
+        
         const searchResults = await this.googleClient.search({ query });
         this.metrics.apiCalls++;
+        
+        apiSpinner.succeed(`API call complete - Found ${searchResults.items?.length || 0} results`);
 
         if (!searchResults.items || searchResults.items.length === 0) {
           logger.warn('No results found');
@@ -406,6 +416,13 @@ export class UltraEfficientScraper {
   private async extractSpiritsFromCatalogPage(url: string, category: string): Promise<any[]> {
     const spirits: any[] = [];
     
+    // Show loading spinner for catalog fetch
+    const catalogSpinner = ora({
+      text: `Fetching catalog page: ${url.substring(0, 50)}...`,
+      spinner: 'dots',
+      color: 'cyan'
+    }).start();
+    
     try {
       // Add user agent and other headers to avoid blocking
       const response = await axios.get(url, {
@@ -439,8 +456,11 @@ export class UltraEfficientScraper {
         // Generic extraction
         spirits.push(...this.extractGenericProducts($, category));
       }
+      
+      catalogSpinner.succeed(`Extracted ${spirits.length} spirits from catalog`);
 
     } catch (error) {
+      catalogSpinner.fail(`Failed to fetch catalog page`);
       logger.error(`Error fetching catalog page ${url}: ${error}`);
     }
 
@@ -1292,6 +1312,15 @@ export class UltraEfficientScraper {
       
       // V2.5.5: Extract price from description if not already set
       let finalPrice = fixedSpirit.price;
+      
+      // V2.6.3: Add logging for price debugging
+      if (!finalPrice) {
+        logger.debug(`🔍 No initial price for: ${fixedSpirit.name}`);
+        if (fixedSpirit.description) {
+          logger.debug(`  Description available: ${fixedSpirit.description.substring(0, 100)}...`);
+        }
+      }
+      
       if (!finalPrice && fixedSpirit.description) {
         // Try to extract price from description
         const descPricePatterns = [
@@ -1346,7 +1375,8 @@ export class UltraEfficientScraper {
       
       // Calculate ABV and proof
       const calculatedAbv = fixedSpirit.abv || advancedMetadata.abv || this.extractABV(fixedSpirit.description || fixedSpirit.snippet, detectedType);
-      const calculatedProof = calculatedAbv ? Math.round(calculatedAbv * 2) : null;
+      // V2.6.3: Always calculate proof if ABV exists, use 0 if no ABV (for database schema compliance)
+      const calculatedProof = calculatedAbv ? Math.round(calculatedAbv * 2) : 0;
       
       const spiritData = {
         name: fixedSpirit.name,
