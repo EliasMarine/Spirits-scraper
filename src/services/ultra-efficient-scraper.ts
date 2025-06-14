@@ -1210,12 +1210,19 @@ export class UltraEfficientScraper {
       // Apply critical fixes before storing
       const fixedSpirit = V25CriticalFixes.applyAllFixes(spirit);
       
-      // V2.6: Use smart NLP-based validation
+      // V2.6.1: Use smart NLP-based validation with more lenient handling
       const validationResult = await smartProductValidator.validateProductName(fixedSpirit.name);
       
-      if (!validationResult.isValid) {
-        logger.warn(`❌ Smart validator rejected: "${fixedSpirit.name}"`);
+      // Log validation details for debugging
+      if (validationResult.confidence < 0.5) {
+        logger.debug(`⚠️ Smart validator warning for: "${fixedSpirit.name}"`);
         logger.debug(`   Confidence: ${validationResult.confidence.toFixed(2)}`);
+        logger.debug(`   Issues: ${validationResult.issues.join(', ')}`);
+      }
+      
+      // V2.6.1: Only reject if confidence is VERY low or has critical issues
+      if (!validationResult.isValid && validationResult.confidence < 0.1) {
+        logger.warn(`❌ Smart validator rejected (confidence ${validationResult.confidence.toFixed(2)}): "${fixedSpirit.name}"`);
         logger.debug(`   Issues: ${validationResult.issues.join(', ')}`);
         if (validationResult.suggestions.length > 0) {
           logger.debug(`   Suggestions: ${validationResult.suggestions.join(', ')}`);
