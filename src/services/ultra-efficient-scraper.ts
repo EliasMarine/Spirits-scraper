@@ -395,6 +395,14 @@ export class UltraEfficientScraper {
       'vodka': [
         'Grey Goose', 'Absolut', 'Belvedere', 'Ketel One', 'Tito\'s', 'Stolichnaya', 'Chopin',
         'Reyka', 'Russian Standard', 'Smirnoff', 'Finlandia', 'Crystal Head', 'Cîroc', 'Hangar 1'
+      ],
+      'cognac': [
+        'Hennessy', 'Rémy Martin', 'Martell', 'Courvoisier', 'Camus', 'Hine', 'Pierre Ferrand',
+        'Paul Giraud', 'Delamain', 'Frapin', 'Hardy', 'Gautier', 'Meukow', 'A.E. Dor', 'Baron Otard',
+        'Bisquit', 'François Voyer', 'Jean Fillioux', 'Leopold Gourmel', 'Landy', 'Larsen',
+        'Louis Royer', 'Maison Surrenne', 'Park', 'Planat', 'Prunier', 'Tesseron', 'D\'Ussé',
+        'ABK6', 'Vallein Tercinier', 'Château de Montifaud', 'Claude Chatelier', 'Daniel Bouju',
+        'Deau', 'Dudognon', 'François Peyrot', 'Jean-Luc Pasquet', 'Louis XIII', 'Maxime Trijol'
       ]
     };
     
@@ -479,7 +487,8 @@ export class UltraEfficientScraper {
       'tequila': ['blanco', 'reposado', 'añejo', 'extra añejo', 'cristalino', '100% agave'],
       'rum': ['white', 'gold', 'dark', 'spiced', 'aged', 'agricole', 'overproof'],
       'gin': ['london dry', 'old tom', 'navy strength', 'barrel aged', 'contemporary'],
-      'vodka': ['premium', 'craft', 'potato', 'wheat', 'rye', 'corn']
+      'vodka': ['premium', 'craft', 'potato', 'wheat', 'rye', 'corn'],
+      'cognac': ['VS', 'VSOP', 'XO', 'Napoleon', 'Extra', 'Paradis', 'Hors d\'Age', 'Fine Champagne', 'Grande Champagne']
     };
     
     const styles = styleQueries[category.toLowerCase()] || [];
@@ -505,12 +514,23 @@ export class UltraEfficientScraper {
     }
 
     // 9. Gift and special occasion searches
-    queries.push(
-      `${category} gift guide ${currentYear}`,
-      `best ${category} gifts under 100`,
-      `${category} wedding gift ideas`,
-      `${category} collectors edition`
-    );
+    // V2.7.3: Skip problematic gift queries for cognac
+    if (category.toLowerCase() !== 'cognac') {
+      queries.push(
+        `${category} gift guide ${currentYear}`,
+        `best ${category} gifts under 100`,
+        `${category} wedding gift ideas`,
+        `${category} collectors edition`
+      );
+    } else {
+      // V2.7.3: Better cognac-specific queries
+      queries.push(
+        `cognac VSOP buy online ${simpleExclusions}`,
+        `cognac XO price list ${currentYear}`,
+        `cognac VS shop online -gift -accessories`,
+        `cognac Napoleon limited edition ${currentYear}`
+      );
+    }
 
     // 10. Inventory and catalog searches
     queries.push(
@@ -532,6 +552,16 @@ export class UltraEfficientScraper {
         `"single malt" scotch whisky site:thewhiskyexchange.com`,
         `"aged 12 years" scotch price`,
         `"highland" OR "islay" scotch buy`
+      );
+    } else if (spiritType === 'cognac') {
+      // V2.7.3: Cognac-specific searches
+      queries.push(
+        `"Hennessy VSOP" price site:totalwine.com`,
+        `"Remy Martin XO" buy online ${simpleExclusions}`,
+        `"Martell VS" "cognac" shop -accessories -leather`,
+        `"Courvoisier VSOP" 750ml price`,
+        `cognac "Grande Champagne" buy online -gift -candle`,
+        `"Fine Champagne" cognac price list`
       );
     }
     
@@ -1128,7 +1158,11 @@ export class UltraEfficientScraper {
           'W.L. Weller', 'W. L. Weller', 'Buffalo Trace', 'Eagle Rare',
           'Blanton\'s', 'Stagg', 'Pappy Van Winkle', 'Four Roses',
           'Wild Turkey', 'Maker\'s Mark', 'Jim Beam', 'Jack Daniel\'s',
-          'Elijah Craig', 'Heaven Hill', 'Woodford Reserve', 'Knob Creek'
+          'Elijah Craig', 'Heaven Hill', 'Woodford Reserve', 'Knob Creek',
+          // V2.7.3: Add cognac brands
+          'Hennessy', 'Remy Martin', 'Rémy Martin', 'Martell', 'Courvoisier',
+          'Hine', 'Camus', 'Pierre Ferrand', 'D\'Ussé', 'D\'usse', 'ABK6',
+          'Louis XIII', 'Baron Otard', 'Delamain', 'Frapin', 'Hardy'
         ];
         
         if (knownBrands.some(brand => name.toLowerCase().includes(brand.toLowerCase()))) {
@@ -1280,8 +1314,8 @@ export class UltraEfficientScraper {
 
     // Pattern 1: "Product Name - $XX.XX" or "Product Name ... $XX.XX"
     const pricePatterns = [
-      /([A-Za-z\s&'.-]+(?:Whiskey|Bourbon|Rum|Vodka|Gin|Tequila|Scotch|Rye)[A-Za-z\s&'.-]*?)\s*[-–...]\s*\$(\d+\.?\d*)/gi,
-      /([A-Za-z\s&'.-]+?)\s+(?:Whiskey|Bourbon|Rum|Vodka|Gin|Tequila|Scotch|Rye)\s*[-–...]\s*\$(\d+\.?\d*)/gi
+      /([A-Za-z\s&'.-]+(?:Whiskey|Bourbon|Rum|Vodka|Gin|Tequila|Scotch|Rye|Cognac|Brandy|Armagnac)[A-Za-z\s&'.-]*?)\s*[-–...]\s*\$(\d+\.?\d*)/gi,
+      /([A-Za-z\s&'.-]+?)\s+(?:Whiskey|Bourbon|Rum|Vodka|Gin|Tequila|Scotch|Rye|Cognac|Brandy|Armagnac)\s*[-–...]\s*\$(\d+\.?\d*)/gi
     ];
     
     for (const pattern of pricePatterns) {
@@ -1306,7 +1340,7 @@ export class UltraEfficientScraper {
     }
     
     // Pattern 2: Look for product listings without prices
-    const listingPattern = /(?:^|\n|;|•|·|\|)\s*([A-Z][A-Za-z\s&'.-]+(?:Whiskey|Bourbon|Rum|Vodka|Gin|Tequila|Scotch|Rye)[A-Za-z\s&'.-]*?)(?:\s*[-–]|$|\n|;)/gi;
+    const listingPattern = /(?:^|\n|;|•|·|\|)\s*([A-Z][A-Za-z\s&'.-]+(?:Whiskey|Bourbon|Rum|Vodka|Gin|Tequila|Scotch|Rye|Cognac|Brandy|Armagnac)[A-Za-z\s&'.-]*?)(?:\s*[-–]|$|\n|;)/gi;
     const listingMatches = Array.from(snippet.matchAll(listingPattern));
     
     for (const match of listingMatches) {
@@ -1519,7 +1553,8 @@ export class UltraEfficientScraper {
         'tequila': ['Tequila', 'Blanco', 'Reposado', 'Añejo', 'Extra Añejo'],
         'rum': ['Rum', 'White Rum', 'Gold Rum', 'Dark Rum', 'Spiced Rum'],
         'vodka': ['Vodka'],
-        'gin': ['Gin', 'London Dry Gin', 'Navy Strength Gin']
+        'gin': ['Gin', 'London Dry Gin', 'Navy Strength Gin'],
+        'cognac': ['Cognac', 'Brandy', 'Armagnac', 'VS', 'VSOP', 'XO', 'Napoleon', 'Extra']
       };
       
       // For searchAndExtract, be more flexible with type matching

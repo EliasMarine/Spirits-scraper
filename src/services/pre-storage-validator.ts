@@ -20,6 +20,7 @@ export interface PreStorageValidationResult {
 
 export class PreStorageValidator {
   private readonly MIN_QUALITY_SCORE = 75; // V2.7.2: Increased from 70
+  private readonly MIN_QUALITY_SCORE_COGNAC = 65; // V2.7.3: Lower threshold for cognac/brandy
   
   /**
    * Perform final validation before storing to database
@@ -27,6 +28,10 @@ export class PreStorageValidator {
   async validate(spiritData: any): Promise<PreStorageValidationResult> {
     const issues: string[] = [];
     let qualityScore = 100;
+    
+    // V2.7.3: Check if this is a cognac/brandy for special handling
+    const isCognacBrandy = spiritData.type === 'cognac' || spiritData.type === 'brandy' ||
+      /\b(cognac|brandy|armagnac)\b/i.test(spiritData.name);
     
     if (!spiritData.name) {
       return {
@@ -43,6 +48,17 @@ export class PreStorageValidator {
     cleanedName = TextProcessor.removeStoreSuffixes(cleanedName);  // V2.7.2: Remove store suffixes
     cleanedName = TextProcessor.fixTextSpacing(cleanedName);
     cleanedName = TextProcessor.removeStoreNames(cleanedName);
+    
+    // V2.7.3: Check for non-spirit items (clothing, merchandise, etc.) BEFORE other validation
+    if (/\b(shirt|polo|sweater|quarter\s+zip|t-shirt|apparel|clothing|merchandise|decor|furniture|candle|notebook|leather)\b/i.test(cleanedName)) {
+      return {
+        isValid: false,
+        qualityScore: 0,
+        issues: ['Non-spirit merchandise or accessory'],
+        cleanedName,
+        rejectionReason: 'non_spirit_item'
+      };
+    }
     
     // Check if name became too short after cleaning
     if (cleanedName.length < 10) {
@@ -159,7 +175,8 @@ export class PreStorageValidator {
         issues.push('Brand must start with letter or number');
       }
     } else {
-      qualityScore -= 15;
+      // V2.7.3: Be more lenient for cognac missing brands since they often use just the house name
+      qualityScore -= isCognacBrandy ? 5 : 15;
       issues.push('No brand specified');
     }
     
@@ -182,30 +199,51 @@ export class PreStorageValidator {
     // Use smart validator for additional checks
     const smartValidation = await smartProductValidator.validateProductName(cleanedName);
     if (!smartValidation.isValid) {
-      qualityScore -= 40;
+      // V2.7.3: Be more lenient for cognac with smart validator failures
+      qualityScore -= isCognacBrandy ? 20 : 40;
       issues.push(...smartValidation.issues);
+    }
+    
+    // V2.7.3: Add positive signals for cognac-specific patterns
+    if (isCognacBrandy) {
+      // Grade indicators are strong signals
+      if (/\b(XO|VSOP|VS|Napoleon|Extra|Paradis|Hors d'Age)\b/i.test(cleanedName)) {
+        qualityScore = Math.min(100, qualityScore + 20);
+      }
+      // Age statements for cognac
+      if (/\b\d{2,3}\s*(year|ans|yr)s?\b/i.test(cleanedName)) {
+        qualityScore = Math.min(100, qualityScore + 10);
+      }
+      // Region indicators
+      if (/\b(Fine Champagne|Grande Champagne|Petite Champagne|Borderies)\b/i.test(cleanedName)) {
+        qualityScore = Math.min(100, qualityScore + 15);
+      }
     }
     
     // Calculate final score
     qualityScore = Math.max(0, qualityScore);
     
+    // V2.7.3: Use appropriate threshold based on spirit type
+    const threshold = isCognacBrandy ? this.MIN_QUALITY_SCORE_COGNAC : this.MIN_QUALITY_SCORE;
+    
     // Log detailed validation for debugging
-    if (qualityScore < this.MIN_QUALITY_SCORE) {
+    if (qualityScore < threshold) {
       logger.warn(`🔍 Pre-storage validation FAILED for "${spiritData.name}"`);
       logger.warn(`   Cleaned name: "${cleanedName}"`);
       logger.warn(`   Brand: "${spiritData.brand || 'none'}"`);
       logger.warn(`   Type: "${spiritData.type || 'none'}"`);
-      logger.warn(`   Quality score: ${qualityScore}`);
+      logger.warn(`   Is Cognac/Brandy: ${isCognacBrandy}`);
+      logger.warn(`   Quality score: ${qualityScore} (threshold: ${threshold})`);
       logger.warn(`   Issues: ${issues.join(', ')}`);
     }
     
     return {
-      isValid: qualityScore >= this.MIN_QUALITY_SCORE,
+      isValid: qualityScore >= threshold,
       qualityScore,
       issues,
       cleanedName: cleanedName !== spiritData.name ? cleanedName : undefined,
       cleanedBrand: cleanedBrand !== spiritData.brand ? cleanedBrand : undefined,
-      rejectionReason: qualityScore < this.MIN_QUALITY_SCORE ? 'low_quality_score' : undefined
+      rejectionReason: qualityScore < threshold ? 'low_quality_score' : undefined
     };
   }
   

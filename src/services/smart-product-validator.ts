@@ -296,9 +296,14 @@ export class SmartProductValidator {
     
     // V2.6.2: Check hard rejection patterns FIRST
     // But skip if it's clearly a product with store mention
-    const hasValidProductIndicators = /\b(bourbon|whiskey|whisky|rye|vodka|gin|rum|tequila|mezcal|cognac|brandy)\b/i.test(name) &&
+    // V2.7.3: More lenient for cognac/brandy which often have simpler names
+    const isCognacBrandy = /\b(cognac|brandy|armagnac)\b/i.test(name);
+    const hasCognacIndicators = isCognacBrandy && /\b(XO|VSOP|VS|Napoleon|Extra|Paradis|Hors d'Age|Fine Champagne|Grande Champagne|Petite Champagne)\b/i.test(name);
+    
+    const hasValidProductIndicators = (/\b(bourbon|whiskey|whisky|rye|vodka|gin|rum|tequila|mezcal)\b/i.test(name) &&
       /\b(straight|single\s+(malt|barrel)|small\s+batch|bottled|cask\s+strength|proof|year|aged?|series|limited|edition|reserve)\b/i.test(name) &&
-      !/^(core|unknown|generic|basic|bundles?)\b/i.test(name);
+      !/^(core|unknown|generic|basic|bundles?)\b/i.test(name)) || 
+      hasCognacIndicators;
     
     const isLikelyProductWithStore = hasValidProductIndicators && 
       /\b(available\s+at|now\s+at|from)\s+\w+/i.test(name);
@@ -389,12 +394,32 @@ export class SmartProductValidator {
     // Check for valid spirit brand patterns
     const knownBrands = [
       'buffalo trace', 'four roses', 'high west', 'bardstown', 'belle meade',
-      'wild turkey', 'maker\'s mark', 'jim beam', 'jack daniel', 'woodford'
+      'wild turkey', 'maker\'s mark', 'jim beam', 'jack daniel', 'woodford',
+      // V2.7.3: Add cognac brands
+      'hennessy', 'remy martin', 'rémy martin', 'martell', 'courvoisier', 'hine',
+      'camus', 'pierre ferrand', 'delamain', 'frapin', 'hardy', 'gautier',
+      'd\'usse', 'd\'ussé', 'abk6', 'abk 6', 'louis xiii', 'baron otard'
     ];
     
     const hasKnownBrand = knownBrands.some(brand => lowerName.includes(brand));
     if (hasKnownBrand) {
       confidence = Math.min(1.0, confidence + 0.3);
+    }
+    
+    // V2.7.3: Special confidence boost for cognac patterns
+    if (isCognacBrandy) {
+      // Cognac grade indicators are strong signals
+      if (/\b(XO|VSOP|VS|Napoleon|Extra|Paradis|Hors d'Age)\b/i.test(normalizedName)) {
+        confidence = Math.min(1.0, confidence + 0.4);
+      }
+      // Region indicators
+      if (/\b(Fine Champagne|Grande Champagne|Petite Champagne|Borderies|Fins Bois|Bons Bois)\b/i.test(normalizedName)) {
+        confidence = Math.min(1.0, confidence + 0.3);
+      }
+      // Age statements for cognac
+      if (/\b\d{2,3}\s*(year|ans|yr)\b/i.test(normalizedName)) {
+        confidence = Math.min(1.0, confidence + 0.2);
+      }
     }
 
     // Check for year patterns (good signal)

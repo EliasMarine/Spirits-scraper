@@ -1077,6 +1077,23 @@ export class TextProcessor {
       return this.normalizeBrandName('Castle & Key');
     }
     
+    // V2.7.3: Special handling for cognac names
+    // Handle "Cognac Hennessy XO" → "Hennessy"
+    if (/^cognac\s+([A-Z][a-zA-Z\s&'.-]+?)(?:\s+XO|\s+VSOP|\s+VS|\s+Napoleon|\s+Extra|\s+Paradis|\s+Richard)/i.test(name)) {
+      const match = name.match(/^cognac\s+([A-Z][a-zA-Z\s&'.-]+?)(?:\s+XO|\s+VSOP|\s+VS|\s+Napoleon|\s+Extra|\s+Paradis|\s+Richard)/i);
+      if (match) {
+        return this.normalizeBrandName(match[1]);
+      }
+    }
+    
+    // Handle "Hennessy VS Cognac 750 ml" → "Hennessy"
+    if (/^([A-Z][a-zA-Z\s&'.-]+?)(?:\s+XO|\s+VSOP|\s+VS|\s+Napoleon|\s+Extra)\s+(?:Cognac|Brandy|Armagnac)/i.test(name)) {
+      const match = name.match(/^([A-Z][a-zA-Z\s&'.-]+?)(?:\s+XO|\s+VSOP|\s+VS|\s+Napoleon|\s+Extra)\s+(?:Cognac|Brandy|Armagnac)/i);
+      if (match) {
+        return this.normalizeBrandName(match[1]);
+      }
+    }
+    
     // Common patterns where brand appears first
     const brandPatterns = [
       /^([A-Z][a-zA-Z\s&'.-]+?)(?:\s+\d+\s*Year|\s+Single\s+Malt|\s+Bourbon|\s+Whiskey|\s+Vodka|\s+Rum|\s+Gin|\s+Tequila)/i,
