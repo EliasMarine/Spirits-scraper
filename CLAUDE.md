@@ -96,10 +96,12 @@ npm run test                                           # Test enhanced features
 When running deduplication, always run with `--dry-run` first to preview changes.
 
 **Important**: All Supabase SQL migration scripts must be "unionized" (unified) to run as a single script in the Supabase SQL Editor. This means:
-- Wrap the entire script in DO blocks for progress tracking
+- **MUST BE IN ONE DO BLOCK**: Wrap the ENTIRE script in a SINGLE DO $$ ... $$ block
+- Include proper variable declarations (e.g., `r RECORD;` for loop variables)
+- Use RAISE NOTICE for progress tracking throughout execution
 - Include cleanup of existing objects to avoid conflicts
-- Add verification at the end to confirm complete execution
-- Use RAISE NOTICE for progress updates throughout the script
+- Add verification queries AFTER the DO block to confirm results
+- The DO block ensures atomic execution and proper error handling
 
 ## Architecture Overview
 
@@ -201,7 +203,8 @@ The deduplication service uses attribute extraction to prevent false positives:
 - Uses dynamic brand weighting (15% for same brand, 40% for different brands)
 
 ### Google Search API Integration
-- Rate limited to 100 queries/day (free tier)
+- **IMPORTANT**: This project uses a PAID Google Cloud account - NOT the free tier
+- The 100 queries/day limit does NOT apply - paid accounts have much higher limits
 - Implements exponential backoff for rate limit handling
 - User agent rotation to avoid bot detection
 - Query generation focuses on trusted sites using `site:` operators

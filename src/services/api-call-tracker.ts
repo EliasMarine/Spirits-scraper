@@ -22,7 +22,7 @@ export class APICallTracker {
   private resetTime: number; // Daily reset timestamp
   private apiLimitReached: boolean = false;
 
-  constructor(dailyLimit = 100) {
+  constructor(dailyLimit = 10000) { // Default for paid Google Cloud account
     this.dailyLimit = dailyLimit;
     this.resetTime = this.getNextResetTime();
   }
@@ -204,4 +204,6 @@ export class APICallTracker {
 }
 
 // Singleton instance
-export const apiCallTracker = new APICallTracker();
+// Using 10,000 daily limit for paid Google Cloud account
+// (actual limit may be higher, but this provides reasonable tracking)
+export const apiCallTracker = new APICallTracker(10000);
