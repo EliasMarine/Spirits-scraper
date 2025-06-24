@@ -1,0 +1,79 @@
+{
+  "timestamp": "2025-06-14T16:33:06.067Z",
+  "summary": {
+    "totalStored": 0,
+    "totalRejected": 32,
+    "totalApiCalls": 8,
+    "acceptanceRate": "0.0",
+    "efficiency": "0.00",
+    "qualityRate": 0,
+    "totalQualityIssues": 0
+  },
+  "results": [
+    {
+      "category": "bourbon",
+      "stored": 0,
+      "rejected": 8,
+      "rejectionReasons": {
+        "- no spirit indicators": 6,
+        "question": 2
+      },
+      "apiCalls": 2,
+      "qualityIssues": 0,
+      "samples": []
+    },
+    {
+      "category": "scotch",
+      "stored": 0,
+      "rejected": 0,
+      "rejectionReasons": {},
+      "apiCalls": 2,
+      "qualityIssues": 0,
+      "samples": []
+    },
+    {
+      "category": "tequila",
+      "stored": 0,
+      "rejected": 12,
+      "rejectionReasons": {
+        "- no spirit indicators": 12
+      },
+      "apiCalls": 2,
+      "qualityIssues": 0,
+      "samples": []
+    },
+    {
+      "category": "rum",
+      "stored": 0,
+      "rejected": 5,
+      "rejectionReasons": {
+        "- no spirit indicators": 4,
+        "fragment pattern": 1
+      },
+      "apiCalls": 1,
+      "qualityIssues": 0,
+      "samples": []
+    },
+    {
+      "category": "gin",
+      "stored": 0,
+      "rejected": 7,
+      "rejectionReasons": {
+        "- no spirit indicators": 3,
+        "too short": 1,
+        "fragment pattern": 1,
+        "article/content": 2
+      },
+      "apiCalls": 1,
+      "qualityIssues": 0,
+      "samples": []
+    }
+  ],
+  "rejectionReasons": {
+    "- no spirit indicators": 25,
+    "question": 2,
+    "fragment pattern": 2,
+    "too short": 1,
+    "article/content": 2
+  }
+}

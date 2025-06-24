@@ -1,0 +1,102 @@
+[
+  {
+    "distillery": "powers",
+    "spiritsFound": 0,
+    "issues": [
+      {
+        "type": "error",
+        "message": "Command failed: npm run scrape -- --distillery powers --limit 2 --no-cache\nerror: unknown option '--no-cache'\n"
+      }
+    ]
+  },
+  {
+    "distillery": "tullamore-dew",
+    "spiritsFound": 0,
+    "issues": [
+      {
+        "type": "error",
+        "message": "Command failed: npm run scrape -- --distillery tullamore-dew --limit 2 --no-cache\nerror: unknown option '--no-cache'\n"
+      }
+    ]
+  },
+  {
+    "distillery": "teeling",
+    "spiritsFound": 0,
+    "issues": [
+      {
+        "type": "error",
+        "message": "Command failed: npm run scrape -- --distillery teeling --limit 2 --no-cache\nerror: unknown option '--no-cache'\n"
+      }
+    ]
+  },
+  {
+    "distillery": "dingle",
+    "spiritsFound": 0,
+    "issues": [
+      {
+        "type": "error",
+        "message": "Command failed: npm run scrape -- --distillery dingle --limit 2 --no-cache\nerror: unknown option '--no-cache'\n"
+      }
+    ]
+  },
+  {
+    "distillery": "waterford",
+    "spiritsFound": 0,
+    "issues": [
+      {
+        "type": "error",
+        "message": "Command failed: npm run scrape -- --distillery waterford --limit 2 --no-cache\nerror: unknown option '--no-cache'\n"
+      }
+    ]
+  },
+  {
+    "distillery": "suntory",
+    "spiritsFound": 0,
+    "issues": [
+      {
+        "type": "error",
+        "message": "Command failed: npm run scrape -- --distillery suntory --limit 2 --no-cache\nerror: unknown option '--no-cache'\n"
+      }
+    ]
+  },
+  {
+    "distillery": "nikka",
+    "spiritsFound": 0,
+    "issues": [
+      {
+        "type": "error",
+        "message": "Command failed: npm run scrape -- --distillery nikka --limit 2 --no-cache\nerror: unknown option '--no-cache'\n"
+      }
+    ]
+  },
+  {
+    "distillery": "yamazaki",
+    "spiritsFound": 0,
+    "issues": [
+      {
+        "type": "error",
+        "message": "Command failed: npm run scrape -- --distillery yamazaki --limit 2 --no-cache\nerror: unknown option '--no-cache'\n"
+      }
+    ]
+  },
+  {
+    "distillery": "hakushu",
+    "spiritsFound": 0,
+    "issues": [
+      {
+        "type": "error",
+        "message": "Command failed: npm run scrape -- --distillery hakushu --limit 2 --no-cache\nerror: unknown option '--no-cache'\n"
+      }
+    ]
+  },
+  {
+    "distillery": "yoichi",
+    "spiritsFound": 0,
+    "issues": [
+      {
+        "type": "error",
+        "message": "Command failed: npm run scrape -- --distillery yoichi --limit 2 --no-cache\nerror: unknown option '--no-cache'\n"
+      }
+    ]
+  }
+]

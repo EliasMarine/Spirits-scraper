@@ -1,0 +1,102 @@
+[
+  {
+    "distillery": "grey-goose",
+    "spiritsFound": 0,
+    "issues": [
+      {
+        "type": "error",
+        "message": "Command failed: npm run scrape -- --distillery grey-goose --limit 2 --no-cache\nerror: unknown option '--no-cache'\n"
+      }
+    ]
+  },
+  {
+    "distillery": "belvedere",
+    "spiritsFound": 0,
+    "issues": [
+      {
+        "type": "error",
+        "message": "Command failed: npm run scrape -- --distillery belvedere --limit 2 --no-cache\nerror: unknown option '--no-cache'\n"
+      }
+    ]
+  },
+  {
+    "distillery": "ketel-one",
+    "spiritsFound": 0,
+    "issues": [
+      {
+        "type": "error",
+        "message": "Command failed: npm run scrape -- --distillery ketel-one --limit 2 --no-cache\nerror: unknown option '--no-cache'\n"
+      }
+    ]
+  },
+  {
+    "distillery": "titos",
+    "spiritsFound": 0,
+    "issues": [
+      {
+        "type": "error",
+        "message": "Command failed: npm run scrape -- --distillery titos --limit 2 --no-cache\nerror: unknown option '--no-cache'\n"
+      }
+    ]
+  },
+  {
+    "distillery": "absolut",
+    "spiritsFound": 0,
+    "issues": [
+      {
+        "type": "error",
+        "message": "Command failed: npm run scrape -- --distillery absolut --limit 2 --no-cache\nerror: unknown option '--no-cache'\n"
+      }
+    ]
+  },
+  {
+    "distillery": "hennessy",
+    "spiritsFound": 0,
+    "issues": [
+      {
+        "type": "error",
+        "message": "Command failed: npm run scrape -- --distillery hennessy --limit 2 --no-cache\nerror: unknown option '--no-cache'\n"
+      }
+    ]
+  },
+  {
+    "distillery": "remy-martin",
+    "spiritsFound": 0,
+    "issues": [
+      {
+        "type": "error",
+        "message": "Command failed: npm run scrape -- --distillery remy-martin --limit 2 --no-cache\nerror: unknown option '--no-cache'\n"
+      }
+    ]
+  },
+  {
+    "distillery": "martell",
+    "spiritsFound": 0,
+    "issues": [
+      {
+        "type": "error",
+        "message": "Command failed: npm run scrape -- --distillery martell --limit 2 --no-cache\nerror: unknown option '--no-cache'\n"
+      }
+    ]
+  },
+  {
+    "distillery": "courvoisier",
+    "spiritsFound": 0,
+    "issues": [
+      {
+        "type": "error",
+        "message": "Command failed: npm run scrape -- --distillery courvoisier --limit 2 --no-cache\nerror: unknown option '--no-cache'\n"
+      }
+    ]
+  },
+  {
+    "distillery": "hine",
+    "spiritsFound": 0,
+    "issues": [
+      {
+        "type": "error",
+        "message": "Command failed: npm run scrape -- --distillery hine --limit 2 --no-cache\nerror: unknown option '--no-cache'\n"
+      }
+    ]
+  }
+]

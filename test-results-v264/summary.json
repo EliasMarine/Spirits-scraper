@@ -1,0 +1,16 @@
+{
+  "timestamp": "2025-06-14T16:00:13.906Z",
+  "distilleriesTested": 110,
+  "totalSpirits": 0,
+  "successfulScrapes": 0,
+  "failedScrapes": 0,
+  "qualityRate": 0,
+  "issueTypes": {
+    "article": 0,
+    "store": 0,
+    "spacing": 0,
+    "generic": 0,
+    "error": 0
+  },
+  "detailedIssues": []
+}

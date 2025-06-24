@@ -258,8 +258,8 @@ export class UltraEfficientScraper {
                 logger.info(`✅ Stored: ${spirit.name} (${spirit.price ? '$' + spirit.price : 'no price'})`);
               } else {
                 logger.warn(`❌ Failed to store: ${spirit.name}`);
-                // Add debug info
-                logger.debug(`  Spirit data: ${JSON.stringify({
+                // V2.7.3: Temporary - log spirit data at warn level to debug cognac issue
+                logger.warn(`  Spirit data: ${JSON.stringify({
                   name: spirit.name,
                   brand: spirit.brand,
                   type: spirit.type,
@@ -862,7 +862,7 @@ export class UltraEfficientScraper {
             name: TextProcessor.fixTextSpacing(product.name),
             type: category,
             price: structuredPrice,
-            brand: product.brand?.name || product.brand || this.extractBrandFromName(product.name),
+            brand: product.brand?.name || product.brand || TextProcessor.extractBrandFromName(product.name),
             description: product.description,
             image_url: product.image || product.offers?.image,
             source_url: link,
@@ -1263,7 +1263,7 @@ export class UltraEfficientScraper {
     
     return {
       name: productName,
-      brand: brand || this.extractBrandFromName(productName),
+      brand: brand || TextProcessor.extractBrandFromName(productName),
       type: category,
       price: priceMatch ? this.extractPrice(priceMatch[1]) : undefined,
       source_url: link,
@@ -1294,7 +1294,7 @@ export class UltraEfficientScraper {
           if (!products.some(p => p.name.toLowerCase() === cleanName.toLowerCase())) {
             products.push({
               name: cleanName,
-              brand: this.extractBrandFromName(cleanName),
+              brand: TextProcessor.extractBrandFromName(cleanName),
               type: category,
               price: this.extractPrice(match[2]),
               source_url: link,
@@ -1620,7 +1620,7 @@ export class UltraEfficientScraper {
       
       const spiritData = {
         name: fixedSpirit.name,
-        brand: fixedSpirit.brand || this.extractBrandFromName(fixedSpirit.name),
+        brand: fixedSpirit.brand || TextProcessor.extractBrandFromName(fixedSpirit.name),
         type: detectedType,
         category: this.mapTypeToCategory(detectedType),
         price: finalPrice,

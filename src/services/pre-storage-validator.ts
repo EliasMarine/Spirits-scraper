@@ -114,10 +114,13 @@ export class PreStorageValidator {
     
     // Check for proper spirit type
     const hasSpiritType = /\b(whiskey|whisky|bourbon|rum|gin|vodka|tequila|mezcal|cognac|brandy|liqueur)\b/i.test(cleanedName);
-    if (!hasSpiritType && spiritData.type) {
-      // It's OK if type is in the type field instead of name
+    
+    // V2.7.3: If type is already detected and set, don't penalize for missing type in name
+    // This is especially important for cognac, where brands like "Hennessy VS" don't include "cognac"
+    if (!hasSpiritType && !spiritData.type) {
+      // Only penalize if neither name nor type field has spirit type
       qualityScore -= 10;
-      issues.push('No spirit type in name');
+      issues.push('No spirit type detected');
     }
     
     // Check brand quality
@@ -188,10 +191,12 @@ export class PreStorageValidator {
     
     // Log detailed validation for debugging
     if (qualityScore < this.MIN_QUALITY_SCORE) {
-      logger.info(`🔍 Pre-storage validation FAILED for "${spiritData.name}"`);
-      logger.info(`   Cleaned name: "${cleanedName}"`);
-      logger.info(`   Quality score: ${qualityScore}`);
-      logger.info(`   Issues: ${issues.join(', ')}`);
+      logger.warn(`🔍 Pre-storage validation FAILED for "${spiritData.name}"`);
+      logger.warn(`   Cleaned name: "${cleanedName}"`);
+      logger.warn(`   Brand: "${spiritData.brand || 'none'}"`);
+      logger.warn(`   Type: "${spiritData.type || 'none'}"`);
+      logger.warn(`   Quality score: ${qualityScore}`);
+      logger.warn(`   Issues: ${issues.join(', ')}`);
     }
     
     return {
