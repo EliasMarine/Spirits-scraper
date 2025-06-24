@@ -28,8 +28,70 @@ export class SmartProductValidator {
   private readonly LEARNING_THRESHOLD = 5;
   private readonly CONFIDENCE_THRESHOLD = 0.3; // Keep V2.6.1 threshold
   
-  // V2.6.2: Hard rejection patterns for non-products
+  // V2.6.4: Enhanced hard rejection patterns for non-products
   private readonly HARD_REJECT_PATTERNS = [
+    // V2.7.1: Generic age-only patterns (MUST BE FIRST)
+    /^\d+\s+year\s+old\s+(whisky|whiskey|bourbon|rum|gin|vodka|tequila)$/i,
+    
+    // V2.7.1: Repeated spirit type words
+    /\b(whiskey|whisky|bourbon|rum|gin|vodka|tequila|mezcal|cognac)\s+\1\b/i,
+    
+    // V2.7.1: Fragment patterns and too short
+    /^type\.\s+\w+$/i,
+    /^[a-z]{2,5}\s+[a-z]{2,5}$/i,  // "Bcn Gin", "Gin Under"
+    
+    // V2.7.1: Menu/listing items with price
+    /\$\d+\.?\d*\s*\/\s*\d+\s*ml/i,
+    /^\w+\s*&\s*(bourbon|whiskey|whisky)\.\s*/i,
+    
+    // V2.7.1: HTML/markup artifacts
+    /<[^>]+>|\\["']|&[a-z]+;|pmeta\s+charset/i,
+    /\bstrong\s*Please\s+note\b/i,
+    
+    // V2.7.1: Store/navigation prefixes
+    /^our\s+(bourbon|whiskey|collection|selection|range|products?)\b/i,
+    /^new\s+products\b/i,
+    
+    // V2.7.1: Store language in names
+    /\b(shop|buy)\s+(today|now|online|all)\b/i,
+    /\bsimilar\s+products\b/i,
+    /\bexplore\s+related\s+collections\b/i,
+    
+    // V2.7.2: Event/Competition/Awards patterns
+    /\b(party|parties|challenge|winners?|competition|awards?|according\s+to|world'?s?\s+best)\b/i,
+    /\b(cocktail\s+challenge|bourbon\s+classic|release\s+party)\b/i,
+    /\b(award\s+winners?|colonel\s+award|san\s+francisco\s+world\s+spirits)\b/i,
+    /\btickets?\s+(sat|sun|mon|tue|wed|thu|fri)\b/i,
+    /\bspecial\s+guests?\b/i,
+    
+    // V2.7.2: Gift/Promotional patterns
+    /\b(gift|gifts|guide|father'?s?\s+day|mother'?s?\s+day|holiday|christmas|valentine)\b/i,
+    /\b(gift\s+box|gift\s+set|gift\s+guide|gift\s+ideas?)\b/i,
+    /\b\d{4}\s+(gift|holiday)\s+(guide|ideas?)\b/i,
+    /\bthe\s+best\s+\w+\s+for\s+dad\b/i,
+    
+    // V2.7.2: Store/Mission content
+    /\b(mission\s+wine|wine\s*(&|and)?\s*spirits?|liquor\s+store)\b/i,
+    /\bmission\s*$/i,  // Names ending with "Mission"
+    /\bwine\s*$/i,     // Names ending with "Wine"
+    /\s+(&|and)\s*$/i, // Names ending with "&" or "and"
+    
+    // V2.7.2: School/Non-spirit references
+    /\b(schools?|county\s+schools?|education|students?|university)\b/i,
+    /\b(bourbon\s+county\s+schools?)\b/i,
+    
+    // V2.7.2: Truncated/Malformed names
+    /(&|\.{3}|\.\.\.|…)\s*$/,  // Ending with & or ... or …
+    /\s+(whisk|bour|scot|tequ)\s*$/i,  // Truncated spirit types at end
+    
+    // V2.6.4: More comprehensive news/article patterns
+    /\b(announces|announced|announcing|says|said|responds?\s+to|accusations|partnership)\b/i,
+    /\b(is\s+back|returns?|returning|resumed?|resuming)\b/i,
+    /\bto\s+(host|become|build)\b.*\b(event|pour|distillery)\b/i,
+    /\bto\s+host\b/i,  // V2.6.4: Catch "To Host" even with broken spacing
+    /\bfashioned\s+week\b/i,  // V2.6.4: Catch event patterns
+    /\b(game\s+day'?s?|playing\s+politics)\b/i,
+    
     // V2.6.3: News articles and press releases
     /\b(announced|announces|introducing|introduces|launching|launches|unveils?|reveals?)\b.*\b(new|ahead\s+of|for\s+its|brand)\b/i,
     /\bjust\s+announced\b/i,
@@ -81,6 +143,13 @@ export class SmartProductValidator {
     /^(the\s+)?(spirit|taste|essence)\s+of\s+\w+\s+(since|heritage)\b/i,
     /^crafted\s+for\s+the\s+\w+\s+palate\b/i,
     
+    // V2.6.4: Enhanced store/shopping/auction patterns
+    /\b(add\s+to\s+cart|tagged|our\s+products|membership|program)\b/i,
+    /\b(unicorn\s+auctions?|vine\s+republic|paragon|applejack)\b/i,
+    /\b(lisa'?s?\s+liquor\s+barn|nc\s+abcc|bev\s+mo!?|remedy\s+liquor)\b/i,
+    /\b(store\s+pick|private\s+barrel\s+selection)\b/i,
+    /\bbarons?'?\s*private\s+barrel\b/i,
+    
     // Store/shopping/availability
     /^(shop|buy|purchase|available|visit)\s+(our|for|online)\b/i,
     /\bavailable\s+for\s+purchase\s+are\b/i,
@@ -128,6 +197,14 @@ export class SmartProductValidator {
     /\b(gift\s+(set|pack)|sample\s+set|tasting\s+set|mini\s+(bottle\s+)?collection)\b/i,
     /\b(set|pack|collection)\s+(with\s+glasses|\d+x\d+ml)\b/i,
     /\bbundles?\s+\w+\s+collection\b/i,
+    
+    // V2.6.4: More generic/incomplete name patterns  
+    /^(bourbon|whiskey|whisky|rye|vodka|gin|rum|cognac|tequila)\s*(whiskey|whisky)?$/i,
+    /^(current|b&e)\s+/i,
+    /^\d+\s+year\s+(kentucky\s+)?(straight\s+)?(bourbon|rye|whiskey)$/i,
+    /^whiskey\s+st\.\s+george$/i,
+    /\b(tours?|tastings?)\b/i,  // Reject anything with tours/tastings
+    /\bheritage\b/i,  // Reject heritage content
     
     // Invalid/generic names
     /^(core|unknown|generic|basic)\s+(bourbon|whiskey|whisky)\b/i,
@@ -258,6 +335,18 @@ export class SmartProductValidator {
         suggestions: ['Product names should be concise']
       };
     }
+    
+    // V2.7.1: Additional quality checks before normalization
+    // Check for broken spacing patterns
+    if (/\b[A-Z]\s+[a-z]{1,4}\b/.test(name) && !/\b(La|Le|De|Di|Du|Van|Von|Mac|Mc)\s+/i.test(name)) {
+      // Likely broken spacing like "Ne Lson" or "C Lassic"
+      return {
+        isValid: false,
+        confidence: 0,
+        issues: ['Name has broken spacing patterns'],
+        suggestions: ['Fix spacing issues in the name']
+      };
+    }
 
     // Clean and normalize the name
     const normalizedName = this.normalizeProductName(name);
@@ -316,8 +405,10 @@ export class SmartProductValidator {
       }
     }
     
-    // V2.6.2: Stricter validation - require higher confidence
-    const isValid = confidence >= 0.5 && issues.length <= 2;
+    // V2.6.4: Much stricter validation
+    // Require high confidence AND few issues AND must have spirit type
+    const hasValidSpiritType = /\b(bourbon|whiskey|whisky|rye|vodka|gin|rum|tequila|mezcal|cognac|brandy)\b/i.test(normalizedName);
+    const isValid = confidence >= 0.4 && issues.length <= 1 && hasValidSpiritType;
 
     return {
       isValid,

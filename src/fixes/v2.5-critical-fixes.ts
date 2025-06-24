@@ -466,17 +466,18 @@ export class V25CriticalFixes {
     }
     
     // V2.5.7: Reject food and non-beverage products
+    // V2.6.5: More precise food patterns to avoid false positives
     const foodPatterns = [
-      /biscuit/i,
-      /cookie/i,
-      /cake/i,
-      /coffee/i,
-      /sauce/i,
-      /glazed\s+pork/i,
-      /pork\s+belly/i,
-      /recipe/i,
-      /food/i,
-      /barrel\s+aged\s+coffee/i
+      /\bbiscuits?\b/i,
+      /\bcookies?\b/i,
+      /\bcakes?\b/i,
+      /\bcoffee\b(?!\s+finish|\s+notes)/i,  // Allow "coffee finish" or "coffee notes"
+      /\bsauces?\b/i,
+      /\bglazed\s+pork\b/i,
+      /\bpork\s+belly\b/i,
+      /\brecipe\s+book\b/i,  // Only reject "recipe book", not spirit recipes
+      /\bfood\s+products?\b/i,  // More specific than just "food"
+      /\bbarrel\s+aged\s+coffee\b/i
     ];
     
     if (foodPatterns.some(pattern => pattern.test(name))) {
@@ -561,8 +562,9 @@ export class V25CriticalFixes {
       return false;
     }
     
-    // Reject if too long (likely a sentence/description)
-    if (name.length > 100) {
+    // V2.6.5: Increased length limit - some legitimate names are long
+    // e.g., "W. L. Weller Providence Barrel Full Proof Kentucky Straight Bourbon Whiskey (1 bottle limit)"
+    if (name.length > 150) {
       console.log(`❌ Rejected too long: "${name}" (${name.length} chars)`);
       return false;
     }

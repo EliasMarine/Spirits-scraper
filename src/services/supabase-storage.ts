@@ -4,6 +4,7 @@ import { SpiritData } from '../types/index.js';
 import { dataValidator } from './data-validator.js';
 import { logger } from '../utils/logger.js';
 import { V25CriticalFixes } from '../fixes/v2.5-critical-fixes.js';
+import { preStorageValidator } from './pre-storage-validator.js';
 
 export interface StorageResult {
   success: boolean;
@@ -42,6 +43,26 @@ export class SupabaseStorage {
       }
 
       const spiritData = validation.cleaned!;
+      
+      // V2.7.1: Perform pre-storage validation
+      const preValidation = await preStorageValidator.validate(spiritData);
+      if (!preValidation.isValid) {
+        logger.warn(`❌ Pre-storage validation failed: ${spiritData.name}`);
+        logger.warn(`   Quality score: ${preValidation.qualityScore}`);
+        logger.warn(`   Rejection reason: ${preValidation.rejectionReason}`);
+        return {
+          success: false,
+          error: `Pre-storage validation failed: ${preValidation.issues.join(', ')}`,
+        };
+      }
+      
+      // Apply cleaned values if available
+      if (preValidation.cleanedName) {
+        spiritData.name = preValidation.cleanedName;
+      }
+      if (preValidation.cleanedBrand) {
+        spiritData.brand = preValidation.cleanedBrand;
+      }
 
       // Check for duplicates
       const duplicate = await this.checkDuplicate(spiritData);
@@ -379,6 +400,37 @@ export class SupabaseStorage {
       .limit(limit);
 
     return data || [];
+  }
+
+  /**
+   * Check if a spirit exists by name and brand
+   * Used by session tracker to verify actual database storage
+   */
+  async spiritExists(name: string, brand?: string): Promise<boolean> {
+    try {
+      // Build query
+      let query = this.client
+        .from('spirits')
+        .select('id')
+        .ilike('name', name);
+      
+      // Add brand filter if provided
+      if (brand) {
+        query = query.ilike('brand', brand);
+      }
+      
+      const { data, error } = await query.limit(1);
+      
+      if (error) {
+        logger.error('Error checking spirit existence:', error);
+        return false;
+      }
+
+      return data && data.length > 0;
+    } catch (error) {
+      logger.error('Error in spiritExists:', error);
+      return false;
+    }
   }
 
   /**

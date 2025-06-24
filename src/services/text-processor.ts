@@ -139,6 +139,75 @@ export class TextProcessor {
   ];
 
   /**
+   * V2.7.1: Remove navigation and store prefixes from names
+   */
+  public static removeNavigationPrefixes(text: string): string {
+    if (!text) return '';
+    
+    let result = text;
+    
+    // Remove common prefixes
+    const prefixPatterns = [
+      /^our\s+(bourbon|whiskey|collection|selection|range|products?)\s*/i,
+      /^new\s+products?\s*[-–—:]\s*/i,
+      /^latest\s+(whiskies|spirits)\s*/i,
+      /^shop\s+(now|today|online)\s*/i,
+      /^buy\s+(now|today|online)\s*/i,
+      /^explore\s+(our|the)\s*/i,
+      /^discover\s+(our|the)\s*/i,
+      /^browse\s+(our|the)\s*/i,
+      /^view\s+(our|the|all)\s*/i,
+      /^featured\s+(products?|spirits?|whiskies)\s*/i,
+      /^available\s+(at|now)\s*/i,
+      /^type\.\s*/i,  // Remove "Type. " prefix
+      
+      // V2.7.2: Additional prefixes
+      /^visit\s+our\s*/i,
+      /^check\s+out\s*/i,
+      /^find\s+(at|in)\s*/i,
+      /^get\s+your\s*/i,
+      /^order\s+(now|today|online)\s*/i,
+      /^purchase\s+(at|from)\s*/i,
+    ];
+    
+    for (const pattern of prefixPatterns) {
+      result = result.replace(pattern, '');
+    }
+    
+    return result.trim();
+  }
+  
+  /**
+   * V2.7.2: Remove store suffixes from names
+   */
+  public static removeStoreSuffixes(text: string): string {
+    if (!text) return '';
+    
+    let result = text;
+    
+    // Remove common suffixes
+    const suffixPatterns = [
+      /\s+mission\s*$/i,
+      /\s+wine\s*$/i,
+      /\s+wine\s*(&|and)?\s*spirits?\s*$/i,
+      /\s+liquor\s*store\s*$/i,
+      /\s+(&|and)\s*$/i,
+      /\s+(\.{3}|\.\.\.|…)\s*$/,  // Truncation indicators
+      /\s+\|\s*.*$/,  // Remove everything after pipe
+      /\s*[-–—]\s*(shop|store|buy|online).*$/i,
+      /\s+at\s+\w+\s*(wine|liquor|spirits).*$/i,
+      /\s+available\s+at.*$/i,
+      /\s+from\s+\w+.*$/i,
+    ];
+    
+    for (const pattern of suffixPatterns) {
+      result = result.replace(pattern, '');
+    }
+    
+    return result.trim();
+  }
+
+  /**
    * Fix text spacing issues in concatenated or camelCase text
    */
   public static fixTextSpacing(text: string): string {
@@ -181,6 +250,7 @@ export class TextProcessor {
     result = result.replace(/BottledInBond/g, 'Bottled in Bond');
     result = result.replace(/SingleBarrel/g, 'Single Barrel');
     
+    // V2.6.4: Fix ALL broken word patterns found in CSV analysis
     // Fix specific broken words we've seen
     result = result.replace(/\bBa Ller\b/g, 'Baller');
     result = result.replace(/\bMa Lt\b/g, 'Malt');
@@ -188,12 +258,80 @@ export class TextProcessor {
     result = result.replace(/\bSing Le\b/g, 'Single');
     result = result.replace(/\bCa Lifornia\b/g, 'California');
     result = result.replace(/\bCast Le\b/gi, 'Castle');
+    result = result.replace(/\bE Lijah\b/gi, 'Elijah');
+    result = result.replace(/\bO Ld\b/gi, 'Old');
+    result = result.replace(/\bAnnua L\b/gi, 'Annual');
+    result = result.replace(/\bJ L\b/gi, 'JL');
+    result = result.replace(/\bKy\b/gi, 'KY');
+    result = result.replace(/\bBev Mo\b/gi, 'BevMo');
+    result = result.replace(/\bNc Abcc\b/gi, 'NC ABCC');
+    result = result.replace(/\bUs 1\b/gi, 'US1');
+    result = result.replace(/\bUs1\b/gi, 'US1');
+    result = result.replace(/\bY Ks\b/gi, 'YKS');
+    result = result.replace(/\b(\d+) Y\b/gi, '$1Y');
+    result = result.replace(/\b(\d+) Yr\b/gi, '$1Yr');
+    result = result.replace(/\bYr Old\b/gi, 'Yr Old');
+    result = result.replace(/\bBa Lcones\b/gi, 'Balcones');
+    result = result.replace(/\bWhistle Pig\b/gi, 'WhistlePig');
+    
+    // Fix patterns where single letters are separated  
+    result = result.replace(/\b([A-Z])\s+([a-z]{1,3})\b/g, (match, letter, suffix) => {
+      // Common patterns to fix
+      const fixes: Record<string, string> = {
+        'E lijah': 'Elijah',
+        'O ld': 'Old',
+        'A nnual': 'Annual',
+        'Y ear': 'Year',
+        'B ourbon': 'Bourbon',
+        'W hiskey': 'Whiskey',
+        'S ingle': 'Single',
+        'D istillery': 'Distillery',
+        'R ye': 'Rye',
+        'M alt': 'Malt',
+        'B atch': 'Batch',
+        'L imited': 'Limited',
+        'R elease': 'Release',
+        'S traight': 'Straight',
+        'K entucky': 'Kentucky'
+      };
+      
+      const key = `${letter} ${suffix}`;
+      return fixes[key] || match;
+    });
+    
+    // V2.7.1: Fix more broken spacing patterns found in database
+    result = result.replace(/\bNe Lson\b/gi, 'Nelson');
+    result = result.replace(/\bMc Kenzie\b/gi, 'McKenzie');
+    result = result.replace(/\bDoub Le\b/gi, 'Double');
+    result = result.replace(/\bGo Ld\b/gi, 'Gold');
+    result = result.replace(/\bMeda L\b/gi, 'Medal');
+    result = result.replace(/\bC Lassic\b/gi, 'Classic');
+    result = result.replace(/\bBottled In Bond\b/gi, 'Bottled in Bond');
+    
+    // V2.7.1: Remove duplicate spirit type words
+    result = result.replace(/\b(whiskey|whisky|bourbon|rum|gin|vodka|tequila|mezcal|cognac)\s+\1\b/gi, '$1');
+    
+    // V2.7.1: Fix "Bourbon Whiskey Whiskey" patterns
+    result = result.replace(/\b(bourbon\s+whiskey)\s+whiskey\b/gi, '$1');
+    result = result.replace(/\b(rye\s+whiskey)\s+whiskey\b/gi, '$1');
+    
+    // V2.7.1: Remove HTML artifacts
+    result = result.replace(/<[^>]+>/g, '');
+    result = result.replace(/\\["']/g, '');
+    result = result.replace(/&[a-z]+;/gi, '');
+    result = result.replace(/pmeta\s+charset[^"]*"/gi, '');
+    result = result.replace(/\bstrong\s*Please\s+note\b/gi, '');
     
     // Clean up multiple spaces
     result = result.replace(/\s+/g, ' ').trim();
     
     // Remove empty parentheses that might remain after volume extraction
     result = result.replace(/\s*\(\s*\)\s*/g, ' ').trim();
+    
+    // V2.7.2: Fix malformed possessives
+    result = result.replace(/([A-Z][a-z]+)[''´`]S\b/g, "$1's");  // Father'S -> Father's
+    result = result.replace(/([A-Z][a-z]+)['']s\b/g, "$1's");   // Normalize apostrophes
+    result = result.replace(/\b([A-Z])['']S\b/g, "$1's");       // J'S -> J's
     
     return result;
   }
@@ -245,6 +383,7 @@ export class TextProcessor {
       
       // Generic patterns
       /\s+Available\s+at\s+.+$/i,
+      /\s+Available$/i,  // V2.6.4: Also remove trailing "Available"
       /\s+Now\s+at\s+.+$/i,
       /\s+Shop\s+at\s+.+$/i,
       /\s+Buy\s+at\s+.+$/i,
@@ -629,12 +768,13 @@ export class TextProcessor {
     result = result.replace(/(?<=[a-z])'S\b/g, "'s");  // Fix "michter'S" to "michter's"
     result = result.replace(/(?<=[A-Z][a-z]+)'S\b/g, "'s");  // Also fix "Michter'S" to "Michter's"
     
-    // Common brand name fixes
+    // V2.6.4: Enhanced brand name fixes from CSV analysis
     const brandFixes: Record<string, string> = {
       "jack daniels": "Jack Daniel's",
       "jack daniel": "Jack Daniel's",
       "makers mark": "Maker's Mark",
       "maker s mark": "Maker's Mark",
+      "maker's mark": "Maker's Mark",
       "jim beam": "Jim Beam",
       "johnnie walker": "Johnnie Walker",
       "johnny walker": "Johnnie Walker",
@@ -647,6 +787,34 @@ export class TextProcessor {
       "patron": "Patrón",
       "don julio": "Don Julio",
       "hendricks": "Hendrick's",
+      "heaven hill": "Heaven Hill",
+      "evan williams": "Evan Williams",
+      "elijah craig": "Elijah Craig",
+      "e lijah craig": "Elijah Craig",
+      "russell's reserve": "Russell's Reserve",
+      "russells reserve": "Russell's Reserve",
+      "wild turkey": "Wild Turkey",
+      "buffalo trace": "Buffalo Trace",
+      "eagle rare": "Eagle Rare",
+      "blantons": "Blanton's",
+      "blanton s": "Blanton's",
+      "blanton's": "Blanton's",
+      "george t stagg": "George T. Stagg",
+      "george t. stagg": "George T. Stagg",
+      "michters": "Michter's",
+      "michter s": "Michter's",
+      "michter's": "Michter's",
+      "whistlepig": "WhistlePig",
+      "whistle pig": "WhistlePig",
+      "castle key": "Castle & Key",
+      "castle and key": "Castle & Key",
+      "castle & key": "Castle & Key",
+      "st george": "St. George Spirits",
+      "st. george": "St. George Spirits",
+      "st george baller": "St. George Spirits",
+      "st. george baller": "St. George Spirits",
+      "st george spirits": "St. George Spirits",
+      "st. george spirits": "St. George Spirits",
       "hendrick s": "Hendrick's",
       "tanqueray": "Tanqueray",
       "beefeater": "Beefeater",
@@ -732,6 +900,8 @@ export class TextProcessor {
       // St. George variations
       "st george": "St. George Spirits",
       "st. george": "St. George Spirits",
+      "st george baller": "St. George Spirits",
+      "st. george baller": "St. George Spirits",
       "st george spirits": "St. George Spirits",
       "st. george spirits": "St. George Spirits",
       "st george spirit": "St. George Spirits",
@@ -899,9 +1069,9 @@ export class TextProcessor {
    * Extract brand from spirit name (helper method)
    */
   private static extractBrandFromName(name: string): string {
-    // Special cases for known brand patterns
-    if (/^st\.?\s*george/i.test(name)) {
-      return this.normalizeBrandName('St. George');
+    // V2.6.4: Special cases for known brand patterns
+    if (/st\.?\s*george\s*(ba\s*ller|baller|breaking|single|spirits)/i.test(name)) {
+      return 'St. George Spirits';  // Always return full brand name for St. George products
     }
     if (/^castle\s*&?\s*key/i.test(name)) {
       return this.normalizeBrandName('Castle & Key');
@@ -937,6 +1107,8 @@ export class TextProcessor {
 export const {
   fixTextSpacing,
   removeStoreNames,
+  removeNavigationPrefixes,
+  removeStoreSuffixes,
   normalizeCategory,
   extractValidAge,
   isValidProductDescription,

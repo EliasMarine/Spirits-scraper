@@ -127,22 +127,34 @@ export class ScrapeSessionTracker {
 
   /**
    * Check if a spirit was already stored in this or previous sessions
+   * V2.7 FIX: ALWAYS check database first, not just session cache
    */
-  async isAlreadyStored(category: string, spiritKey: string): Promise<boolean> {
-    const session = this.sessions.get(category);
-    
-    // Check current session
-    if (session && session.storedSpiritKeys.has(spiritKey)) {
-      return true;
-    }
-
-    // Check previous session from cache
-    const previousSession = await this.loadSession(category);
-    if (previousSession && previousSession.storedSpiritKeys.has(spiritKey)) {
-      // Add to current session to avoid repeated lookups
-      if (session) {
-        session.storedSpiritKeys.add(spiritKey);
+  async isAlreadyStored(category: string, spiritKey: string, spiritName?: string, spiritBrand?: string): Promise<boolean> {
+    // V2.7: CRITICAL FIX - Always check database first
+    try {
+      // If we have name/brand, use them for more accurate checking
+      if (spiritName) {
+        const exists = await supabaseStorage.spiritExists(spiritName, spiritBrand);
+        if (exists) {
+          // Add to session cache to avoid repeated DB lookups
+          const session = this.sessions.get(category);
+          if (session) {
+            session.storedSpiritKeys.add(spiritKey);
+          }
+          logger.debug(`Spirit already exists in database: ${spiritName}`);
+          return true;
+        }
       }
+    } catch (error) {
+      logger.error('Error checking database for spirit existence:', error);
+      // Fall back to session checking if DB check fails
+    }
+    
+    // Only check session as a secondary cache optimization
+    const session = this.sessions.get(category);
+    if (session && session.storedSpiritKeys.has(spiritKey)) {
+      // V2.7: Log this as cache hit, not definitive storage
+      logger.debug(`Spirit found in session cache (may not be in DB): ${spiritKey}`);
       return true;
     }
 

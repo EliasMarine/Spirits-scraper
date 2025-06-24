@@ -37,7 +37,7 @@ const program = new Command();
 program
   .name('spirits-scraper')
   .description('Smart spirits data scraper with NLP-based validation and adaptive learning')
-  .version('2.6.3');
+  .version('2.7.1');
 
 // Main scrape command - smart by default
 program
@@ -54,6 +54,8 @@ program
   .option('--dedup-threshold <number>', 'Number of spirits before auto-dedup (default: 10)', '10')
   .option('--force-refresh', 'Bypass cache and force fresh API calls (for testing/development)')
   .option('--clear-cache', 'Clear cache before scraping')
+  .option('--clear-session', 'Clear session tracking before scraping (V2.7)')
+  .option('--force-fresh', 'Bypass ALL caching and session tracking (V2.7)')
   .option('--cache-only', 'Only use cached results, no API calls')
   .option('--max-cache-age <hours>', 'Maximum cache age in hours', '6')
   .option('--hide-api-stats', 'Hide detailed API call statistics')
@@ -108,6 +110,27 @@ program
         spinner.text = 'Clearing cache...';
         await cacheService.clearCache();
         console.log('🗑️  Cache cleared successfully');
+      }
+      
+      // V2.7: Handle session clearing
+      if (options.clearSession) {
+        spinner.text = 'Clearing session tracking...';
+        const { scrapeSessionTracker } = await import('./services/scrape-session-tracker.js');
+        for (const category of categories) {
+          await scrapeSessionTracker.clearSession(category);
+        }
+        console.log('🗑️  Session tracking cleared successfully');
+      }
+      
+      // V2.7: Handle force-fresh (bypass all caching and session tracking)
+      if (options.forceFresh) {
+        spinner.text = 'Enabling force-fresh mode...';
+        cacheService.setBypassMode(true);
+        const { scrapeSessionTracker } = await import('./services/scrape-session-tracker.js');
+        for (const category of categories) {
+          await scrapeSessionTracker.clearSession(category);
+        }
+        console.log('🚀 Force-fresh mode enabled - bypassing ALL caching and session tracking');
       }
       
       // Set cache bypass mode if force-refresh is enabled

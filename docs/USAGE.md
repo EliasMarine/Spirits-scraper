@@ -1,6 +1,6 @@
-# Spirits Scraper Usage Guide (v2.6 - Smart NLP Validation Edition)
+# Spirits Scraper Usage Guide (v2.7.1 - Enhanced Database & Validation Edition)
 
-This document provides usage instructions for the Smart Spirits Scraper with ULTRA-EFFICIENT catalog scraping and V2.6 smart NLP-based validation with adaptive learning!
+This document provides usage instructions for the Smart Spirits Scraper with ULTRA-EFFICIENT catalog scraping, V2.7 database-aware session tracking, and V2.7.1 enhanced garbage detection!
 
 ## 🚀 Quick Start
 
@@ -38,6 +38,12 @@ npm run scrape -- --distillery "Buffalo Trace" --limit 50 --clear-cache
 
 # Force fresh API calls
 npm run scrape -- --distillery "Buffalo Trace" --limit 50 --force-refresh
+
+# V2.7: Clear session tracking for truly fresh scraping
+npm run scrape -- --distillery "Buffalo Trace" --limit 50 --clear-session
+
+# V2.7: Force fresh scraping (bypass all caching and session tracking)
+npm run scrape -- --distillery "Buffalo Trace" --limit 50 --force-fresh
 ```
 
 **Why Catalog-Focused Scraping is Superior:**
@@ -308,7 +314,24 @@ npm run cache -- --stats
 # - Cache age statistics
 ```
 
-### 10. Complete Fresh Start (Clear Database & All Caches)
+### 10. Database Cleanup (V2.7.1)
+
+Clean up garbage entries and fix data quality issues:
+
+```bash
+# Run the comprehensive cleanup script in Supabase SQL Editor
+# See: sql-scripts/cleanup-v2.7.1-garbage.sql
+
+# This will:
+# - Remove generic age-only names ("30 Year Old Whisky")
+# - Fix spacing issues ("Ne Lson" → "Nelson")
+# - Remove duplicate words ("Bourbon Whiskey Whiskey")
+# - Clean HTML from descriptions
+# - Remove navigation/store content
+# - Fix brand capitalizations
+```
+
+### 11. Complete Fresh Start (Clear Database & All Caches)
 
 When you need to start completely fresh with a clean database and no cached data:
 
@@ -323,8 +346,8 @@ npm run scrape-catalogs -- --clear-tracking
 # See: sql/clear-all-spirits-data.sql
 TRUNCATE TABLE spirits CASCADE;
 
-# 4. Start fresh scraping
-npm run scrape -- --categories bourbon --limit 10
+# 4. Start fresh scraping with V2.7 flags
+npm run scrape -- --categories bourbon --limit 10 --clear-session --force-fresh
 ```
 
 **What `clear-caches` does:**
@@ -712,13 +735,34 @@ SEARCH_ENGINE_ID=your_search_engine_id
 
 ## 🐛 Troubleshooting
 
+### Zero Spirits Being Stored (V2.7 Fix)
+```bash
+# Use the new session tracking flags
+npm run scrape -- --categories bourbon --limit 50 --clear-session --force-fresh
+
+# This ensures:
+# - Session tracker checks database, not just cache
+# - Fresh queries are generated
+# - No false "already stored" results
+```
+
+### Garbage Entries in Database (V2.7.1 Fix)
+```bash
+# Run the cleanup script in Supabase SQL Editor
+# See: sql-scripts/cleanup-v2.7.1-garbage.sql
+
+# Then use enhanced validation for new scrapes
+npm run scrape -- --categories bourbon --limit 50 --clear-session
+```
+
 ### High Error Rate
 ```bash
 # Check statistics
 npm run stats
 
-# Clear cache and try again
-rm -rf cache/*.json
+# Clear cache and session tracking
+npm run clear-caches
+npm run scrape -- --categories bourbon --limit 10 --clear-session
 
 # Try smaller batch size
 npm run scrape -- --batch-size 1 --limit 10
@@ -735,7 +779,8 @@ npm run backup -- --restore <backup-id>
 
 ### Poor Data Quality
 ```bash
-# Clear cache to force fresh extraction
+# V2.7.1: Pre-storage validator ensures minimum quality score of 70
+# Clear cache to force fresh extraction with new validation
 rm -rf cache/*.json
 
 # Fix existing data
@@ -744,11 +789,11 @@ npm run fix-csv spirits.csv spirits_fixed.csv
 
 ### Stale or Incorrect Data
 ```bash
-# Clear specific spirit from cache
-jq 'del(.[] | select(.[0] | contains("Spirit Name")))' cache/spirit_data.json > temp.json && mv temp.json cache/spirit_data.json
+# V2.7: Use force-fresh flag to bypass all caching
+npm run scrape -- --categories bourbon --limit 50 --force-fresh
 
-# Or clear all cache for complete refresh
-rm -rf cache/*.json
+# Or clear specific spirit from cache
+jq 'del(.[] | select(.[0] | contains("Spirit Name")))' cache/spirit_data.json > temp.json && mv temp.json cache/spirit_data.json
 ```
 
 ## 🚨 Known Issues from Latest Distillery Scraping (June 2025)
@@ -1192,6 +1237,29 @@ npm run scrape-distilleries -- --distilleries "Buffalo Trace,Heaven Hill" --max-
 Current status: **Bronze Data** (needs significant improvement)
 Next milestone: **Silver Data** (85+ quality score)
 Final goal: **Golden Data** (90+ quality score with all fields)
+
+## 📊 What's New in v2.7.1?
+
+### 🔍 Database-Aware Session Tracking (v2.7)
+- **Fixed Zero Storage Bug** - Session tracker now checks database, not just cache
+- **100+ Dynamic Queries** - Increased from 15 to 100+ query variations
+- **10K API Support** - Supports paid GCP accounts with 10,000 daily API calls
+- **Real Progress Tracking** - Shows actual database counts during scraping
+- **New CLI Flags** - Added `--clear-session` and `--force-fresh` options
+
+### 🛡️ Enhanced Garbage Detection (v2.7.1)
+- **Pre-Storage Validator** - Final quality check with scoring (minimum 70/100)
+- **Hard Reject Patterns** - Blocks generic names like "30 Year Old Whisky"
+- **Spacing Fixes** - Automatically fixes "Ne Lson" → "Nelson", "Ba Ller" → "Baller"
+- **HTML Cleanup** - Removes artifacts like `pmeta charset` from descriptions
+- **Navigation Filtering** - Rejects store content like "Our Bourbon", "Shop today!"
+- **Duplicate Word Removal** - Fixes "Bourbon Whiskey Whiskey" → "Bourbon Whiskey"
+
+### 🏷️ Brands Table Cleanup
+- **398 Brands Fixed** - All lowercase brands now properly capitalized
+- **Duplicate Consolidation** - Merged variations like "russell's" and "russell's reserve"
+- **Brand Normalization** - Consistent naming across all spirits
+- **Zero Orphaned Brands** - All brands now have associated spirits
 
 ## 📊 What's New in v2.6?
 
