@@ -59,36 +59,36 @@ export const NON_PRODUCT_FILTERS: NonProductFilterConfig = {
       /\b(tasting\s+room|visitor\s+center)\s+(hours|open|visit)\b/i,
       /\b(kentucky\s+distillery\s+&\s+bourbon\s+tours)\b/i,
       /\b(whiskey\s+trail\s+home|bourbon\s+trail)\b/i,
-      // Avoid matching product names with "Reserve"
-      /(?<!reserve\s)(?<!\w)tour(?:s)?(?!\w)/i,
+      // Only match "tour" or "tours" as complete words, not within other words
+      /\btours?\b(?!\s+(?:reserve|special|limited|edition|single|barrel|bourbon|whiskey|whisky))/i,
     ],
     
-    // Merchandise and accessories
+    // Merchandise and accessories - V2.7.5: More targeted patterns
     merchandise: [
-      /\b(t-?shirt|tee|polo\s+shirt|hoodie|sweatshirt|sweater|apparel)\b/i,
+      // Clothing patterns - must be explicit apparel items
+      /\b(t-?shirt|tee|polo\s+shirt|hoodie|sweatshirt|sweater)\s*(for\s+men|for\s+women|unisex)?\b/i,
       /\b(baseball\s+cap|beanie|snapback|trucker\s+hat)\b/i,
       /\b(men's|women's|mens|womens|unisex)\s+(shirt|jacket|hoodie|apparel)\b/i,
       /\b(clothing|merchandise|merch)\s+(store|shop|section|available)\b/i,
-      /\b(size)\s+(small|medium|large|x+l)\b/i,
-      /\b(shot\s+glass|beer\s+mug|pint\s+glass|wine\s+glass)(?!\s*\d+ml)\b/i,
+      /\bsize\s+(small|medium|large|x+l)\b/i,
+      
+      // Glassware - only when sold as accessories, not containing spirits
+      /\b(shot\s+glass|beer\s+mug|pint\s+glass|wine\s+glass)\s+(set|gift|with\s+logo)\b/i,
       /\b(glassware|barware)\s+(set|collection|accessories)\b/i,
-      /\b(coaster|bottle\s+opener|key\s*chain|sticker|patch|pin|badge)\s+(with|featuring)\b/i,
-      /\b(barrel\s+head|barrel\s+stave|wood\s+sign|wall\s+art)\s+(decor|decoration)\b/i,
-      /\b(white|black|red|blue|green|navy|gray|grey)\s+(polo|shirt|tee|top|jacket)\b/i,
-      /\b(cotton|polyester|fabric|material)\s+(blend|content|made\s+from)\b/i,
-      // V2.7.4: Fashion and accessories (shoes, jewelry, etc.)
-      /\b(sandal|sandals|boot|boots|shoe|shoes|sneaker|sneakers|loafer|loafers)\b/i,
-      /\b(brogues|oxford|pump|heel|stiletto|ankle\s+boot|knee\s+boot)\b/i,
-      /\b(earring|earrings|necklace|necklaces|bracelet|bracelets|ring|rings)\b/i,
-      /\b(jewelry|jewellery|fashion|accessory|accessories)\b/i,
-      /\b(handbag|purse|wallet|belt|strap|leather\s+goods)\b/i,
-      /\b(watch|timepiece|bracelet\s+watch|designer\s+watch)\b/i,
-      // V2.7.4: Craft supplies and textiles
-      /\b(knitting|yarn|fabric|textile|cashmere|wool|silk|cotton)\b/i,
-      /\b(crochet|embroidery|sewing|craft|crafting|needlework)\b/i,
-      /\b(thread|twine|rope|cord|string|fiber|fibre)\b/i,
-      // Don't match spirit names that might contain these words
-      /(?<!wild\s+turkey\s+rare\s)breed(?!\s+bourbon|\s+rye|\s+whiskey)/i,
+      
+      // Promotional items - only with specific context
+      /\b(coaster|bottle\s+opener|key\s*chain|sticker|patch|pin|badge)\s+(with|featuring|branded)\b/i,
+      /\b(barrel\s+head|barrel\s+stave|wood\s+sign|wall\s+art)\s+(decor|decoration|for\s+sale)\b/i,
+      
+      // Fashion items - be very specific
+      /\b(sandal|sandals|boot|boots|shoe|shoes)\s+(in\s+cognac|leather|fashion)\b/i,
+      /\b(earring|necklace|bracelet)\s+(jewelry|jewellery|fashion)\b/i,
+      /\b(handbag|purse|wallet)\s+(leather|designer|fashion)\b/i,
+      /\b(watch|timepiece)\s+(luxury|designer|fashion)\b/i,
+      
+      // Craft supplies - only when clearly craft context
+      /\b(knitting|crochet|sewing)\s+(yarn|fabric|supplies)\b/i,
+      /\b(yarn|fabric|textile)\s+(for\s+knitting|for\s+crafts|supplies)\b/i,
     ],
     
     // Beer and non-spirit beverages
@@ -135,16 +135,14 @@ export const NON_PRODUCT_FILTERS: NonProductFilterConfig = {
       /\b(holiday\s+cask\s+strength\s+single\s+barrels)\b/i,  // Specific pattern from CSV
     ],
     
-    // Cocktails and mixed drinks
+    // Cocktails and mixed drinks - V2.7.5: Only match clear cocktail contexts
     cocktails: [
-      /\b(cocktail|cocktails|mixed\s+drink|mixer)\s+(recipe|menu|list)\b/i,
-      /\b(how\s+to\s+make|recipe\s+for|ingredients\s+for)\s+\w+\s+(cocktail|drink)\b/i,
-      /\b(martini|margarita|manhattan|old\s+fashioned)\s+(recipe|ingredients)\b/i,
-      /\b(bourbon\s+sour|whiskey\s+sour|mint\s+julep)\s+(recipe|how\s+to)\b/i,
-      /\b(shake|stir|muddle|strain)\s+(well|until|gently)\b/i,
-      /\b(simple\s+syrup|bitters|vermouth)\s+(recipe|to\s+taste)\b/i,
-      // Don't match product names that happen to contain cocktail words
-      /(?<!piggy)back(?!\s+\d+|\s+bourbon|\s+rye|\s+whiskey)/i,
+      /\b(cocktail|cocktails|mixed\s+drink|mixer)\s+(recipe|menu|list|how\s+to)\b/i,
+      /\b(how\s+to\s+make|recipe\s+for|ingredients\s+for)\s+.{0,20}\s+(cocktail|drink)\b/i,
+      /\b(martini|margarita|manhattan|old\s+fashioned)\s+(recipe|ingredients|how\s+to\s+make)\b/i,
+      /\b(bourbon\s+sour|whiskey\s+sour|mint\s+julep)\s+(recipe|how\s+to|ingredients)\b/i,
+      /\b(shake|stir|muddle|strain)\s+(well|until|gently)\s+.{0,20}\s+(cocktail|drink)\b/i,
+      /\b(simple\s+syrup|bitters|vermouth)\s+(recipe|to\s+taste|for\s+cocktail)\b/i,
     ],
     
     // Food and restaurant items

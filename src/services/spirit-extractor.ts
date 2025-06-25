@@ -1526,13 +1526,35 @@ export class SpiritExtractor {
       /\b\d+(\.\d+)?%\s*(abv|alcohol)\b/i,
     ];
     
-    const hasStrongSpiritIndicators = spiritIndicators.filter(pattern => pattern.test(productName)).length >= 2;
+    // V2.7.5: Require 3+ indicators for strong confidence, or 2+ with specific keywords
+    const indicatorCount = spiritIndicators.filter(pattern => pattern.test(productName)).length;
+    const hasSpecificSpiritName = /\b(bourbon|whiskey|whisky|scotch|rye|vodka|gin|rum|tequila|cognac|brandy)\b/i.test(productName);
+    const hasStrongSpiritIndicators = indicatorCount >= 3 || (indicatorCount >= 2 && hasSpecificSpiritName);
+    
+    // V2.7.5: Known valid spirits that might trigger false positives
+    const knownValidSpirits = [
+      /\blarceny\s+.*bourbon/i,  // Larceny bourbon products
+      /\bmethod\s+and\s+madness/i,  // Method and Madness Irish Whiskey
+      /\bknob\s+creek/i,  // Knob Creek bourbon
+      /\bwild\s+turkey/i,  // Wild Turkey bourbon
+      /\brare\s+breed/i,  // Rare Breed bourbon
+      /\bpiggyback/i,  // Piggyback bourbon
+    ];
+    
+    // Check if this is a known valid spirit
+    const isKnownValid = knownValidSpirits.some(pattern => pattern.test(productName));
     
     // CRITICAL: Check all non-product categories with context
     const nonProductCategories = ['merchandise', 'beer', 'tours', 'food', 'events', 'cocktails'] as const;
     
     for (const category of nonProductCategories) {
       if (containsNonProductPatterns(text, category)) {
+        // If it's a known valid spirit, skip rejection
+        if (isKnownValid) {
+          logger.info(`✅ Known valid spirit despite ${category} pattern: "${productName}"`);
+          continue;
+        }
+        
         // If it has strong spirit indicators, it's probably a false positive
         if (hasStrongSpiritIndicators) {
           logger.info(`✅ Product has strong spirit indicators despite ${category} pattern: "${productName}"`);
@@ -1540,20 +1562,12 @@ export class SpiritExtractor {
         }
         
         // Additional context checks for specific categories
-        if (category === 'tours' && /reserve|\d+\s*year/i.test(productName)) {
-          continue; // Likely "Reserve" product, not a tour
+        if (category === 'tours' && /reserve|\d+\s*year|limited\s+edition|single\s+barrel/i.test(productName)) {
+          continue; // Likely product, not a tour
         }
         
-        if (category === 'food' && /wild\s+turkey|\d+\s*year/i.test(productName)) {
-          continue; // Likely Wild Turkey bourbon, not food
-        }
-        
-        if (category === 'merchandise' && /rare\s+breed|\d+\s*year/i.test(productName)) {
-          continue; // Likely Rare Breed bourbon, not merchandise
-        }
-        
-        if (category === 'cocktails' && /piggyback\s+\d+\s*year/i.test(productName)) {
-          continue; // Likely Piggyback bourbon, not a cocktail
+        if (category === 'merchandise' && /\d+\s*year|\d+ml|\d+\s*proof|limited\s+edition/i.test(productName)) {
+          continue; // Likely spirit with volume/proof, not merchandise
         }
         
         logger.warn(`❌ Product rejected - contains ${category} patterns: "${productName}"`);

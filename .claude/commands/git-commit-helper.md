@@ -3,16 +3,19 @@
 ## ⚡ Auto-Execution Notice
 **When this rule is active, Claude will automatically execute git commands including commits and pushes without requesting user confirmation. All operations will be reported in real-time.**
 
-## 🚨 PRIMARY DIRECTIVE: Aggressive Branch Creation
-**Claude MUST create a new branch for EVERY distinct set of changes, regardless of current branch.**
+## 📊 Companion File Required
+**This file works with `git-metrics-reporter.md` to provide comprehensive post-commit metrics and reporting. Both files should be used together for complete functionality.**
+
+## 🚨 PRIMARY DIRECTIVE: Smart Branch Type Selection
+**Claude intelligently creates the right type of branch for each type of work.**
 - If on main/master → Claude IMMEDIATELY creates a new branch
-- If on ANY other branch → Claude creates a NEW focused branch for the current changes
-- **No exceptions** for "continuing work" or "related changes"
-- Each branch should represent ONE focused change/fix/feature
-- This rule supersedes all user requests to continue on existing branches
+- **Analyze the work** and create appropriate branch type: feat/, fix/, docs/, perf/, refactor/, etc.
+- **Each branch represents focused work** that can be reviewed independently
+- **No automatic merging** - each branch stands on its own
+- **No micro-branching** - only create branches for substantial, focused work
 
 ## Overview
-This rule enables Claude to properly handle git commits with semantic versioning, create descriptive commit messages, intelligently determine when to update version numbers based on commit context, and automatically push changes to remote repositories with aggressive branch creation for maximum clarity and focus.
+This rule enables Claude to intelligently analyze work and create appropriately typed branches (fix/, feat/, docs/, perf/, etc.) while maintaining a clean workflow where each branch represents focused, reviewable work.
 
 ## Core Principles
 
@@ -32,743 +35,621 @@ Use the Conventional Commits specification:
 [optional footer(s)]
 ```
 
-## Commit Types and Version Impact
+## Smart Branch Type Decision Matrix
 
-### Breaking Changes (MAJOR version bump)
-- **Type**: `feat!`, `fix!`, or any type with `!`
-- **Footer**: `BREAKING CHANGE:` in commit body
-- **Examples**:
-  - `feat!: remove deprecated API endpoints`
-  - `refactor!: change authentication method to OAuth2`
+### 🐛 **fix/** branches - Bug Fixes & Problem Solving
+Create when:
+- Fixing broken functionality
+- Resolving UI/UX issues
+- Correcting data problems
+- Patching security vulnerabilities
+- Fixing performance bottlenecks
 
-### Feature Additions (MINOR version bump)
-- **Type**: `feat`
-- **Examples**:
-  - `feat: add user profile customization`
-  - `feat(auth): implement two-factor authentication`
+Examples:
+- `fix/navbar-routing-404-errors`
+- `fix/mobile-responsive-layout`
+- `fix/auth-session-timeout`
+- `fix/memory-leak-video-player`
 
-### Bug Fixes (PATCH version bump)
-- **Type**: `fix`
-- **Examples**:
-  - `fix: resolve memory leak in data processing`
-  - `fix(ui): correct button alignment on mobile`
+### ✨ **feat/** branches - New Features & Enhancements
+Create when:
+- Adding new functionality
+- Building new components
+- Implementing new pages
+- Creating new user flows
+- Adding new integrations
 
-### No Version Change
-- **Types**: `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`
-- **Examples**:
-  - `docs: update README with installation steps`
-  - `style: format code according to style guide`
-  - `refactor: simplify error handling logic`
+Examples:
+- `feat/user-notifications-system`
+- `feat/video-upload-interface`
+- `feat/dark-mode-toggle`
+- `feat/social-sharing-integration`
 
-## Decision Flow for Version Updates
+### 📚 **docs/** branches - Documentation Work
+Create when:
+- Writing/updating documentation
+- Adding code comments
+- Creating README files
+- API documentation updates
+- User guide creation
 
-1. **Analyze all commits since last version tag**
-2. **Determine highest impact change**:
-   - If ANY breaking change → MAJOR bump
-   - Else if ANY new feature → MINOR bump
-   - Else if ANY bug fix → PATCH bump
-   - Else → No version change
+Examples:
+- `docs/api-endpoint-specifications`
+- `docs/component-usage-guide`
+- `docs/deployment-instructions`
 
-## Commit Message Guidelines
+### 🔧 **refactor/** branches - Code Restructuring  
+Create when:
+- Restructuring existing code
+- Improving code organization
+- Extracting reusable components
+- Consolidating duplicate logic
+- Modernizing code patterns
 
-### Structure Requirements
-1. **Subject Line** (required):
-   - Max 72 characters
-   - Imperative mood ("add" not "adds" or "added")
-   - No period at the end
-   - Lowercase type and description
+Examples:
+- `refactor/auth-middleware-extraction`
+- `refactor/component-prop-interfaces`
+- `refactor/database-query-optimization`
 
-2. **Scope** (optional):
-   - Component, module, or area affected
-   - Examples: `(api)`, `(ui)`, `(auth)`, `(database)`
+### ⚡ **perf/** branches - Performance Improvements
+Create when:
+- Optimizing loading times
+- Reducing bundle sizes
+- Improving render performance
+- Database query optimization
+- Memory usage improvements
 
-3. **Body** (optional):
-   - Separated by blank line from subject
-   - Explain what and why, not how
-   - Wrap at 72 characters
+Examples:
+- `perf/lazy-load-video-components`
+- `perf/bundle-size-optimization`
+- `perf/database-index-improvements`
 
-4. **Footer** (optional):
-   - Breaking changes
-   - Issue references: `Fixes #123`, `Closes #456`
+### 💄 **style/** branches - Visual & Styling Changes
+Create when:
+- CSS/styling updates
+- Design system changes
+- Visual consistency improvements
+- Layout adjustments
+- Theme updates
 
-## Examples
+Examples:
+- `style/button-design-system`
+- `style/mobile-layout-improvements`
+- `style/color-palette-update`
 
-### Major Version Update (1.2.3 → 2.0.0)
+### 🔒 **security/** branches - Security Improvements
+Create when:
+- Security vulnerability fixes
+- Authentication improvements
+- Data protection enhancements
+- Access control updates
+
+Examples:
+- `security/jwt-token-validation`
+- `security/sql-injection-prevention`
+- `security/user-data-encryption`
+
+### 🏗️ **test/** branches - Testing & Quality
+Create when:
+- Adding unit tests
+- Integration testing
+- E2E test implementation
+- Test infrastructure setup
+
+Examples:
+- `test/auth-component-coverage`
+- `test/api-endpoint-integration`
+- `test/e2e-user-flows`
+
+### 🔧 **chore/** branches - Maintenance & Tooling
+Create when:
+- Dependency updates
+- Build system changes
+- CI/CD improvements
+- Development tooling setup
+
+Examples:
+- `chore/update-react-dependencies`
+- `chore/eslint-configuration`
+- `chore/github-actions-setup`
+
+### 🎯 **improve/** branches - Bundled Improvements
+Create when:
+- Multiple related improvements for same feature/component/page
+- Combination of UI + performance + docs for same area
+- Comprehensive updates that logically belong together
+- Multiple enhancement types in same development session
+
+Examples:
+- `improve/navbar-comprehensive-enhancements`
+- `improve/video-player-multiple-improvements`
+- `improve/user-dashboard-ui-perf-docs`
+
+### 🔄 **update/** branches - General Updates
+Create when:
+- Updating multiple aspects of existing functionality
+- Modernizing or refreshing existing features
+- Cross-cutting changes affecting multiple areas
+- Maintenance updates with mixed types
+
+Examples:
+- `update/authentication-system-refresh`
+- `update/mobile-responsiveness-improvements`
+- `update/api-integration-enhancements`
+
+## Smart Bundling Decision Matrix
+
+### 🎯 **BUNDLE Together** (improve/ or update/ branch) When:
+
+**Feature/Component Cohesion:**
+- All changes improve the SAME feature, component, or page
+- Changes work together to solve the SAME user problem
+- Improvements that enhance the SAME user experience
+
+**Logical Review Unit:**
+- Changes that should be reviewed as a complete improvement
+- Multiple aspects of the same enhancement (UI + performance + docs)
+- Changes that tell a cohesive improvement story
+
+**Development Context:**
+- Multiple improvements made in the same work session for the same area
+- Related changes that address the same underlying goal
+- Comprehensive updates to bring something up to current standards
+
+### 🔀 **SEPARATE** (different branches) When:
+
+**Different Areas:**
+- Changes affect completely unrelated features/components
+- Bug fix for one area + new feature for different area
+- Changes requiring different reviewers or expertise
+
+**Different Priorities:**
+- Critical security fix + nice-to-have UI improvement
+- Breaking changes + minor documentation updates
+- Changes with different urgency levels
+
+**Different Review Cycles:**
+- Changes that could/should be merged independently
+- One change ready for review, another needs more work
+- Changes requiring different approval processes
+
+## Bundling vs Separation Logic
+
+### ✅ Bundle Multiple Changes on ONE Branch When:
+
+**Same Feature/Component Context:**
+- UI improvements + performance optimizations + documentation for the same feature
+- Multiple enhancements to the same component or page
+- Related changes that improve the same user experience
+
+**Logical Grouping:**
+- Changes that should be reviewed together
+- Improvements that depend on each other
+- Updates that form a cohesive improvement story
+
+**Development Session Context:**
+- Multiple related improvements made in the same work session
+- Changes that address the same underlying issue or goal
+- Comprehensive updates to bring something up to standard
+
+### ❌ Separate Into Different Branches When:
+
+**Unrelated Changes:**
+- Bug fix for navbar + new feature for footer
+- Performance improvement for videos + documentation for API
+- Changes affecting completely different parts of the application
+
+**Different Review Requirements:**
+- Critical security fix + nice-to-have UI improvement
+- Breaking changes + minor documentation updates
+- Changes requiring different reviewers or approval processes
+
+### 🎯 Bundling Examples
+
+#### Example 1: Navbar Comprehensive Improvements (Bundle)
+```bash
+# Changes: UI redesign + performance optimization + documentation
+# AI detects: All changes relate to navbar component
+
+git checkout -b improve/navbar-comprehensive-enhancements
+git add src/components/layout/Navbar.tsx docs/components/navbar.md src/hooks/useNavigation.ts
+git commit -m "improve(navbar): comprehensive UI, performance, and documentation enhancements
+
+UI Improvements:
+- Redesign with glassmorphism effects
+- Improve mobile responsiveness
+- Add smooth hover animations
+
+Performance Optimizations:
+- Implement React.memo for unnecessary re-renders
+- Lazy load dropdown components
+- Optimize notification badge updates
+
+Documentation:
+- Add comprehensive component documentation
+- Include usage examples and props API
+- Document accessibility features
+
+Complete navbar enhancement for better UX and maintainability"
+git push -u origin improve/navbar-comprehensive-enhancements
 ```
-feat!: replace REST API with GraphQL
 
-BREAKING CHANGE: All REST endpoints have been removed in favor of a single GraphQL endpoint. 
-Clients must update their integration to use GraphQL queries and mutations.
+#### Example 2: Video Player Multi-Enhancement (Bundle)
+```bash
+# Changes: Bug fix + new features + performance + docs
+# AI detects: All changes improve video player experience
 
-Migration guide available at docs/migration/v2.md
+git checkout -b improve/video-player-multiple-improvements
+git add src/components/video/ docs/video-player.md tests/video-player.test.tsx
+git commit -m "improve(video): comprehensive video player enhancements
+
+Bug Fixes:
+- Fix fullscreen mode on mobile devices
+- Resolve audio sync issues on slow connections
+
+New Features:
+- Add picture-in-picture support
+- Implement custom playback speed controls
+- Add keyboard shortcuts for accessibility
+
+Performance Improvements:
+- Optimize video loading with progressive enhancement
+- Reduce memory usage during long playback sessions
+
+Documentation & Testing:
+- Add comprehensive usage documentation
+- Include accessibility guidelines
+- Add unit tests for new features
+
+Significantly improves video player functionality and user experience"
+git push -u origin improve/video-player-multiple-improvements
 ```
 
-### Minor Version Update (1.2.3 → 1.3.0)
-```
-feat(payments): add support for cryptocurrency payments
+#### Example 3: User Dashboard Complete Refresh (Bundle)
+```bash
+# Changes: UI overhaul + API updates + documentation + tests
+# AI detects: All changes part of dashboard modernization
 
-- Implement Bitcoin and Ethereum payment gateways
-- Add wallet address validation
-- Include real-time exchange rate conversion
+git checkout -b update/user-dashboard-modernization
+git add src/pages/dashboard/ src/api/dashboard/ docs/dashboard/ tests/dashboard/
+git commit -m "update(dashboard): complete modernization with UI, API, docs, and tests
 
-Closes #789
-```
+UI Overhaul:
+- Modern card-based layout with improved visual hierarchy
+- Dark mode support with theme consistency
+- Enhanced mobile responsiveness
 
-### Patch Version Update (1.2.3 → 1.2.4)
-```
-fix(auth): prevent session timeout during active use
+API Integration:
+- Migrate to GraphQL for better data fetching
+- Add real-time updates via WebSocket
+- Implement optimistic updates for better UX
 
-Users were being logged out while actively using the application due to a 
-misconfigured session refresh mechanism. This fix ensures sessions are 
-properly extended during user activity.
+Documentation:
+- Complete user guide for new dashboard features
+- API documentation for GraphQL endpoints
+- Component documentation for maintainability
 
-Fixes #234
-```
+Testing:
+- Comprehensive unit tests for all components
+- Integration tests for API interactions
+- E2E tests for critical user flows
 
-### Multiple Commits Analysis
-When analyzing multiple commits for a release:
-
-```
-Commits since v1.2.3:
-- fix: resolve data export timeout issue
-- feat: add CSV import functionality  
-- docs: update API documentation
-- fix: correct timezone handling in scheduler
-- feat!: change user ID format from int to UUID
-
-Result: Version 2.0.0 (due to breaking change)
+Complete dashboard modernization bringing it up to current standards"
+git push -u origin update/user-dashboard-modernization
 ```
 
-## Automatic Git Push Behavior
+#### Example 4: Separate Unrelated Changes
+```bash
+# Changes: Critical auth bug + new explore page feature
+# AI detects: Unrelated changes requiring different review priorities
 
-### Auto-Push Configuration
+# Critical bug fix first:
+git checkout -b fix/auth-session-security-vulnerability
+git add src/auth/session.ts
+git commit -m "fix(auth): patch critical session security vulnerability"
+git push -u origin fix/auth-session-security-vulnerability
 
-Once this rule is initiated, Claude should automatically execute git push commands without requesting user confirmation, following these guidelines:
-
-### Default Auto-Push Rules
-
-1. **Always Auto-Push for:**
-   - ALL newly created branches
-   - ANY branch that's NOT main/master
-
-2. **FORBIDDEN - Never Auto-Push or Commit to:**
-   - main branch (automatic branch creation enforced)
-   - master branch (automatic branch creation enforced)
-   - Any attempt to bypass branch creation will be refused
-
-3. **Hyper-Assertive Branch Creation Workflow:**
-   ```bash
-   # Claude ALWAYS creates a new branch regardless of current branch
-   # Analyzes changes first, then:
-   git checkout -b <change-type>/<focused-description>
-   # Then continues with commit and push
-   ```
-
-### Automatic Execution Flow
-
-```
-1. Analyze changes to determine focus
-2. Create NEW branch based on change type/focus
-3. Stage changes
-4. Create commit with proper message
-5. AUTOMATICALLY push to remote
-6. Report push status to user
+# Then new feature on separate branch:
+git checkout main  # or appropriate base
+git checkout -b feat/explore-page-social-sharing
+git add src/pages/explore/ src/components/social-share/
+git commit -m "feat(explore): add social sharing functionality for discoveries"
+git push -u origin feat/explore-page-social-sharing
 ```
 
-### Safety Mechanisms
+## Branch Decision Logic
 
-#### Pre-Push Validation
-Before auto-pushing, Claude should verify:
-- ✓ All changes are committed
-- ✓ No merge conflicts exist
-- ✓ Branch allows pushing (not protected)
-- ✓ Remote is accessible
-
-#### When NOT to Auto-Push
-Claude will halt auto-push and request confirmation for:
-- Commits containing passwords, API keys, or secrets detected
-- Commits over 100 files (potential mistake)
-- Commits deleting over 1000 lines (potential destructive change)
-- First push to a new repository
-- When credentials are not configured
-
-Example halt message:
 ```
-"⚠️  Detected potential sensitive data in commit
-🛑 Auto-push halted for safety
-📋 Please review the changes and confirm:
-   - No secrets or credentials included
-   - Changes are intentional
-   
-Type 'push confirmed' to proceed"
+1. Analyze the scope and context of ALL changes:
+   ┌─ Multiple related changes in same session/feature? 
+   │  ├─ YES → Bundle on ONE appropriately named branch
+   │  └─ NO → Create separate focused branches
+   │
+   ├─ Single type of substantial work? → Create typed branch (fix/, feat/, etc.)
+   ├─ Multiple unrelated changes? → Create separate branches for each
+   ├─ Incremental work on current feature? → Continue on current branch
+   └─ On main/master? → ALWAYS create new branch (never commit to main/master)
+
+2. Branch naming for bundled work:
+   ┌─ Feature-focused bundle → feat/feature-name-improvements
+   ├─ Component-focused bundle → improve/component-name-enhancements  
+   ├─ Page-focused bundle → update/page-name-comprehensive-updates
+   └─ General improvements → improve/area-name-multiple-enhancements
 ```
 
-#### Auto-Push Examples
+## Workflow Examples
 
-**Example 1: Feature Development (Even when on existing feature branch)**
+### Example 1: Bug Fix Detected
 ```bash
 # Current branch: feat/user-dashboard
-# Changes: Video card UI consistency fixes
-# Claude executes automatically:
-git checkout -b fix/video-card-aspect-ratio
-git add .
-git commit -m "fix(ui): standardize video cards to square aspect ratio"
-git push -u origin fix/video-card-aspect-ratio
+# Issue: Navigation links are broken
 
-# Output to user:
-"✅ Created focused branch 'fix/video-card-aspect-ratio'
-✅ Committed changes: fix(ui): standardize video cards to square aspect ratio
-✅ Pushed to origin/fix/video-card-aspect-ratio
-🔗 PR URL: https://github.com/org/repo/pull/new/fix/video-card-aspect-ratio"
+# AI creates appropriate branch type:
+git checkout -b fix/navigation-routing-broken-links
+git add src/components/layout/Navbar.tsx
+git commit -m "fix(nav): resolve broken navigation routing links
+
+- Fix incorrect route paths in navbar component
+- Add proper route validation
+- Prevent navigation to non-existent pages
+
+Fixes critical navigation issue affecting all users"
+git push -u origin fix/navigation-routing-broken-links
+
+# AI reports:
+"✅ Created fix/navigation-routing-broken-links
+🎯 Focus: Fixing broken navigation functionality
+🔗 Branch ready for independent PR review"
 ```
 
-**Example 2: Bug Fix (Even when on feature branch)**
+### Example 2: New Feature Implementation
 ```bash
-# Current branch: feat/payment-integration  
-# Changes: Memory leak fix
-# Claude executes automatically:
-git checkout -b fix/memory-leak-payment-processor
-git add src/utils/cache.js
-git commit -m "fix(performance): resolve memory leak in payment processor"
-git push -u origin fix/memory-leak-payment-processor
+# Current branch: feat/user-dashboard
+# Work: Adding notification system
 
-# Output to user:
-"✅ Branch 'fix/memory-leak-payment-processor' created and pushed
-📝 Commit: fix(performance): resolve memory leak in payment processor
-🚀 Changes are now focused and ready for review"
+# AI creates appropriate branch type:
+git checkout -b feat/real-time-notifications-system
+git add src/components/notifications/ src/hooks/useNotifications.ts
+git commit -m "feat(notifications): implement real-time notification system
+
+- Add notification bell component with badge counts
+- Implement WebSocket connection for real-time updates
+- Create notification dropdown with action buttons
+- Add notification persistence and mark-as-read functionality
+
+Enables users to receive instant updates for comments, invites, and activities"
+git push -u origin feat/real-time-notifications-system
+
+# AI reports:
+"✅ Created feat/real-time-notifications-system
+🎯 Focus: New notification feature implementation
+🔗 Branch ready for independent PR review"
 ```
 
-**Example 3: Documentation Update (Even on existing docs branch)**
+### Example 3: Performance Optimization
 ```bash
-# Current branch: docs/api-updates
-# Changes: Adding new endpoint docs
-# Claude executes automatically:
-git checkout -b docs/webhook-endpoint-specification
-git add .
-git commit -m "docs(api): add webhook endpoint specification and examples"
-git push -u origin docs/webhook-endpoint-specification
+# Current branch: feat/video-streaming
+# Issue: Video components loading slowly
 
-# Output to user:
-"✅ Documentation branch created and pushed
-📝 Focused on webhook endpoint documentation
-🔗 Changes isolated for targeted review"
+# AI creates appropriate branch type:
+git checkout -b perf/video-component-lazy-loading
+git add src/components/video/ src/hooks/useLazyVideo.ts
+git commit -m "perf(video): implement lazy loading for video components
+
+- Add intersection observer for video loading
+- Implement progressive thumbnail loading
+- Reduce initial bundle size by 40%
+- Improve page load times for video-heavy pages
+
+Significantly improves performance on video grid pages"
+git push -u origin perf/video-component-lazy-loading
+
+# AI reports:
+"✅ Created perf/video-component-lazy-loading
+🎯 Focus: Video component performance optimization
+🔗 Branch ready for independent PR review"
 ```
 
-### Force Push Handling
-
-**Never force push automatically.** If push fails due to conflicts:
+### Example 4: Documentation Update
 ```bash
-# If push fails, Claude reports:
-"❌ Push failed due to conflicts
-📋 Manual intervention required:
-   1. git pull origin <branch>
-   2. Resolve conflicts
-   3. git push
+# Current branch: feat/api-integration
+# Work: Adding API documentation
 
-Would you like me to pull and show the conflicts?"
+# AI creates appropriate branch type:
+git checkout -b docs/api-integration-guide
+git add docs/api/ README.md
+git commit -m "docs(api): add comprehensive API integration guide
+
+- Document all available endpoints with examples
+- Add authentication flow documentation
+- Include error handling patterns
+- Provide integration code samples
+
+Helps developers integrate with the API effectively"
+git push -u origin docs/api-integration-guide
+
+# AI reports:
+"✅ Created docs/api-integration-guide
+🎯 Focus: API integration documentation
+🔗 Branch ready for independent PR review"
 ```
 
-### Automatic Push Summary Messages
+### Example 5: Incremental Work - Stay on Current Branch
+```bash
+# Current branch: feat/user-dashboard
+# Work: Minor styling tweaks
 
-After each auto-push, provide clear feedback:
-```
-✅ Successfully pushed to <branch-name>
-📊 Stats: X files changed, Y insertions(+), Z deletions(-)
-🔗 Remote URL: <repository-url>
-📝 Commit: <commit-message-summary>
-🎯 Focus: <single-purpose-description>
-```
+# AI continues on current branch:
+git add src/components/Dashboard.tsx
+git commit -m "style(dashboard): adjust card spacing and hover effects"
+git push origin feat/user-dashboard
 
-### Configuration Options
-
-Users can configure auto-push behavior:
-```yaml
-# .claude-git-config.yml (hypothetical)
-auto_push:
-  enabled: true
-  aggressive_branching: true
-  branches:
-    feature/*: true
-    fix/*: true
-    hotfix/*: true
-    docs/*: true
-    refactor/*: true
-    main: false
-    master: false
-  create_pr_link: true
-  push_tags: true
+# AI reports:
+"✅ Committed to feat/user-dashboard
+🎯 Focus: Incremental styling improvements
+📝 Minor changes - continuing current feature development"
 ```
 
-### Disabling Auto-Push
+## When to Create New Branch vs Continue vs Bundle
 
-To temporarily disable auto-push for a specific operation, users can say:
-- "commit but don't push"
-- "local commit only"
-- "hold the push"
+### ✅ Create New SINGLE-TYPE Branch When:
+- **Single focused work** of one type (pure fix, pure feature, pure docs)
+- **Clear single purpose** that fits one branch type
+- **Independent work** not related to current development
 
-Claude will then execute commits locally without pushing.
+### ✅ Create New BUNDLED Branch When:
+- **Multiple improvements** for the same feature/component/page
+- **Related changes** that should be reviewed together (UI + perf + docs for same area)
+- **Comprehensive updates** that form a cohesive improvement story
+- **Same development session** with logically connected changes
 
-### Error Handling
+### ✅ Continue Current Branch When:
+- **Incremental progress** on existing work
+- **Minor adjustments** to recently implemented features
+- **Small styling tweaks** or copy changes
+- **Follow-up fixes** directly related to current branch work
 
-If auto-push fails, Claude should:
-1. Clearly report the error
-2. Suggest fixes
-3. NOT attempt to force push
-4. Preserve local commits
+## Branch Naming Conventions
 
-```
-"❌ Auto-push failed: remote rejected push
-💡 Possible reasons:
-   - Branch protection rules
-   - Outdated local branch  
-   - Authentication issues
-   
-📋 Your commits are safe locally. Run 'git pull' to update."
+### Pattern: `type/descriptive-kebab-case-name`
+
+**Single-Type Branches:**
+- `feat/user-authentication-system`
+- `fix/mobile-navigation-overlay`
+- `perf/database-query-optimization`
+- `docs/component-api-reference`
+- `refactor/auth-middleware-consolidation`
+- `style/design-system-colors`
+- `security/jwt-token-validation`
+- `chore/dependency-security-updates`
+
+**Bundled/Multi-Type Branches:**
+- `improve/navbar-comprehensive-enhancements`
+- `improve/video-player-ui-perf-docs`
+- `update/dashboard-modernization`
+- `update/mobile-responsiveness-improvements`
+- `improve/auth-system-multiple-fixes`
+- `update/api-integration-enhancements`
+
+**Bad Examples:**
+- `fix/stuff` (too vague)
+- `feat/updates` (not descriptive)
+- `branch1` (no type or description)
+- `fix-navigation` (missing type/ prefix)
+
+## Auto-Push Behavior
+
+### Always Auto-Push To:
+- Any branch that's NOT main/master
+- Newly created branches immediately after creation
+- Updated branches after commits
+
+### Never Auto-Push To:
+- main branch (automatic branch creation enforced)
+- master branch (automatic branch creation enforced)
+
+### Workflow:
+```bash
+# AI automatically executes:
+1. Analyze work → Determine branch type
+2. Create appropriate branch → git checkout -b type/description
+3. Stage changes → git add files
+4. Commit with proper message → git commit -m "type(scope): description"
+5. Push to remote → git push -u origin type/description
+6. Generate comprehensive metrics report → See git-metrics-reporter.md
+7. Display detailed statistics and next steps → Formatted output with all metrics
 ```
 
 ## Implementation Rules for Claude
 
 1. **ENFORCE main/master protection** - Never allow commits to these branches
-2. **Create NEW branches aggressively** - Even when on existing feature branches
-3. **Focus each branch on ONE thing** - Single-purpose branches only
-4. **Always analyze the full context** of changes before suggesting a version
-5. **Prioritize clarity** in commit messages over brevity
-6. **Include relevant issue numbers** when provided
-7. **Suggest squashing** similar commits when appropriate
-8. **Warn about breaking changes** and suggest migration notes
-9. **Automatically create new branches** for EVERY set of changes
-10. **Execute git push automatically** without requesting user confirmation
-11. **Report all git operations** clearly with success/failure status
-12. **Handle push failures gracefully** without attempting force push
-13. **Refuse requests** to continue on existing branches - always create new ones
+2. **Analyze work type** - Choose correct branch prefix (feat/, fix/, docs/, etc.)
+3. **Create meaningful branch names** - Descriptive, specific, kebab-case
+4. **No automatic merging** - Each branch stands independently
+5. **Smart decisions** - New branch for substantial work, continue for incremental
+6. **Auto-push everything** - Push all branches immediately
+7. **Generate comprehensive metrics** - Use git-metrics-reporter.md after every push
+8. **Display detailed statistics** - Show formatted metrics report with all insights
+9. **Provide actionable next steps** - Include PR links, suggestions, and alerts
+10. **Clear communication** - Explain branch creation decisions with metrics context
 
-## Version Tag Format
+## Communication Templates
+
+### When Creating Single-Type Branch:
 ```
-git tag -a v<VERSION> -m "Release version <VERSION>"
-```
+"🎯 Detected [work-type] work: [description]. Creating focused [type]/ branch...
 
-Example:
-```
-git tag -a v2.1.0 -m "Release version 2.1.0"
-```
+✅ Created: [type]/[branch-name]
+✅ Committed: [commit-message-summary]
+✅ Pushed: origin/[type]/[branch-name]
+🎯 Focus: [specific-purpose]
+🔗 Branch ready for independent PR review
 
-## Pre-release and Build Metadata
-- Pre-release: `v1.2.3-alpha.1`, `v1.2.3-beta.2`, `v1.2.3-rc.1`
-- Build metadata: `v1.2.3+build.123`
-
-## Hyper-Aggressive Branch Management
-
-### 🚨 CRITICAL RULE: ALWAYS Create New Branches
-
-**ABSOLUTE REQUIREMENT**: Claude MUST create a new branch for EVERY distinct set of changes, regardless of the current branch. This includes when already on feature branches, bug fix branches, or any other non-main branch.
-
-### Ultra-Assertive Branch Creation Policy
-
-Claude should **NEVER** continue work on an existing branch unless explicitly asked to amend the last commit. Every logical set of changes gets its own focused branch.
-
-#### 1. Always Create New Branch - No Exceptions
-
-**Create new branch for EVERY:**
-- Bug fix (even on feature branches)
-- New feature component (even on feature branches)  
-- Refactoring (even on refactor branches)
-- Documentation updates (even on docs branches)
-- Style changes (even on style branches)
-- Performance improvements (even on perf branches)
-- Test additions (even on test branches)
-
-**Branch naming must be hyper-specific:**
-```bash
-# Instead of continuing on feat/user-dashboard:
-git checkout -b fix/dashboard-video-card-aspect-ratio
-git checkout -b feat/dashboard-export-pdf-button
-git checkout -b refactor/dashboard-component-structure
+📊 Generating comprehensive metrics report..."
+[Display full metrics report from git-metrics-reporter.md]
 ```
 
-#### 2. Single-Purpose Branch Philosophy
+### When Creating Bundled Branch:
+```
+"🎯 Detected multiple related improvements for [area/component]: [types]. Bundling on single branch...
 
-Each branch should represent ONE atomic change that:
-- Can be reviewed independently
-- Can be merged independently  
-- Can be reverted independently
-- Has a clear, focused purpose
+✅ Created: improve/[area-name]-comprehensive-enhancements
+✅ Bundled changes:
+   • [change-type-1]: [description]
+   • [change-type-2]: [description]  
+   • [change-type-3]: [description]
+✅ Committed: [commit-message-summary]
+✅ Pushed: origin/improve/[branch-name]
+🎯 Focus: Comprehensive improvements to [area]
+🔗 Branch ready for holistic PR review
 
-#### 3. Micro-Branch Strategy Examples
-
-**Current scenario: On `feat/streams-create-UI-v1.2`**
-**Changes: Video card consistency fixes**
-
-**❌ What the AI did (Bad):**
-```bash
-# Stayed on existing branch
-git add src/components/ui/mux-thumbnail.tsx
-git commit -m "fix(ui): standardize video cards..."
-git push origin feat/streams-create-UI-v1.2  # Bad - continued existing branch
+📊 Generating comprehensive metrics report..."
+[Display full metrics report from git-metrics-reporter.md]
 ```
 
-**✅ What the AI should do (Good):**
-```bash
-# Create focused branch for this specific fix
-git checkout -b fix/video-card-square-aspect-ratio
-git add src/components/ui/mux-thumbnail.tsx  
-git commit -m "fix(ui): standardize video cards to square aspect ratio across all grids"
-git push -u origin fix/video-card-square-aspect-ratio
+### When Continuing Current Branch:
+```
+"📝 This appears to be incremental work for [current-feature]. Continuing on [current-branch]...
 
-# Then for the documentation:
-git checkout feat/streams-create-UI-v1.2  # Go back to base
-git checkout -b docs/video-card-fix-tracking
-git add tracking-fixes/stream-ui-fixes.md
-git commit -m "docs(tracking): document video card consistency fix implementation"
-git push -u origin docs/video-card-fix-tracking
+✅ Committed: [commit-message-summary]
+✅ Pushed: origin/[current-branch]
+🎯 Focus: [incremental-progress-description]
+
+📊 Generating metrics report..."
+[Display metrics report from git-metrics-reporter.md]
 ```
 
-#### 4. Branch Decision Flow (Ultra-Aggressive)
-
-```
-1. Analyze changes:
-   ┌─ What is the primary focus of these changes?
-   └─ Create a branch name that describes EXACTLY this focus
-   
-2. ALWAYS create new branch:
-   ┌─ On ANY branch? → YES → Create new focused branch
-   ├─ Even for tiny changes? → YES → Create new branch
-   ├─ Even for related work? → YES → Create new branch  
-   ├─ Even for documentation? → YES → Create new branch
-   └─ The ONLY exception is amending the last commit
-```
-
-### Mandatory Branch Creation Examples
-
-**Claude MUST create focused branches for everything:**
-
-#### Example 1: Multiple Changes = Multiple Branches
-```bash
-# User has: UI fix + documentation update
-# AI creates TWO branches:
-
-# Branch 1: UI Fix
-git checkout -b fix/button-alignment-mobile
-git add src/components/Button.tsx
-git commit -m "fix(ui): correct button alignment on mobile devices"
-git push -u origin fix/button-alignment-mobile
-
-# Branch 2: Documentation  
-git checkout main  # or appropriate base
-git checkout -b docs/button-component-mobile-notes
-git add docs/components/button.md
-git commit -m "docs(ui): add mobile alignment considerations for Button component"
-git push -u origin docs/button-component-mobile-notes
-```
-
-#### Example 2: Even Tiny Changes Get New Branches
-```bash
-# Current: feat/user-authentication
-# Change: Fix typo in comment
-git checkout -b fix/auth-comment-typo
-git add src/auth/validator.js
-git commit -m "fix(comments): correct typo in password validation comment"
-git push -u origin fix/auth-comment-typo
-```
-
-#### Example 3: Logical Separation
-```bash
-# Current: feat/dashboard-redesign  
-# Changes: Performance optimization for dashboard
-git checkout -b perf/dashboard-component-memoization
-git add src/components/Dashboard.tsx
-git commit -m "perf(dashboard): add React.memo to prevent unnecessary re-renders"
-git push -u origin perf/dashboard-component-memoization
-```
-
-### Assertive Responses to User Requests
-
-#### When User Says "Just commit this"
-```
-User: "Just commit this quick fix"
-Claude: "🎯 Creating focused branch for this fix..."
-[Immediately creates: fix/specific-issue-name]
-```
-
-#### When User Says "Continue on this branch"  
-```
-User: "Continue working on the current feature branch"
-Claude: "🚀 Creating focused branch for these specific changes..."
-[Creates new branch based on the actual changes being made]
-```
-
-#### When User Says "This is related work"
-```
-User: "This is related to the current feature"
-Claude: "✅ Creating focused branch to keep changes atomic and reviewable..."
-[Creates new branch with specific focus]
-```
-
-### Branch Naming Excellence
-
-**Hyper-specific naming patterns:**
-
-#### Fix Branches
-```bash
-fix/login-timeout-handling
-fix/mobile-nav-overflow  
-fix/api-response-parsing
-fix/memory-leak-user-list
-fix/timezone-calculation-error
-```
-
-#### Feature Branches  
-```bash
-feat/password-reset-email
-feat/dark-mode-toggle
-feat/csv-export-reports
-feat/two-factor-authentication
-feat/social-media-sharing
-```
-
-#### Refactor Branches
-```bash
-refactor/auth-middleware-extraction
-refactor/database-query-optimization
-refactor/component-prop-interfaces
-refactor/error-handling-consolidation
-```
-
-#### Documentation Branches
-```bash
-docs/api-webhook-examples
-docs/deployment-docker-guide
-docs/component-usage-patterns
-docs/troubleshooting-common-issues
-```
-
-### Integration with Auto-Push
-
-With hyper-aggressive branching + auto-push:
-
-```bash
-# Complete automated workflow:
-1. Analyze changes → Determine focus
-2. Create focused branch → Switch to it
-3. Stage changes → Commit with proper message  
-4. Push immediately → Report success
-5. Provide PR link → Ready for review
-
-# All in under 10 seconds, no user interaction needed
-```
-
-### When NOT to Create New Branch
-
-**ONLY stay on current branch for:**
-- **Nothing** - Always create new branches
-
-**The ONLY exception:**
-- Amending the very last commit (git commit --amend)
-- And only if explicitly requested by user with "amend last commit"
-
-## Good vs Bad Branch Management Examples
-
-### ❌ Bad: Continuing Existing Branches vs ✅ Good: Focused New Branches
-
-#### Example 1: UI Consistency Fixes
-**❌ Bad (Current AI behavior):**
-```bash
-# On feat/streams-create-UI-v1.2
-git add src/components/ui/mux-thumbnail.tsx
-git commit -m "fix(ui): standardize video cards..."
-git push origin feat/streams-create-UI-v1.2  # Continued existing branch
-```
-
-**✅ Good (Desired behavior):**
-```bash
-# Create focused branch for this specific fix
-git checkout -b fix/video-card-aspect-ratio-standardization
-git add src/components/ui/mux-thumbnail.tsx
-git commit -m "fix(ui): standardize video cards to square aspect ratio across all video grids"
-git push -u origin fix/video-card-aspect-ratio-standardization
-```
-
-#### Example 2: Mixed Changes
-**❌ Bad:**
-```bash
-# On docs/api-updates
-git add docs/api.md src/api/auth.js README.md
-git commit -m "update docs and fix auth and update readme"
-git push origin docs/api-updates
-```
-
-**✅ Good:**
-```bash
-# Separate into focused branches
-git checkout -b docs/auth-endpoint-specification
-git add docs/api.md
-git commit -m "docs(api): add authentication endpoint specification"
-git push -u origin docs/auth-endpoint-specification
-
-git checkout main
-git checkout -b fix/auth-token-validation  
-git add src/api/auth.js
-git commit -m "fix(auth): improve token validation logic"
-git push -u origin fix/auth-token-validation
-
-git checkout main
-git checkout -b docs/readme-installation-steps
-git add README.md
-git commit -m "docs: update README with detailed installation steps"
-git push -u origin docs/readme-installation-steps
-```
-
-#### Example 3: Performance Improvements
-**❌ Bad:**
-```bash
-# On feat/user-dashboard
-git add multiple-files-with-different-optimizations
-git commit -m "perf improvements"
-git push origin feat/user-dashboard
-```
-
-**✅ Good:**
-```bash
-# Create specific performance branches
-git checkout -b perf/dashboard-component-memoization
-git add src/components/Dashboard.tsx
-git commit -m "perf(dashboard): add React.memo to Dashboard component"
-git push -u origin perf/dashboard-component-memoization
-
-git checkout main  
-git checkout -b perf/api-response-caching
-git add src/api/cache.js
-git commit -m "perf(api): implement response caching for user data endpoints"
-git push -u origin perf/api-response-caching
-```
-
-### Common Mistakes to Avoid
-
-1. **Continuing Existing Branches**
-   - ❌ "I'm already on a feature branch, I'll just add this fix"
-   - ✅ "Creating focused branch for this specific fix"
-
-2. **Mixing Different Types of Changes**
-   - ❌ One commit with fixes, features, and documentation
-   - ✅ Separate focused branches for each type of change
-
-3. **Vague Branch Names**
-   - ❌ `fix/updates` → ✅ `fix/login-form-validation-error`
-   - ❌ `feat/improvements` → ✅ `feat/user-profile-avatar-upload`
-
-4. **Fear of "Too Many Branches"**
-   - ❌ "I don't want to create too many branches"
-   - ✅ "Each branch has a clear purpose and can be reviewed independently"
-
-## Special Considerations
-
-### Initial Development (0.x.x)
-- Major version zero (0.y.z) is for initial development
-- Anything may change at any time
-- Public API should not be considered stable
-- **Still use hyper-aggressive branching** for clear development history
-
-### When to Start at 1.0.0
-- Public API is defined and stable
-- Software is used in production
-- Users depend on the stability
-
-## Automation Helpers
-When asked to handle git operations, Claude will automatically:
-1. Analyze changes without prompting
-2. Determine the single focused purpose of changes
-3. Create new hyper-specific branch for these changes
-4. Stage appropriate files
-5. Generate and execute commit with proper message
-6. Push to remote repository immediately
-7. Report operation status with details
-8. Provide version bump recommendation
-
-## Complete Hyper-Aggressive Workflow Example
-
-When Claude analyzes ANY change request:
-
-```bash
-# Current branch: feat/user-dashboard-v2
-# User: "Fix the video thumbnail sizing issue"
-
-# 1. Claude analyzes: This is a UI fix for video thumbnails
-# 2. Creates hyper-focused branch:
-git checkout -b fix/video-thumbnail-sizing-consistency
-
-# 3. Makes focused commits:
-git add src/components/VideoThumbnail.tsx
-git commit -m "fix(ui): ensure consistent video thumbnail sizing across all views
-
-- Set fixed aspect ratio of 16:9 for all video thumbnails
-- Add responsive scaling while maintaining aspect ratio
-- Remove hardcoded width/height values in favor of CSS classes
-
-Fixes display inconsistencies reported in user feedback"
-
-# 4. AUTOMATICALLY pushes to remote:
-git push -u origin fix/video-thumbnail-sizing-consistency
-
-# 5. Reports to user:
-"✅ Focused branch 'fix/video-thumbnail-sizing-consistency' created and pushed
-🎯 Purpose: Video thumbnail sizing consistency fix
-📝 Commit: fix(ui): ensure consistent video thumbnail sizing across all views
-📊 Stats: 1 file changed, 12 insertions(+), 8 deletions(-)
-🔗 Create PR: https://github.com/org/repo/pull/new/fix/video-thumbnail-sizing-consistency
-📈 Version impact: Will trigger v1.2.4 (patch bump) when merged
-
-Note: This focused branch can be reviewed and merged independently of other dashboard work."
-
-# 6. If user has more changes:
-# User: "Also update the documentation for this fix"
-
-# Claude immediately creates ANOTHER focused branch:
-git checkout feat/user-dashboard-v2  # Go back to appropriate base
-git checkout -b docs/video-thumbnail-fix-implementation
-git add docs/components/video-thumbnail.md
-git commit -m "docs(ui): document video thumbnail sizing fix and implementation"
-git push -u origin docs/video-thumbnail-fix-implementation
-
-# Output:
-"✅ Created separate documentation branch 'docs/video-thumbnail-fix-implementation'
-📚 Focus: Documenting the video thumbnail fix
-🔗 Independent PR: https://github.com/org/repo/pull/new/docs/video-thumbnail-fix-implementation"
-```
-
-### Example: Hyper-Assertive Response to User Instructions
-
-```bash
-# User: "Just commit these changes to the current branch"
-# Current branch: feat/payment-integration
-
-# Claude's response:
-"🎯 Creating focused branch for these specific changes instead of continuing on the general payment integration branch..."
-
-# Claude executes WITHOUT asking:
-git checkout -b fix/payment-form-validation-error
-git add src/components/PaymentForm.tsx
-git commit -m "fix(payment): resolve form validation error for credit card inputs"
-git push -u origin fix/payment-form-validation-error
-
-# Output:
-"✅ Created focused branch 'fix/payment-form-validation-error'
-✅ Committed: fix(payment): resolve form validation error for credit card inputs
-✅ Pushed to origin
-🎯 Focus: Credit card form validation fix
-🔗 Create PR: https://github.com/org/repo/pull/new/fix/payment-form-validation-error
-
-Benefits of this approach:
-- This fix can be reviewed and merged independently
-- Payment integration work can continue separately  
-- Clear separation of concerns for easier debugging
-- Atomic changes make rollbacks safer"
-```
-
-### Key Hyper-Aggressive Behaviors
-
-1. **Zero Tolerance for Branch Reuse**: Every change gets its own branch
-2. **Immediate Branch Creation**: No asking, just create the right branch
-3. **Hyper-Specific Naming**: Branch names describe exactly what changes
-4. **Atomic Focus**: Each branch solves exactly one problem
-5. **Auto-Push Everything**: Push focused branches immediately
-6. **Educational Feedback**: Explain why this approach is better
-7. **Complete Automation**: From analysis to pushed branch in seconds
+## Version Impact
+
+### Branch Types and Version Bumps:
+- **feat/** branches → MINOR version bump when merged
+- **fix/** branches → PATCH version bump when merged
+- **security/** branches → PATCH version bump (urgent)
+- **perf/** branches → PATCH version bump when merged
+- **refactor/, style/, docs/, test/, chore/** → No version bump
+- **Breaking changes** (any type with !) → MAJOR version bump
+
+## Summary Workflow
+
+**The AI will:**
+1. **Analyze** the type, scope, and context of ALL changes being made
+2. **Decide** whether to:
+   - Create single-type branch (fix/, feat/, docs/, etc.)
+   - Create bundled branch (improve/, update/) for related multi-type changes
+   - Continue on current branch for incremental work
+3. **Choose** appropriate branch type and naming based on the work
+4. **Create** descriptively named branch if needed
+5. **Commit** with comprehensive message describing all changes
+6. **Push** automatically to remote
+7. **Report** clear status, purpose, and bundling rationale
+8. **Never merge** automatically - each branch stands alone
+
+**Decision Priority:**
+1. Same feature/component + multiple improvement types → Bundle on improve/ or update/ branch
+2. Single type of substantial work → Create typed branch (feat/, fix/, etc.)
+3. Unrelated changes → Create separate branches
+4. Incremental work → Continue current branch
+5. Always protect main/master → Never commit directly
+
+**IMPORTANT** 
+When done with git commit and push please run the /Volumes/ExtraStrg_RAID1/Mega Sync/Bourbon_buddy/.claude/commands/git-commit-metrics-reporter.md

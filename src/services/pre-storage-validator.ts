@@ -71,17 +71,8 @@ export class PreStorageValidator {
       issues.push('Possibly incomplete name extraction');
     }
     
-    // V2.7.4: Enhanced non-spirit validation using comprehensive filters
-    if (containsNonProductPatterns(cleanedName, 'furniture') ||
-        containsNonProductPatterns(cleanedName, 'merchandise')) {
-      return {
-        isValid: false,
-        qualityScore: 0,
-        issues: ['Non-spirit merchandise, furniture, or accessory'],
-        cleanedName,
-        rejectionReason: 'non_spirit_item'
-      };
-    }
+    // V2.7.5: Non-product filtering is now handled in spirit-extractor.ts
+    // This validator focuses on data quality, not product type validation
     
     // Check if name became too short after cleaning
     if (cleanedName.length < 10) {
