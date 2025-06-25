@@ -91,8 +91,23 @@ export class SpiritExtractor {
     }
 
     // Initialize extracted data with fixed names
+    const cleanedName = this.cleanProductName(fixedName);
+    
+    // V2.7.4: Early validation for non-spirit items
+    if (TextProcessor.containsStoreReference(cleanedName)) {
+      logger.warn(`Rejecting spirit with store reference: "${cleanedName}"`);
+      return {}; // Return empty object to indicate invalid extraction
+    }
+    
+    // Check for non-spirit categories
+    if (containsNonProductPatterns(cleanedName, 'furniture') ||
+        containsNonProductPatterns(cleanedName, 'merchandise')) {
+      logger.warn(`Rejecting non-spirit item: "${cleanedName}"`);
+      return {}; // Return empty object to indicate invalid extraction
+    }
+    
     const extractedData: Partial<SpiritData> = {
-      name: this.cleanProductName(fixedName),
+      name: cleanedName,
       source_url: '',
       scraped_at: new Date(),
     };
@@ -297,6 +312,12 @@ export class SpiritExtractor {
         extractedData.scraped_data.image_source = extractedData.image_url;
         extractedData.scraped_data.image_extraction_method = "search_results";
       }
+    }
+
+    // V2.7.4: Check for incomplete name extraction
+    if (TextProcessor.isIncompleteExtraction(extractedData.name || '', extractedData.description)) {
+      logger.warn(`⚠️ Possible incomplete extraction detected: "${extractedData.name}"`);
+      // Could attempt to extract better name from description here
     }
 
     // CRITICAL: Validate this is actually an alcoholic beverage, not merchandise
@@ -1608,6 +1629,10 @@ export class SpiritExtractor {
     
     // Apply text processor fixes for spacing
     cleaned = TextProcessor.fixTextSpacing(cleaned);
+    
+    // V2.7.4: Remove store suffixes and clean up
+    cleaned = TextProcessor.removeStoreSuffixes(cleaned);
+    cleaned = TextProcessor.removeNavigationPrefixes(cleaned);
     
     return cleaned;
   }

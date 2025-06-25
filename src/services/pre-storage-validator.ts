@@ -8,6 +8,7 @@
 import { logger } from '../utils/logger.js';
 import { TextProcessor } from './text-processor.js';
 import { smartProductValidator } from './smart-product-validator.js';
+import { containsNonProductPatterns } from '../config/non-product-filters.js';
 
 export interface PreStorageValidationResult {
   isValid: boolean;
@@ -19,8 +20,8 @@ export interface PreStorageValidationResult {
 }
 
 export class PreStorageValidator {
-  private readonly MIN_QUALITY_SCORE = 75; // V2.7.2: Increased from 70
-  private readonly MIN_QUALITY_SCORE_COGNAC = 65; // V2.7.3: Lower threshold for cognac/brandy
+  private readonly MIN_QUALITY_SCORE = 60; // V2.7.5: Reduced from 75 to allow more spirits
+  private readonly MIN_QUALITY_SCORE_COGNAC = 55; // V2.7.5: Reduced from 65 to allow more cognac/brandy
   
   /**
    * Perform final validation before storing to database
@@ -29,9 +30,14 @@ export class PreStorageValidator {
     const issues: string[] = [];
     let qualityScore = 100;
     
-    // V2.7.3: Check if this is a cognac/brandy for special handling
+    // V2.7.5: Check for special spirit types that need different handling
     const isCognacBrandy = spiritData.type === 'cognac' || spiritData.type === 'brandy' ||
       /\b(cognac|brandy|armagnac)\b/i.test(spiritData.name);
+    
+    const isJapaneseSpirit = spiritData.type === 'japanese whisky' || spiritData.type === 'sake' ||
+      /\b(japanese\s+whisk[ey]|sake|shochu|suntory|nikka|hibiki|yamazaki|hakushu|yoichi|miyagikyo)\b/i.test(spiritData.name);
+    
+    const isSpecialType = isCognacBrandy || isJapaneseSpirit;
     
     if (!spiritData.name) {
       return {
@@ -49,12 +55,29 @@ export class PreStorageValidator {
     cleanedName = TextProcessor.fixTextSpacing(cleanedName);
     cleanedName = TextProcessor.removeStoreNames(cleanedName);
     
-    // V2.7.3: Check for non-spirit items (clothing, merchandise, etc.) BEFORE other validation
-    if (/\b(shirt|polo|sweater|quarter\s+zip|t-shirt|apparel|clothing|merchandise|decor|furniture|candle|notebook|leather)\b/i.test(cleanedName)) {
+    // V2.7.4: Early rejection for store references and non-spirit items
+    if (TextProcessor.containsStoreReference(cleanedName) || TextProcessor.containsStoreReference(spiritData.name)) {
       return {
         isValid: false,
         qualityScore: 0,
-        issues: ['Non-spirit merchandise or accessory'],
+        issues: ['Contains store name in title'],
+        rejectionReason: 'store_reference_in_name'
+      };
+    }
+    
+    // V2.7.4: Check for incomplete extraction
+    if (TextProcessor.isIncompleteExtraction(cleanedName, spiritData.description)) {
+      qualityScore -= 15;
+      issues.push('Possibly incomplete name extraction');
+    }
+    
+    // V2.7.4: Enhanced non-spirit validation using comprehensive filters
+    if (containsNonProductPatterns(cleanedName, 'furniture') ||
+        containsNonProductPatterns(cleanedName, 'merchandise')) {
+      return {
+        isValid: false,
+        qualityScore: 0,
+        issues: ['Non-spirit merchandise, furniture, or accessory'],
         cleanedName,
         rejectionReason: 'non_spirit_item'
       };
@@ -128,14 +151,15 @@ export class PreStorageValidator {
       issues.push('Name lacks complexity');
     }
     
-    // Check for proper spirit type
-    const hasSpiritType = /\b(whiskey|whisky|bourbon|rum|gin|vodka|tequila|mezcal|cognac|brandy|liqueur)\b/i.test(cleanedName);
+    // V2.7.5: Enhanced spirit type detection including Japanese spirits
+    const hasSpiritType = /\b(whiskey|whisky|bourbon|rum|gin|vodka|tequila|mezcal|cognac|brandy|liqueur|sake|shochu|baijiu|aquavit|grappa|pisco|calvados|armagnac)\b/i.test(cleanedName);
     
-    // V2.7.3: If type is already detected and set, don't penalize for missing type in name
-    // This is especially important for cognac, where brands like "Hennessy VS" don't include "cognac"
+    // V2.7.5: More lenient for special spirit types (cognac, Japanese spirits)
+    // These often don't include spirit type in name (e.g., "Hennessy VS", "Suntory Hibiki")
     if (!hasSpiritType && !spiritData.type) {
       // Only penalize if neither name nor type field has spirit type
-      qualityScore -= 10;
+      const penalty = isSpecialType ? 5 : 10; // Reduced penalty for special types
+      qualityScore -= penalty;
       issues.push('No spirit type detected');
     }
     
@@ -175,8 +199,9 @@ export class PreStorageValidator {
         issues.push('Brand must start with letter or number');
       }
     } else {
-      // V2.7.3: Be more lenient for cognac missing brands since they often use just the house name
-      qualityScore -= isCognacBrandy ? 5 : 15;
+      // V2.7.5: Be more lenient for special spirit types missing brands
+      const penalty = isSpecialType ? 5 : 15;
+      qualityScore -= penalty;
       issues.push('No brand specified');
     }
     
@@ -199,12 +224,13 @@ export class PreStorageValidator {
     // Use smart validator for additional checks
     const smartValidation = await smartProductValidator.validateProductName(cleanedName);
     if (!smartValidation.isValid) {
-      // V2.7.3: Be more lenient for cognac with smart validator failures
-      qualityScore -= isCognacBrandy ? 20 : 40;
+      // V2.7.5: Be more lenient for special spirit types with smart validator failures
+      const penalty = isSpecialType ? 15 : 30; // Reduced penalties
+      qualityScore -= penalty;
       issues.push(...smartValidation.issues);
     }
     
-    // V2.7.3: Add positive signals for cognac-specific patterns
+    // V2.7.5: Add positive signals for special spirit types
     if (isCognacBrandy) {
       // Grade indicators are strong signals
       if (/\b(XO|VSOP|VS|Napoleon|Extra|Paradis|Hors d'Age)\b/i.test(cleanedName)) {
@@ -220,30 +246,51 @@ export class PreStorageValidator {
       }
     }
     
+    // V2.7.5: Add positive signals for Japanese spirits
+    if (isJapaneseSpirit) {
+      // Japanese distillery names are strong signals
+      if (/\b(suntory|nikka|hibiki|yamazaki|hakushu|yoichi|miyagikyo|taketsuru|coffey)\b/i.test(cleanedName)) {
+        qualityScore = Math.min(100, qualityScore + 25);
+      }
+      // Japanese whisky age statements
+      if (/\b\d{1,2}\s*year/i.test(cleanedName)) {
+        qualityScore = Math.min(100, qualityScore + 15);
+      }
+      // Single malt indicators
+      if (/\bsingle\s+malt\b/i.test(cleanedName)) {
+        qualityScore = Math.min(100, qualityScore + 10);
+      }
+    }
+    
     // Calculate final score
     qualityScore = Math.max(0, qualityScore);
     
-    // V2.7.3: Use appropriate threshold based on spirit type
-    const threshold = isCognacBrandy ? this.MIN_QUALITY_SCORE_COGNAC : this.MIN_QUALITY_SCORE;
+    // V2.7.5: Use appropriate threshold based on spirit type
+    const threshold = isSpecialType ? this.MIN_QUALITY_SCORE_COGNAC : this.MIN_QUALITY_SCORE;
     
-    // Log detailed validation for debugging
-    if (qualityScore < threshold) {
+    // V2.7.5: Enhanced validation logging for debugging
+    const isValid = qualityScore >= threshold;
+    
+    if (!isValid) {
       logger.warn(`🔍 Pre-storage validation FAILED for "${spiritData.name}"`);
       logger.warn(`   Cleaned name: "${cleanedName}"`);
       logger.warn(`   Brand: "${spiritData.brand || 'none'}"`);
       logger.warn(`   Type: "${spiritData.type || 'none'}"`);
-      logger.warn(`   Is Cognac/Brandy: ${isCognacBrandy}`);
+      logger.warn(`   Is Special Type (Cognac/Japanese): ${isSpecialType}`);
       logger.warn(`   Quality score: ${qualityScore} (threshold: ${threshold})`);
       logger.warn(`   Issues: ${issues.join(', ')}`);
+    } else {
+      // V2.7.5: Log successful validations for monitoring
+      logger.info(`✅ Pre-storage validation PASSED for "${spiritData.name}" (score: ${qualityScore}/${threshold})`);
     }
     
     return {
-      isValid: qualityScore >= threshold,
+      isValid,
       qualityScore,
       issues,
       cleanedName: cleanedName !== spiritData.name ? cleanedName : undefined,
       cleanedBrand: cleanedBrand !== spiritData.brand ? cleanedBrand : undefined,
-      rejectionReason: qualityScore < threshold ? 'low_quality_score' : undefined
+      rejectionReason: !isValid ? 'low_quality_score' : undefined
     };
   }
   

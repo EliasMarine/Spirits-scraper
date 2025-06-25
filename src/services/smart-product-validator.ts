@@ -26,7 +26,7 @@ interface LearnedPattern {
 export class SmartProductValidator {
   private learnedPatterns: Map<string, LearnedPattern> = new Map();
   private readonly LEARNING_THRESHOLD = 5;
-  private readonly CONFIDENCE_THRESHOLD = 0.3; // Keep V2.6.1 threshold
+  private readonly CONFIDENCE_THRESHOLD = 0.02; // V2.7.5: Lowered from 0.3 to allow more spirits
   
   // V2.6.4: Enhanced hard rejection patterns for non-products
   private readonly HARD_REJECT_PATTERNS = [
@@ -250,6 +250,15 @@ export class SmartProductValidator {
         'cognac': 'SpiritType',
         'brandy': 'SpiritType',
         'rye': 'SpiritType',
+        // V2.7.5: Add Japanese and other international spirits
+        'sake': 'SpiritType',
+        'shochu': 'SpiritType',
+        'baijiu': 'SpiritType',
+        'aquavit': 'SpiritType',
+        'grappa': 'SpiritType',
+        'pisco': 'SpiritType',
+        'calvados': 'SpiritType',
+        'armagnac': 'SpiritType',
         
         // V2.6.2: Enhanced non-product indicators
         'university': 'NonProduct',
@@ -300,8 +309,9 @@ export class SmartProductValidator {
     const isCognacBrandy = /\b(cognac|brandy|armagnac)\b/i.test(name);
     const hasCognacIndicators = isCognacBrandy && /\b(XO|VSOP|VS|Napoleon|Extra|Paradis|Hors d'Age|Fine Champagne|Grande Champagne|Petite Champagne)\b/i.test(name);
     
-    const hasValidProductIndicators = (/\b(bourbon|whiskey|whisky|rye|vodka|gin|rum|tequila|mezcal)\b/i.test(name) &&
-      /\b(straight|single\s+(malt|barrel)|small\s+batch|bottled|cask\s+strength|proof|year|aged?|series|limited|edition|reserve)\b/i.test(name) &&
+    // V2.7.5: Include Japanese and other international spirits
+    const hasValidProductIndicators = (/\b(bourbon|whiskey|whisky|rye|vodka|gin|rum|tequila|mezcal|sake|shochu|baijiu|aquavit|grappa|pisco|calvados|armagnac)\b/i.test(name) &&
+      /\b(straight|single\s+(malt|barrel)|small\s+batch|bottled|cask\s+strength|proof|year|aged?|series|limited|edition|reserve|japanese|suntory|nikka|hibiki|yamazaki|hakushu)\b/i.test(name) &&
       !/^(core|unknown|generic|basic|bundles?)\b/i.test(name)) || 
       hasCognacIndicators;
     
@@ -430,10 +440,10 @@ export class SmartProductValidator {
       }
     }
     
-    // V2.6.4: Much stricter validation
-    // Require high confidence AND few issues AND must have spirit type
-    const hasValidSpiritType = /\b(bourbon|whiskey|whisky|rye|vodka|gin|rum|tequila|mezcal|cognac|brandy)\b/i.test(normalizedName);
-    const isValid = confidence >= 0.4 && issues.length <= 1 && hasValidSpiritType;
+    // V2.7.5: More lenient validation to allow legitimate spirits
+    // Include Japanese whisky and other spirit types, lower confidence threshold
+    const hasValidSpiritType = /\b(bourbon|whiskey|whisky|rye|vodka|gin|rum|tequila|mezcal|cognac|brandy|sake|shochu|baijiu|aquavit|grappa|pisco|calvados|armagnac)\b/i.test(normalizedName);
+    const isValid = confidence >= 0.02 && issues.length <= 2 && hasValidSpiritType;
 
     return {
       isValid,

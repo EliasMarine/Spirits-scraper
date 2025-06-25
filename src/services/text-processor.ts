@@ -198,6 +198,32 @@ export class TextProcessor {
       /\s+at\s+\w+\s*(wine|liquor|spirits).*$/i,
       /\s+available\s+at.*$/i,
       /\s+from\s+\w+.*$/i,
+      
+      // V2.7.4: Specific store names identified from database cleanup
+      /\s+liquor\s+legends?\s*(nz)?\s*$/i,
+      /\s+sovereignty\s+wines?\s*$/i,
+      /\s+mac\s+arthur\s+beverages?\s*$/i,
+      /\s+naija\s+liquor\s*$/i,
+      /\s+divine\s+cellar\s*$/i,
+      /\s+culturebox\s*$/i,
+      /\s+whisky\.my\s*$/i,
+      /\s+thewinelist\.cy\s*$/i,
+      /\s+port\s+2\s+port\s+(online\s+)?wine\s+store\s*$/i,
+      /\s+twin\s+liquors?\s*$/i,
+      /\s+wine\s+delight\s*$/i,
+      /\s+wine\s*&\s*liquor\s+mart\s*$/i,
+      /\s+liquor\s+corporation\s*$/i,
+      /\s+lisa'?s\s+liquor\s*$/i,
+      /\s+woodland\s+hills\s+wine\s+company\s*$/i,
+      /\s+liquorama\s*$/i,
+      /\s+superstore\s*$/i,
+      /\s+rare\s+whiskey\s*&\s*co\.?\s*$/i,
+      /\s+winestore\s+online\s*(\d+[\.,]\d+)?\s*$/i,
+      /\s+five\s+towns\s+wine\s*&\s*liquor\s*$/i,
+      /\s+scotch\s+malt\s+whisky\s+society\s*(eu\s+store)?\s*$/i,
+      /\s+cana\s+wine\s+company\s*$/i,
+      /\s+food\s+4\s+less\s*$/i,
+      /\s+knast\s+liquor\s*$/i,
     ];
     
     for (const pattern of suffixPatterns) {
@@ -865,26 +891,13 @@ export class TextProcessor {
       "seagrams": "Seagram's",
       "seagram s": "Seagram's",
       "canadian club": "Canadian Club",
-      "wild turkey": "Wild Turkey",
-      "four roses": "Four Roses",
-      "woodford reserve": "Woodford Reserve",
-      "knob creek": "Knob Creek",
-      "bulleit": "Bulleit",
-      "buffalo trace": "Buffalo Trace",
-      "eagles rare": "Eagle Rare",
-      "eagle rare": "Eagle Rare",
-      "blantons": "Blanton's",
-      "blanton s": "Blanton's",
+      // Duplicates removed - these are already defined earlier in the object
+      "eagles rare": "Eagle Rare", // Keep this variation that wasn't in first set
       "weller": "W.L. Weller",
       "w.l. weller": "W.L. Weller",
       "wl weller": "W.L. Weller",
       "van winkle": "Van Winkle",
       "pappy van winkle": "Pappy Van Winkle",
-      "michters": "Michter's",
-      "michter s": "Michter's",
-      "heaven hill": "Heaven Hill",
-      "evan williams": "Evan Williams",
-      "elijah craig": "Elijah Craig",
       "old forester": "Old Forester",
       "george dickel": "George Dickel",
       "remy martin": "Rémy Martin",
@@ -897,26 +910,9 @@ export class TextProcessor {
       "ej": "E&J",
       "christian brothers": "Christian Brothers",
       "paul masson": "Paul Masson",
-      // St. George variations
-      "st george": "St. George Spirits",
-      "st. george": "St. George Spirits",
-      "st george baller": "St. George Spirits",
-      "st. george baller": "St. George Spirits",
-      "st george spirits": "St. George Spirits",
-      "st. george spirits": "St. George Spirits",
-      "st george spirit": "St. George Spirits",
-      "st. george spirit": "St. George Spirits",
-      // Castle & Key variations
-      "castle": "Castle & Key",
-      "castle & key": "Castle & Key",
-      "castle and key": "Castle & Key",
+      // Additional variations not covered in first set
       "cast le": "Castle & Key",  // For broken spacing
-      // High West variations
-      "high west": "High West",
       "high": "High West",  // Only if standalone
-      // WhistlePig variations
-      "whistlepig": "WhistlePig",
-      "whistle pig": "WhistlePig",
       // Old Grand-Dad
       "old grand dad": "Old Grand-Dad",
       "old grand-dad": "Old Grand-Dad",
@@ -930,9 +926,7 @@ export class TextProcessor {
       // Uncle Nearest
       "uncle nearest": "Uncle Nearest",
       "unc le nearest": "Uncle Nearest",
-      // Russell's Reserve
-      "russells reserve": "Russell's Reserve",
-      "russell s reserve": "Russell's Reserve",
+      // Russell's Reserve duplicate removed - already defined earlier
       // Very Old Barton
       "very old barton": "Very Old Barton",
       "vob": "Very Old Barton",
@@ -1118,6 +1112,85 @@ export class TextProcessor {
 
     return this.normalizeBrandName(name);
   }
+
+  /**
+   * V2.7.4: Detect if a spirit name contains store references
+   */
+  public static containsStoreReference(text: string): boolean {
+    if (!text) return false;
+    
+    const storePatterns = [
+      // Specific store names from database cleanup
+      /\bliquor\s+legends?\b/i,
+      /\bsovereignty\s+wines?\b/i,
+      /\bmac\s+arthur\s+beverages?\b/i,
+      /\bnaija\s+liquor\b/i,
+      /\bdivine\s+cellar\b/i,
+      /\bculturebox\b/i,
+      /\bwhisky\.my\b/i,
+      /\bthewinelist\.cy\b/i,
+      /\bport\s+2\s+port\b/i,
+      /\btwin\s+liquors?\b/i,
+      /\bwine\s+delight\b/i,
+      /\bwine\s*&\s*liquor\s+mart\b/i,
+      /\bliquor\s+corporation\b/i,
+      /\blisa'?s\s+liquor\b/i,
+      /\bwoodland\s+hills\s+wine\s+company\b/i,
+      /\bliquorama\b/i,
+      /\bsuperstore\b/i,
+      /\brare\s+whiskey\s*&\s*co\.?\b/i,
+      /\bwinestore\s+online\b/i,
+      /\bfive\s+towns\s+wine\s*&\s*liquor\b/i,
+      /\bscotch\s+malt\s+whisky\s+society\b/i,
+      /\bcana\s+wine\s+company\b/i,
+      /\bfood\s+4\s+less\b/i,
+      /\bknast\s+liquor\b/i,
+      
+      // Generic store indicators
+      /\b(wine|liquor)\s+(store|shop|mart|company)\b/i,
+      /\b(beverage|spirits?)\s+(store|shop|mart|company)\b/i,
+      /\b(online\s+)?(wine|liquor|spirits?)\s+retailer\b/i,
+    ];
+    
+    return storePatterns.some(pattern => pattern.test(text));
+  }
+
+  /**
+   * V2.7.4: Check if name extraction seems incomplete
+   */
+  public static isIncompleteExtraction(name: string, description?: string): boolean {
+    if (!name || !description) return false;
+    
+    // Check if the name is suspiciously short compared to description
+    if (name.length < 10 && description.length > 100) {
+      // Look for complete product names in description
+      const productPatterns = [
+        /\b([A-Z][a-zA-Z\s&'.-]+?\s+\d+\s*year\s*old\s+\w+)/i,
+        /\b([A-Z][a-zA-Z\s&'.-]+?\s+XO\s+\w+)/i,
+        /\b([A-Z][a-zA-Z\s&'.-]+?\s+VSOP\s+\w+)/i,
+        /\b([A-Z][a-zA-Z\s&'.-]+?\s+VS\s+\w+)/i,
+      ];
+      
+      for (const pattern of productPatterns) {
+        const match = description.match(pattern);
+        if (match && match[1].length > name.length * 1.5) {
+          return true; // Found a more complete name in description
+        }
+      }
+    }
+    
+    // Check for common incomplete patterns
+    const incompletePatterns = [
+      /^year\s+old\b/i,
+      /^old\s+\w+$/i,
+      /^\w+\s+year$/i,
+      /^single\s+malt$/i,
+      /^reserve$/i,
+      /^select$/i,
+    ];
+    
+    return incompletePatterns.some(pattern => pattern.test(name.trim()));
+  }
 }
 
 // Export individual functions for convenience
@@ -1130,5 +1203,7 @@ export const {
   extractValidAge,
   isValidProductDescription,
   normalizeBrandName,
-  processSpirit
+  processSpirit,
+  containsStoreReference,
+  isIncompleteExtraction
 } = TextProcessor;

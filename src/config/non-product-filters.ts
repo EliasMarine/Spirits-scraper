@@ -9,6 +9,7 @@
 export interface NonProductFilterConfig {
   version: string;
   patterns: {
+    furniture: RegExp[];
     tours: RegExp[];
     merchandise: RegExp[];
     beer: RegExp[];
@@ -19,6 +20,7 @@ export interface NonProductFilterConfig {
     events: RegExp[];
   };
   urlPatterns: {
+    furniture: string[];
     tours: string[];
     merchandise: string[];
     articles: string[];
@@ -37,6 +39,18 @@ export const NON_PRODUCT_FILTERS: NonProductFilterConfig = {
   version: '1.0.0',
   
   patterns: {
+    // V2.7.4: Furniture and home decor
+    furniture: [
+      /\b(sconce|sconces|nightstand|nightstands|table|tables|chair|chairs)\b/i,
+      /\b(sofa|couch|loveseat|ottoman|bench|stool|dresser|armoire)\b/i,
+      /\b(cabinet|shelf|shelves|bookcase|desk|vanity|mirror)\b/i,
+      /\b(lamp|lamps|chandelier|lighting|light\s+fixture)\b/i,
+      /\b(rug|carpet|curtain|curtains|drape|drapes|blinds)\b/i,
+      /\b(furniture|decor|decoration|decorative|home\s+goods)\b/i,
+      /\b(interior\s+design|home\s+decor|room\s+decor)\b/i,
+      /\b(dining\s+set|bedroom\s+set|living\s+room)\b/i,
+    ],
+    
     // Tour and experience patterns
     tours: [
       /\b(distillery|brewery|winery)\s+(tour|tours|visit|experience)\b/i,
@@ -62,6 +76,17 @@ export const NON_PRODUCT_FILTERS: NonProductFilterConfig = {
       /\b(barrel\s+head|barrel\s+stave|wood\s+sign|wall\s+art)\s+(decor|decoration)\b/i,
       /\b(white|black|red|blue|green|navy|gray|grey)\s+(polo|shirt|tee|top|jacket)\b/i,
       /\b(cotton|polyester|fabric|material)\s+(blend|content|made\s+from)\b/i,
+      // V2.7.4: Fashion and accessories (shoes, jewelry, etc.)
+      /\b(sandal|sandals|boot|boots|shoe|shoes|sneaker|sneakers|loafer|loafers)\b/i,
+      /\b(brogues|oxford|pump|heel|stiletto|ankle\s+boot|knee\s+boot)\b/i,
+      /\b(earring|earrings|necklace|necklaces|bracelet|bracelets|ring|rings)\b/i,
+      /\b(jewelry|jewellery|fashion|accessory|accessories)\b/i,
+      /\b(handbag|purse|wallet|belt|strap|leather\s+goods)\b/i,
+      /\b(watch|timepiece|bracelet\s+watch|designer\s+watch)\b/i,
+      // V2.7.4: Craft supplies and textiles
+      /\b(knitting|yarn|fabric|textile|cashmere|wool|silk|cotton)\b/i,
+      /\b(crochet|embroidery|sewing|craft|crafting|needlework)\b/i,
+      /\b(thread|twine|rope|cord|string|fiber|fibre)\b/i,
       // Don't match spirit names that might contain these words
       /(?<!wild\s+turkey\s+rare\s)breed(?!\s+bourbon|\s+rye|\s+whiskey)/i,
     ],
@@ -145,6 +170,11 @@ export const NON_PRODUCT_FILTERS: NonProductFilterConfig = {
   
   // URL patterns that indicate non-product pages
   urlPatterns: {
+    furniture: [
+      '/furniture', '/home-decor', '/lighting', '/lamps',
+      '/tables', '/chairs', '/bedroom', '/living-room',
+      '/interior-design', '/home-goods', '/decor',
+    ],
     tours: [
       '/tour', '/tours', '/visit', '/visitor', '/experience',
       '/distillery-tour', '/book-tour', '/plan-visit',
@@ -170,6 +200,14 @@ export const NON_PRODUCT_FILTERS: NonProductFilterConfig = {
     /\b(spirit|spirits|liquor|liqueur|alcohol|distilled)\b/i,
     /\b(bottle|bottles|750ml|1L|liter|proof|abv)\b/i,
     /\b(aged|aging|barrel|cask|distillery|distillation)\b/i,
+    // V2.7.5: Japanese and international spirits
+    /\b(japanese|sake|shochu|baijiu|aquavit|grappa|pisco|calvados|armagnac)\b/i,
+    // V2.7.5: Japanese whisky distilleries/brands
+    /\b(suntory|nikka|hibiki|yamazaki|hakushu|yoichi|miyagikyo|chichibu|mars|akashi|taketsuru)\b/i,
+    // V2.7.5: Common Japanese whisky descriptors
+    /\b(single\s+malt|blended|pure\s+malt|grain|malt)\b/i,
+    // V2.7.5: International brand indicators
+    /\b(hennessy|martell|remy|patron|grey\s+goose|johnnie|macallan|glenfiddich)\b/i,
   ],
   
   // Alcohol content patterns for validation
