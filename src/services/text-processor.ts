@@ -342,6 +342,13 @@ export class TextProcessor {
     result = result.replace(/\bC Lassic\b/gi, 'Classic');
     result = result.replace(/\bBottled In Bond\b/gi, 'Bottled in Bond');
     
+    // V2.9: Fix broken spacing patterns found in database analysis
+    result = result.replace(/\bLagavu Lin\b/gi, 'Lagavulin');
+    result = result.replace(/\bW L We ller\b/gi, 'W.L. Weller');
+    result = result.replace(/\bOld Fitzgera Ld\b/gi, 'Old Fitzgerald');
+    result = result.replace(/\bUnc Le Nearest\b/gi, 'Uncle Nearest');
+    result = result.replace(/\bThe Disti Llers\b/gi, 'The Distillers');
+    
     // V2.7.1: Remove duplicate spirit type words
     result = result.replace(/\b(whiskey|whisky|bourbon|rum|gin|vodka|tequila|mezcal|cognac)\s+\1\b/gi, '$1');
     

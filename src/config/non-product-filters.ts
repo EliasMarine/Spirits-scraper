@@ -111,6 +111,15 @@ export const NON_PRODUCT_FILTERS: NonProductFilterConfig = {
       // Craft supplies - only when clearly craft context
       /\b(knitting|crochet|sewing)\s+(yarn|fabric|supplies)\b/i,
       /\b(yarn|fabric|textile)\s+(for\s+knitting|for\s+crafts|supplies)\b/i,
+      
+      // V2.9: Office supplies found in database
+      /\b3\s*m\s+scotch/i,
+      /\bscotch\s+(tape|weld|adhesive|glue|magic\s+tape)/i,
+      /\bepoxy\s+adhesive/i,
+      /\bdry\s+erase\s+tape/i,
+      /\bscotch\s+brand/i,
+      /\btape\s+refill\s+rolls/i,
+      /\boffice\s+supplies/i,
     ],
     
     // Beer and non-spirit beverages
@@ -186,6 +195,13 @@ export const NON_PRODUCT_FILTERS: NonProductFilterConfig = {
       /\b(recipe|cooking|baking)\s+(with|for|instructions)\b/i,
       // Avoid matching spirits with food-like names
       /(?<!wild\s)(?<!\w)turkey(?!\s+\d+|\s+rare|\s+101)(?:\s+dinner|\s+sandwich)?/i,
+      // V2.9: Specific patterns found in database
+      /\bscotch\s+eggs?\b/i,
+      /\btaco\s*(bar|restaurant|cantina)/i,
+      /\btequila\s+escape\b/i,
+      /\bmr\.\s*tequila\s+mexican\s+restaurant/i,
+      /\bxo\s+taco\s+taco\s*&\s*tequila\s+bar/i,
+      /\bauthentic\s+mexican\s+restaurant/i,
     ],
     
     // Events and tickets
@@ -195,6 +211,12 @@ export const NON_PRODUCT_FILTERS: NonProductFilterConfig = {
       /\b(concert|show|performance|entertainment)\b/i,
       /\b(date|dates|schedule|calendar)\b/i,
       /\b(rsvp|register|registration|booking)\b/i,
+      // V2.9: Specific patterns found in database
+      /\beventbrite\b/i,
+      /\btequila\s+and\s+tacos\s+(festival|tickets)/i,
+      /\brn\s*b\s+tequila\s+festival/i,
+      /\btacos\s+and\s+tequila\s+festival/i,
+      /\bdreamville\s+festival/i,
     ],
     
     // V2.8: Store/brand pages rather than specific products

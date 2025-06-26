@@ -84,6 +84,15 @@ export const EXCLUDED_DOMAINS = [
   'archive.org',
   'waybackmachine.org',
   
+  // V2.9 Additions - Non-spirit domains found in database analysis
+  'eventbrite.com',  // Event tickets, not spirits
+  'scotchbrand.com',  // 3M office products
+  '3m.com',  // 3M products
+  'qfc.com',  // Grocery store with generic results
+  'target.com',  // General retail, not spirit-focused
+  'office-supplies.com',  // Office supplies
+  'stationery.com',  // Office supplies
+  
   // Whiskey/Spirits Review Sites (often return comparison articles instead of products)
   'fredminnick.com',
   'breakingbourbon.com',
@@ -189,6 +198,12 @@ export function getSearchExclusions(): string {
     'blog.thewhiskyexchange.com',
     'distiller.com',
     'whiskybase.com',
+    // V2.9 High-risk domains
+    'eventbrite.com',
+    'scotchbrand.com',
+    '3m.com',
+    'target.com',
+    'qfc.com',
   ];
   
   return priorityExclusions
