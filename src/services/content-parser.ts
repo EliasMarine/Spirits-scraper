@@ -60,11 +60,18 @@ export class ContentParser {
       }
     }
 
-    // Always try to extract price from snippet if not found in metadata
+    // V2.8: Always try to extract price from snippet and title if not found in metadata
     if (!parsed.price) {
+      // Try snippet first
       const priceFromSnippet = this.extractPrice(result.snippet);
       if (priceFromSnippet) {
         parsed.price = priceFromSnippet;
+      } else {
+        // Try title as fallback
+        const priceFromTitle = this.extractPrice(result.title);
+        if (priceFromTitle) {
+          parsed.price = priceFromTitle;
+        }
       }
     }
 
@@ -136,11 +143,19 @@ export class ContentParser {
       );
       parsed.description = this.filterReviewFragments(rawDescription);
 
-      // Extract price
+      // V2.8: Enhanced price extraction with more selectors
       const priceSelectors = [
         '.price', '.product-price', '.cost',
         '[itemprop="price"]', '[data-price]',
         '.price-tag', '.price-now',
+        // V2.8: Additional selectors based on common e-commerce patterns
+        '.price-box', '.price-container', '.price-value',
+        '.current-price', '.sale-price', '.regular-price',
+        '.product-price-value', '.item-price', '.pricing',
+        '[class*="price"]', '[id*="price"]',  // Generic price classes/ids
+        '.msrp', '.retail-price', '.list-price',
+        // Spirit-specific selectors
+        '.bottle-price', '.spirit-price', '.whiskey-price',
       ];
 
       for (const selector of priceSelectors) {
@@ -377,7 +392,7 @@ export class ContentParser {
       return null;
     }
 
-    // Enhanced price patterns - more specific to avoid false positives
+    // V2.8: Enhanced price patterns - more comprehensive extraction
     const patterns = [
       // Standard currency patterns with explicit currency symbols
       /\$\s*(\d+(?:\.\d{2})?)\b/,
@@ -391,6 +406,17 @@ export class ContentParser {
       /\b(?:was|now|sale|regular):?\s*\$(\d+(?:\.\d{2})?)\b/i,
       // Structured product price data
       /\bproduct:price:amount["\s]*(\d+(?:\.\d{2})?)/i,
+      // V2.8: Additional patterns based on real data
+      /\$(\d{2,4})\b/,  // Simple dollar amounts
+      /\b(\d{2,3})\.\d{2}\b/,  // XX.XX or XXX.XX patterns
+      /\bfor\s+\$(\d+(?:\.\d{2})?)/i,  // "for $XX"
+      /\bat\s+\$(\d+(?:\.\d{2})?)/i,   // "at $XX"
+      /\bonly\s+\$(\d+(?:\.\d{2})?)/i, // "only $XX"
+      /\bbuy\s+(?:for|at)\s+\$(\d+(?:\.\d{2})?)/i, // "buy for/at $XX"
+      /\b(\d{2,3})(?:\s*\$|\s*dollars?)/i,  // "XX $" or "XX dollars"
+      // Spirit-specific price patterns
+      /\b(?:bottle|750ml|1L|liter)\s+(?:for|at|costs?)\s+\$?(\d+(?:\.\d{2})?)/i,
+      /\b(?:priced|pricing)\s+at\s+\$?(\d+(?:\.\d{2})?)/i,
     ];
 
     for (const pattern of patterns) {

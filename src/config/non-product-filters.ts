@@ -1,9 +1,14 @@
 /**
  * Non-Product Filtering Configuration
- * Version: 1.0.0
+ * Version: 2.8.0
  * 
  * This configuration defines patterns to identify and filter out non-spirit products
  * from search results at multiple stages of the scraping process.
+ * 
+ * V2.8 Changes:
+ * - Added marketing language patterns ("buy online", "near me", etc.)
+ * - Added store page detection patterns
+ * - Enhanced retail patterns based on database analysis
  */
 
 export interface NonProductFilterConfig {
@@ -18,6 +23,7 @@ export interface NonProductFilterConfig {
     cocktails: RegExp[];
     food: RegExp[];
     events: RegExp[];
+    storePage: RegExp[];  // V2.8: New category
   };
   urlPatterns: {
     furniture: string[];
@@ -25,6 +31,7 @@ export interface NonProductFilterConfig {
     merchandise: string[];
     articles: string[];
     retail: string[];
+    storePage: string[];  // V2.8: New category
   };
   requiredSpiritIndicators: RegExp[];
   alcoholContentPatterns: RegExp[];
@@ -36,7 +43,7 @@ export interface NonProductFilterConfig {
 }
 
 export const NON_PRODUCT_FILTERS: NonProductFilterConfig = {
-  version: '1.0.0',
+  version: '2.8.0',  // V2.8: Enhanced marketing language and store page detection
   
   patterns: {
     // V2.7.4: Furniture and home decor
@@ -120,7 +127,7 @@ export const NON_PRODUCT_FILTERS: NonProductFilterConfig = {
       /\b(archives?|press release|media)\b/i,
     ],
     
-    // Retail and category pages
+    // Retail and category pages - V2.8: Enhanced based on database analysis
     retail: [
       /\b(retail|retailer|store|shop|shopping)\b/i,
       /\b(category|categories|catalog|collection)\b/i,
@@ -133,6 +140,16 @@ export const NON_PRODUCT_FILTERS: NonProductFilterConfig = {
       /\b(special|limited|seasonal)\s+(release|releases|available|offerings?)\b/i,
       /\b(available\s+now|just\s+released|new\s+arrivals?|coming\s+soon)\b/i,
       /\b(holiday\s+cask\s+strength\s+single\s+barrels)\b/i,  // Specific pattern from CSV
+      // V2.8: Marketing language patterns from database analysis
+      /\bbuy\s+.+\s+online\b/i,
+      /\border\s+.+\s+near\s+me\b/i,
+      /\bproducts?\s+delivery\s+or\s+pickup\b/i,
+      /\b(delivery|pickup)\s+near\s+me\b/i,
+      /\bis\s+a\s+premium\s+(whiskey|bourbon|spirit|tequila|rum|gin|vodka)\b/i,
+      /\bproducts-\w+\b/i,  // Products- prefix pattern
+      /\bgift\s+guide\b/i,
+      /\bcase\s+bundle\b/i,
+      /\b(find|order|locate)\s+.+\s+near\s+(me|you)\b/i,
     ],
     
     // Cocktails and mixed drinks - V2.7.5: Only match clear cocktail contexts
@@ -164,6 +181,22 @@ export const NON_PRODUCT_FILTERS: NonProductFilterConfig = {
       /\b(date|dates|schedule|calendar)\b/i,
       /\b(rsvp|register|registration|booking)\b/i,
     ],
+    
+    // V2.8: Store/brand pages rather than specific products
+    storePage: [
+      // Brand collection pages
+      /\b(buffalo\s+trace|jack\s+daniels|jim\s+beam)\s+(products|bourbon|whiskey|collection)\b/i,
+      /\bproducts?\s*-\s*(old\s+town|epicurious|barbank)\b/i,
+      /\b(brands|collections)\/(buffalo-trace|jack-daniels|jim-beam)\b/i,
+      // Generic store listings
+      /\b(all|browse|shop)\s+(buffalo\s+trace|bourbon|whiskey|spirits)\b/i,
+      /\b(buffalo\s+trace|bourbon|whiskey)\s+(page|section|category)\b/i,
+      // Multiple products in name
+      /\b(bourbon|whiskey|vodka|rum|gin)\s+.+\s+(bourbon|whiskey|vodka|rum|gin)\s+.+\s+(bourbon|whiskey|vodka|rum|gin)\b/i,
+      // Store navigation
+      /\bview\s+all\s+(products|spirits|bourbon|whiskey)\b/i,
+      /\bsort\s+by\s+(price|name|popularity)\b/i,
+    ],
   },
   
   // URL patterns that indicate non-product pages
@@ -188,6 +221,13 @@ export const NON_PRODUCT_FILTERS: NonProductFilterConfig = {
     retail: [
       '/category', '/catalog', '/browse', '/search',
       '/retail', '/wholesale', '/trade',
+    ],
+    // V2.8: Store page URL patterns
+    storePage: [
+      '/collections/', '/brands/', '/all-products',
+      '/bourbon-collection', '/whiskey-collection',
+      '/buffalo-trace-collection', '/product-category/',
+      '?sort=', '?filter=', '/page/', '/products?',
     ],
   },
   

@@ -3,6 +3,11 @@
  * 
  * V2.7.1: Final validation layer before database storage
  * Provides quality scoring and last-chance rejection of garbage entries
+ * 
+ * V2.8 Changes:
+ * - Added specific Buffalo Trace store page detection
+ * - Added marketing language rejection (near me, delivery, etc.)
+ * - Enhanced validation for collection pages vs individual products
  */
 
 import { logger } from '../utils/logger.js';
@@ -20,8 +25,9 @@ export interface PreStorageValidationResult {
 }
 
 export class PreStorageValidator {
-  private readonly MIN_QUALITY_SCORE = 60; // V2.7.5: Reduced from 75 to allow more spirits
-  private readonly MIN_QUALITY_SCORE_COGNAC = 55; // V2.7.5: Reduced from 65 to allow more cognac/brandy
+  private readonly MIN_QUALITY_SCORE = 55; // V2.8: Reduced from 60 based on database analysis (avg 56.8)
+  private readonly MIN_QUALITY_SCORE_COGNAC = 50; // V2.8: Reduced from 55 to allow more cognac/brandy
+  private readonly MIN_QUALITY_SCORE_WITH_PRICE = 45; // V2.8: Lower threshold if spirit has price data
   
   /**
    * Perform final validation before storing to database
@@ -62,6 +68,51 @@ export class PreStorageValidator {
         qualityScore: 0,
         issues: ['Contains store name in title'],
         rejectionReason: 'store_reference_in_name'
+      };
+    }
+    
+    // V2.8: Specific Buffalo Trace store page detection
+    if (/\b(buffalo\s+trace)\b/i.test(cleanedName)) {
+      // Check for store listing patterns
+      if (/\b(products|collection|bourbon\s+whiskey$|whiskey$|distillery$)\b/i.test(cleanedName) &&
+          !/\b(single\s+barrel|barrel\s+select|antique|kosher|experimental|special\s+edition)\b/i.test(cleanedName)) {
+        return {
+          isValid: false,
+          qualityScore: 0,
+          issues: ['Buffalo Trace store listing page'],
+          rejectionReason: 'buffalo_trace_store_page'
+        };
+      }
+      
+      // Check for multiple spirit names (store collection page)
+      const spiritTypeCount = (cleanedName.match(/\b(bourbon|whiskey|vodka|rum|gin)\b/gi) || []).length;
+      if (spiritTypeCount > 2) {
+        return {
+          isValid: false,
+          qualityScore: 0,
+          issues: ['Multiple spirit types - likely collection page'],
+          rejectionReason: 'multiple_spirit_types'
+        };
+      }
+      
+      // Check for marketing language
+      if (/\b(buy|order|purchase)\s+.+\s+online\b/i.test(cleanedName)) {
+        return {
+          isValid: false,
+          qualityScore: 0,
+          issues: ['Marketing language in name'],
+          rejectionReason: 'marketing_language'
+        };
+      }
+    }
+    
+    // V2.8: General marketing language check
+    if (/\b(near\s+me|delivery\s+or\s+pickup|instacart|ubereats|doordash|gopuff)\b/i.test(cleanedName)) {
+      return {
+        isValid: false,
+        qualityScore: 0,
+        issues: ['Delivery/marketplace language in name'],
+        rejectionReason: 'marketplace_language'
       };
     }
     
@@ -256,10 +307,21 @@ export class PreStorageValidator {
     // Calculate final score
     qualityScore = Math.max(0, qualityScore);
     
-    // V2.7.5: Use appropriate threshold based on spirit type
-    const threshold = isSpecialType ? this.MIN_QUALITY_SCORE_COGNAC : this.MIN_QUALITY_SCORE;
+    // V2.8: Use appropriate threshold based on spirit type and price availability
+    let threshold = isSpecialType ? this.MIN_QUALITY_SCORE_COGNAC : this.MIN_QUALITY_SCORE;
     
-    // V2.7.5: Enhanced validation logging for debugging
+    // V2.8: Lower threshold if spirit has valid price data
+    const hasValidPrice = spiritData.price && 
+                         typeof spiritData.price === 'number' && 
+                         spiritData.price > 0 && 
+                         spiritData.price < 5000;
+    
+    if (hasValidPrice) {
+      threshold = Math.min(threshold, this.MIN_QUALITY_SCORE_WITH_PRICE);
+      qualityScore = Math.min(100, qualityScore + 10); // Bonus for having price
+    }
+    
+    // V2.8: Enhanced validation with price consideration
     const isValid = qualityScore >= threshold;
     
     if (!isValid) {
@@ -267,12 +329,15 @@ export class PreStorageValidator {
       logger.warn(`   Cleaned name: "${cleanedName}"`);
       logger.warn(`   Brand: "${spiritData.brand || 'none'}"`);
       logger.warn(`   Type: "${spiritData.type || 'none'}"`);
+      logger.warn(`   Price: ${hasValidPrice ? `$${spiritData.price}` : 'none'}`);
       logger.warn(`   Is Special Type (Cognac/Japanese): ${isSpecialType}`);
+      logger.warn(`   Has Valid Price: ${hasValidPrice}`);
       logger.warn(`   Quality score: ${qualityScore} (threshold: ${threshold})`);
       logger.warn(`   Issues: ${issues.join(', ')}`);
     } else {
-      // V2.7.5: Log successful validations for monitoring
-      logger.info(`✅ Pre-storage validation PASSED for "${spiritData.name}" (score: ${qualityScore}/${threshold})`);
+      // V2.8: Log successful validations with price info
+      const priceInfo = hasValidPrice ? ` [price: $${spiritData.price}]` : '';
+      logger.info(`✅ Pre-storage validation PASSED for "${spiritData.name}" (score: ${qualityScore}/${threshold})${priceInfo}`);
     }
     
     return {

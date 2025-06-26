@@ -1,3 +1,12 @@
+/**
+ * Spirit Extractor Service
+ * 
+ * V2.8 Changes:
+ * - Enhanced category mapping to reduce "Other" classifications
+ * - Added more international spirit categories
+ * - Improved category detection logic with fallback mechanisms
+ */
+
 import { googleSearchClient } from './google-search.js';
 import { queryGenerator } from './query-generator.js';
 import { contentParser } from './content-parser.js';
@@ -249,12 +258,12 @@ export class SpiritExtractor {
     // Calculate a simple data quality score
     extractedData.data_quality_score = this.calculateSimpleQualityScore(extractedData);
     
-    // Get the most relevant source URL - BUT ONLY FROM ALLOWED DOMAINS
+    // V2.8: Get the most relevant source URL - with enhanced validation
     if (parsedResults.length > 0) {
-      // Find first non-excluded domain
+      // Find first non-excluded domain with valid product URL
       let validSourceUrl = '';
       for (const result of parsedResults) {
-        if (result.url && !isExcludedDomain(result.url)) {
+        if (result.url && !isExcludedDomain(result.url) && this.isValidProductUrl(result.url)) {
           validSourceUrl = result.url;
           break;
         }
@@ -1067,34 +1076,108 @@ export class SpiritExtractor {
   private detectCategory(type: string): string {
     if (!type) return 'Other';
 
-    // Return the specific type as the category for better classification
+    // V2.8: Enhanced category mapping to reduce "Other" classifications
     const categoryMap: Record<string, string> = {
+      // Whiskey categories
       'Single Malt': 'Single Malt Whiskey',
-      'Blended Scotch': 'Scotch Whiskey', 
+      'Blended Scotch': 'Scotch Whiskey',
+      'Scotch': 'Scotch Whiskey',
       'Bourbon': 'Bourbon',
       'Rye Whiskey': 'Rye Whiskey',
       'Irish Whiskey': 'Irish Whiskey',
       'Japanese Whisky': 'Japanese Whiskey',
       'Canadian Whisky': 'Canadian Whiskey',
       'Tennessee Whiskey': 'Tennessee Whiskey',
+      'American Single Malt': 'American Single Malt',
+      'Whiskey': 'Whiskey',
+      'Whisky': 'Whiskey',
+      
+      // Clear spirits
       'Vodka': 'Vodka',
       'Gin': 'Gin',
+      
+      // Aged spirits
       'Rum': 'Rum',
       'Tequila': 'Tequila',
       'Mezcal': 'Mezcal',
+      
+      // Brandy categories
       'Cognac': 'Cognac',
       'Brandy': 'Brandy',
+      'Armagnac': 'Brandy',
+      'Calvados': 'Brandy',
+      'Pisco': 'Brandy',
+      
+      // Liqueurs
       'Liqueur': 'Liqueur',
-      'Whiskey': 'Whiskey',
+      'Cream Liqueur': 'Liqueur',
+      'Coffee Liqueur': 'Liqueur',
+      'Herbal Liqueur': 'Liqueur',
+      
+      // International spirits
+      'Sake': 'Sake',
+      'Shochu': 'Other Asian Spirits',
+      'Baijiu': 'Other Asian Spirits',
+      'Soju': 'Other Asian Spirits',
+      'Aquavit': 'Other European Spirits',
+      'Grappa': 'Other European Spirits',
+      'Schnapps': 'Other European Spirits',
+      
+      // Special categories
+      'Absinthe': 'Absinthe',
+      'Aperitif': 'Aperitif',
+      'Digestif': 'Digestif',
+      'Vermouth': 'Vermouth',
+      'Amaro': 'Amaro',
+      
+      // Lowercase variations
+      'single malt': 'Single Malt Whiskey',
+      'bourbon': 'Bourbon',
+      'rye whiskey': 'Rye Whiskey',
+      'whiskey': 'Whiskey',
+      'vodka': 'Vodka',
+      'gin': 'Gin',
+      'rum': 'Rum',
+      'tequila': 'Tequila',
+      'cognac': 'Cognac',
+      'brandy': 'Brandy',
+      
+      // Default mappings
       'Spirit': 'Other',
       'Other': 'Other',
-      'other': 'Other',
-      'whiskey': 'Whiskey',
-      'bourbon': 'Bourbon',
-      'rye whiskey': 'Rye Whiskey'
+      'other': 'Other'
     };
 
-    const mapped = categoryMap[type] || categoryMap[type.toLowerCase()] || 'Other';
+    // Try exact match first
+    let mapped = categoryMap[type];
+    
+    // Try lowercase match if no exact match
+    if (!mapped && type) {
+      mapped = categoryMap[type.toLowerCase()];
+    }
+    
+    // Try to extract category from type if still no match
+    if (!mapped) {
+      // Check if type contains known spirit words
+      const spiritKeywords = [
+        'whiskey', 'whisky', 'bourbon', 'rum', 'gin', 'vodka', 
+        'tequila', 'mezcal', 'cognac', 'brandy', 'liqueur',
+        'sake', 'absinthe', 'schnapps'
+      ];
+      
+      for (const keyword of spiritKeywords) {
+        if (type.toLowerCase().includes(keyword)) {
+          mapped = categoryMap[keyword] || 'Other';
+          break;
+        }
+      }
+    }
+    
+    // Default to Other if still no match
+    if (!mapped) {
+      mapped = 'Other';
+    }
+    
     // Only log category mapping in debug mode
     // console.log(`📂 Category mapping: type="${type}" -> category="${mapped}"`);
     return mapped;
@@ -1973,6 +2056,54 @@ export class SpiritExtractor {
       .replace(/\s*\|\s*/g, '. ')
       .replace(/([.!?])\1+/g, '$1')
       .trim();
+  }
+  
+  /**
+   * V2.8: Validate if URL is likely a product page
+   */
+  private isValidProductUrl(url: string): boolean {
+    const lowerUrl = url.toLowerCase();
+    
+    // Reject URLs with non-product patterns
+    const invalidPatterns = [
+      '/collections/', '/brands/', '/category/', '/categories/',
+      '/search', '/browse', '/shop', '/store',
+      '?sort=', '?filter=', '/page/', '/products?',
+      '/all-products', '/bourbon-collection', '/whiskey-collection',
+      // Delivery services
+      'instacart.com', 'ubereats.com', 'doordash.com', 'gopuff.com',
+      // Store navigation
+      '/near-me', '/delivery', '/pickup'
+    ];
+    
+    for (const pattern of invalidPatterns) {
+      if (lowerUrl.includes(pattern)) {
+        return false;
+      }
+    }
+    
+    // Accept URLs that look like product pages
+    const validPatterns = [
+      '/product/', '/products/', '/item/', '/spirits/',
+      '/bourbon/', '/whiskey/', '/whisky/', '/rum/', '/gin/', '/vodka/', '/tequila/',
+      // Common product ID patterns
+      /\/[a-z0-9-]+-\d{3,}/, // slug-123 pattern
+      /\/\d{5,}/, // numeric product ID
+      /\/[a-z0-9]{8,}$/, // alphanumeric product ID at end
+    ];
+    
+    for (const pattern of validPatterns) {
+      if (pattern instanceof RegExp) {
+        if (pattern.test(lowerUrl)) {
+          return true;
+        }
+      } else if (lowerUrl.includes(pattern)) {
+        return true;
+      }
+    }
+    
+    // Default to true if no patterns match (allow by default)
+    return true;
   }
 
 }
