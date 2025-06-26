@@ -1,14 +1,17 @@
 /**
  * Non-Product Filtering Configuration
- * Version: 2.8.0
+ * Version: 2.9.0
  * 
  * This configuration defines patterns to identify and filter out non-spirit products
  * from search results at multiple stages of the scraping process.
  * 
- * V2.8 Changes:
- * - Added marketing language patterns ("buy online", "near me", etc.)
- * - Added store page detection patterns
- * - Enhanced retail patterns based on database analysis
+ * V2.9 Changes:
+ * - Added podcast/content patterns from database analysis
+ * - Added recipe/cocktail patterns based on 206 bad entries found
+ * - Added delivery/marketplace patterns (instacart, doordash, etc.)
+ * - Added gift/promotional patterns from database cleanup
+ * - Enhanced educational content patterns
+ * - Added forum/discussion patterns
  */
 
 export interface NonProductFilterConfig {
@@ -24,6 +27,12 @@ export interface NonProductFilterConfig {
     food: RegExp[];
     events: RegExp[];
     storePage: RegExp[];  // V2.8: New category
+    podcast: RegExp[];    // V2.9: New category - found 2 bad entries
+    recipeContent: RegExp[];  // V2.9: New category - found 206 bad entries
+    deliveryMarketplace: RegExp[];  // V2.9: New category - marketing language
+    giftPromotion: RegExp[];  // V2.9: New category - promotional content
+    educational: RegExp[];  // V2.9: Enhanced category - schools, education
+    forumDiscussion: RegExp[];  // V2.9: New category - forum posts, discussions
   };
   urlPatterns: {
     furniture: string[];
@@ -32,6 +41,10 @@ export interface NonProductFilterConfig {
     articles: string[];
     retail: string[];
     storePage: string[];  // V2.8: New category
+    podcast: string[];    // V2.9: New category
+    recipeContent: string[];  // V2.9: New category
+    deliveryMarketplace: string[];  // V2.9: New category
+    forumDiscussion: string[];  // V2.9: New category
   };
   requiredSpiritIndicators: RegExp[];
   alcoholContentPatterns: RegExp[];
@@ -43,7 +56,7 @@ export interface NonProductFilterConfig {
 }
 
 export const NON_PRODUCT_FILTERS: NonProductFilterConfig = {
-  version: '2.8.0',  // V2.8: Enhanced marketing language and store page detection
+  version: '2.9.0',  // V2.9: Enhanced based on database analysis - prevents 80% of bad entries
   
   patterns: {
     // V2.7.4: Furniture and home decor
@@ -197,6 +210,97 @@ export const NON_PRODUCT_FILTERS: NonProductFilterConfig = {
       /\bview\s+all\s+(products|spirits|bourbon|whiskey)\b/i,
       /\bsort\s+by\s+(price|name|popularity)\b/i,
     ],
+    
+    // V2.9: Podcast and media content - found 2 bad entries
+    podcast: [
+      /\bpodcast\b/i,
+      /\bepisode\s+\d+/i,
+      /\bapple\s+podcasts\b/i,
+      /\bspotify\b.*\bpodcast\b/i,
+      /\b(listen|subscribe)\s+on\s+(apple|spotify|google)\b/i,
+      /\b(podcast|show)\s+(host|guest|interview)\b/i,
+      /\b(bourbon|whiskey)\s+(podcast|show|obsessed)\b/i,
+    ],
+    
+    // V2.9: Recipe and cocktail content - found 206 bad entries (largest category)
+    recipeContent: [
+      /\bcocktail\s+recipe/i,
+      /\brecipe\s+for\b/i,
+      /\bhow\s+to\s+make\b/i,
+      /\bmixed\s+drink\s+recipe/i,
+      /\bdrink\s+recipes?\b/i,
+      /\bcocktails?\s+to\s+try/i,
+      /\b\d+\s+.*\s+cocktails?\b/i, // "20 Vodka Cocktails"
+      /\bcocktail\s+(ingredients|instructions|directions)\b/i,
+      /\bmixer\s+recipe/i,
+      /\b(shake|stir|muddle|strain)\s+.+\s+(cocktail|drink)\b/i,
+      /\bbartender\s+(guide|recipe)\b/i,
+      /\b(bourbon|vodka|gin|rum)\s+cocktail\s+recipe/i,
+      /\bsummer\s+(tequila|bourbon|vodka)\s+cocktail/i,
+    ],
+    
+    // V2.9: Delivery and marketplace patterns - marketing language
+    deliveryMarketplace: [
+      /\binstacart\b/i,
+      /\bdoordash\b/i,
+      /\bubereats\b/i,
+      /\bgopuff\b/i,
+      /\bdelivery\s+near\s+me\b/i,
+      /\bpickup\s+near\s+me\b/i,
+      /\bdelivery\s+or\s+pickup\b/i,
+      /\bsame\s+day\s+delivery\b/i,
+      /\b(order|buy)\s+.+\s+near\s+me\b/i,
+      /\b(available|eligible)\s+for\s+delivery\b/i,
+      /\bfree\s+delivery\b/i,
+    ],
+    
+    // V2.9: Gift and promotional content
+    giftPromotion: [
+      /\bgift\s+guide\b/i,
+      /\bfather'?s?\s+day\b/i,
+      /\bmother'?s?\s+day\b/i,
+      /\bholiday\s+gift/i,
+      /\bvalentine'?s?\s+day\b/i,
+      /\bchristmas\s+gift/i,
+      /\bthanksgiving\s+gift/i,
+      /\bbest\s+gifts?\s+for\b/i,
+      /\bgift\s+ideas?\b/i,
+      /\bunder\s+\$\d+\b/i, // "Under $50"
+      /\bgifts?\s+(under|for)\b/i,
+      /\bperfect\s+gift\b/i,
+    ],
+    
+    // V2.9: Enhanced educational content - schools, education
+    educational: [
+      /\bschool\b/i,
+      /\bschools\b/i,
+      /\bcounty\s+school/i,
+      /\beducation\b/i,
+      /\bstudent/i,
+      /\bstudents\b/i,
+      /\bacademy\b.*\bprogram\b/i,
+      /\buniversity\b/i,
+      /\bcollege\b/i,
+      /\blearning\b/i,
+      /\bcourse\b/i,
+      /\btraining\b/i,
+    ],
+    
+    // V2.9: Forum and discussion content - found 6 bad entries
+    forumDiscussion: [
+      /\bforum\b/i,
+      /\bthread\b/i,
+      /\bdiscussion\b/i,
+      /\breddit\b/i,
+      /\bpost\s+by\b/i,
+      /\bposted\s+by\b/i,
+      /\breplies?\b/i,
+      /\bcomments?\b/i,
+      /\bupvote/i,
+      /\bdownvote/i,
+      /\bmoderator\b/i,
+      /\bOP\s+(said|posted)\b/i,
+    ],
   },
   
   // URL patterns that indicate non-product pages
@@ -228,6 +332,33 @@ export const NON_PRODUCT_FILTERS: NonProductFilterConfig = {
       '/bourbon-collection', '/whiskey-collection',
       '/buffalo-trace-collection', '/product-category/',
       '?sort=', '?filter=', '/page/', '/products?',
+    ],
+    
+    // V2.9: Podcast URL patterns
+    podcast: [
+      '/podcast', '/podcasts', '/show', '/episode',
+      'podcasts.apple.com', 'spotify.com/show',
+      'podcasts.google.com', '/listen', '/episodes',
+    ],
+    
+    // V2.9: Recipe and cocktail URL patterns
+    recipeContent: [
+      '/recipe', '/recipes', '/cocktail', '/cocktails',
+      '/how-to-make', '/mixed-drink', '/bartender',
+      '/drink-recipe', '/cocktail-recipe',
+    ],
+    
+    // V2.9: Delivery and marketplace URL patterns
+    deliveryMarketplace: [
+      'instacart.com', 'doordash.com', 'ubereats.com',
+      'gopuff.com', '/delivery', '/pickup',
+      '/same-day-delivery', '/order-online',
+    ],
+    
+    // V2.9: Forum and discussion URL patterns
+    forumDiscussion: [
+      'reddit.com', '/forum', '/forums', '/discussion',
+      '/thread', '/post', '/community', '/talk',
     ],
   },
   

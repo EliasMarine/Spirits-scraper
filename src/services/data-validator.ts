@@ -10,6 +10,15 @@ export interface ValidationResult {
   warnings: string[];
   cleaned?: SpiritData;
   descriptionFingerprint?: string;
+  qualityScore?: number; // V2.9: 0-100 quality score
+  qualityFactors?: QualityFactor[]; // V2.9: Detailed scoring breakdown
+}
+
+export interface QualityFactor {
+  category: string;
+  score: number;
+  maxScore: number;
+  description: string;
 }
 
 // Store for tracking duplicate descriptions globally
@@ -67,6 +76,11 @@ export class DataValidator {
 
       // Check for data quality warnings
       this.checkDataQuality(validated, result);
+      
+      // V2.9: Calculate quality score and factors
+      const qualityAssessment = this.calculateQualityScore(validated);
+      result.qualityScore = qualityAssessment.score;
+      result.qualityFactors = qualityAssessment.factors;
 
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -451,6 +465,200 @@ export class DataValidator {
     // Trim at word boundary
     const lastSpace = trimmed.lastIndexOf(' ');
     return trimmed.substring(0, lastSpace) + '...';
+  }
+
+  /**
+   * V2.9: Calculate quality score (0-100) with detailed factor breakdown
+   * Based on database analysis findings - addresses core issues identified
+   */
+  private calculateQualityScore(data: SpiritData): { score: number; factors: QualityFactor[] } {
+    const factors: QualityFactor[] = [];
+    let totalScore = 0;
+    let maxTotalScore = 0;
+
+    // 1. Name Quality (20 points max) - CRITICAL for reducing bad entries
+    let nameScore = 0;
+    const nameMaxScore = 20;
+    if (data.name) {
+      // Name exists
+      nameScore += 5;
+      
+      // Name looks like actual product (not search query)
+      if (!this.looksLikeSearchQuery(data.name)) {
+        nameScore += 10;
+      }
+      
+      // Name has reasonable length (not too generic)
+      if (data.name.length >= 10 && data.name.length <= 80) {
+        nameScore += 5;
+      }
+    }
+    factors.push({
+      category: 'Name Quality',
+      score: nameScore,
+      maxScore: nameMaxScore,
+      description: `Product name quality and specificity (${nameScore}/${nameMaxScore})`
+    });
+    totalScore += nameScore;
+    maxTotalScore += nameMaxScore;
+
+    // 2. Price Data (20 points max) - CRITICAL: 73% missing prices in analysis
+    let priceScore = 0;
+    const priceMaxScore = 20;
+    if (data.price_range) {
+      priceScore += 15; // Having price range is worth a lot
+    }
+    if (data.source_url && data.source_url.includes('price')) {
+      priceScore += 5; // Bonus for price-focused sources
+    }
+    factors.push({
+      category: 'Price Information',
+      score: priceScore,
+      maxScore: priceMaxScore,
+      description: `Price data availability (${priceScore}/${priceMaxScore})`
+    });
+    totalScore += priceScore;
+    maxTotalScore += priceMaxScore;
+
+    // 3. Category Specificity (15 points max) - CRITICAL: 31% classified as "Other"
+    let categoryScore = 0;
+    const categoryMaxScore = 15;
+    if (data.category && data.category !== 'Other') {
+      categoryScore += 10;
+      // Bonus for specific whiskey types
+      if (['Bourbon', 'Rye Whiskey', 'Scotch', 'Irish Whiskey', 'Japanese Whisky'].includes(data.category)) {
+        categoryScore += 5;
+      }
+    }
+    factors.push({
+      category: 'Category Classification',
+      score: categoryScore,
+      maxScore: categoryMaxScore,
+      description: `Specific category identification (${categoryScore}/${categoryMaxScore})`
+    });
+    totalScore += categoryScore;
+    maxTotalScore += categoryMaxScore;
+
+    // 4. Description Quality (15 points max) - Based on description validation improvements
+    let descriptionScore = 0;
+    const descriptionMaxScore = 15;
+    if (data.description) {
+      // Has description
+      descriptionScore += 5;
+      
+      // Description is substantive
+      if (data.description.length >= 50) {
+        descriptionScore += 5;
+      }
+      
+      // Description is not generic/duplicate
+      if (!this.isGenericDescription(data.description)) {
+        descriptionScore += 5;
+      }
+    }
+    factors.push({
+      category: 'Description Quality',
+      score: descriptionScore,
+      maxScore: descriptionMaxScore,
+      description: `Description completeness and uniqueness (${descriptionScore}/${descriptionMaxScore})`
+    });
+    totalScore += descriptionScore;
+    maxTotalScore += descriptionMaxScore;
+
+    // 5. Technical Specifications (10 points max)
+    let technicalScore = 0;
+    const technicalMaxScore = 10;
+    if (data.abv && data.abv >= 20 && data.abv <= 80) {
+      technicalScore += 5;
+    }
+    if (data.volume && this.validateVolume(data.volume)) {
+      technicalScore += 3;
+    }
+    if (data.origin_country) {
+      technicalScore += 2;
+    }
+    factors.push({
+      category: 'Technical Specs',
+      score: technicalScore,
+      maxScore: technicalMaxScore,
+      description: `ABV, volume, and origin data (${technicalScore}/${technicalMaxScore})`
+    });
+    totalScore += technicalScore;
+    maxTotalScore += technicalMaxScore;
+
+    // 6. Brand Recognition (10 points max)
+    let brandScore = 0;
+    const brandMaxScore = 10;
+    if (data.brand) {
+      brandScore += 5;
+      // Bonus for normalized brands (indicates quality control)
+      const normalizedBrand = normalizeBrandName(data.brand, DEFAULT_BRAND_CONFIG);
+      if (normalizedBrand.confidence > 0.8) {
+        brandScore += 5;
+      }
+    }
+    factors.push({
+      category: 'Brand Information',
+      score: brandScore,
+      maxScore: brandMaxScore,
+      description: `Brand identification and recognition (${brandScore}/${brandMaxScore})`
+    });
+    totalScore += brandScore;
+    maxTotalScore += brandMaxScore;
+
+    // 7. Source Quality (10 points max) - Based on URL filtering improvements
+    let sourceScore = 0;
+    const sourceMaxScore = 10;
+    if (data.source_url) {
+      sourceScore += 3;
+      
+      // Bonus for trusted retailer domains
+      const trustedDomains = [
+        'totalwine.com', 'thewhiskyexchange.com', 'masterofmalt.com',
+        'klwines.com', 'caskers.com', 'reservebar.com', 'wine.com'
+      ];
+      if (trustedDomains.some(domain => data.source_url!.includes(domain))) {
+        sourceScore += 7;
+      } else if (data.source_url.includes('.com') || data.source_url.includes('.co.uk')) {
+        sourceScore += 4; // Partial credit for other commercial sites
+      }
+    }
+    factors.push({
+      category: 'Source Quality',
+      score: sourceScore,
+      maxScore: sourceMaxScore,
+      description: `Source URL trustworthiness (${sourceScore}/${sourceMaxScore})`
+    });
+    totalScore += sourceScore;
+    maxTotalScore += sourceMaxScore;
+
+    // Calculate final score as percentage
+    const finalScore = Math.round((totalScore / maxTotalScore) * 100);
+
+    return {
+      score: finalScore,
+      factors
+    };
+  }
+
+  /**
+   * Check if a string looks like a search query rather than a spirit name
+   */
+  private looksLikeSearchQuery(name: string): boolean {
+    const queryPatterns = [
+      /^(budget|premium|best|top|cheap|expensive|affordable|rare|quality|smooth|craft)\s+/i,
+      /^(good|great|nice|bad|worst|overrated|underrated)\s+/i,
+      /^(find|search|looking for|where to buy|how to)\s+/i,
+      /^(types of|kinds of|list of|collection of)\s+/i,
+      /\s+(under|over|below|above)\s+\$\d+/i,
+      /^wheated bourbon whiskey$/i,
+      /^single malt scotch$/i,
+      /^blended scotch whisky$/i,
+      /^premium vodka$/i,
+      /^craft gin$/i,
+    ];
+
+    return queryPatterns.some(pattern => pattern.test(name));
   }
 
   /**

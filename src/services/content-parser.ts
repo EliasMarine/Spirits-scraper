@@ -143,27 +143,53 @@ export class ContentParser {
       );
       parsed.description = this.filterReviewFragments(rawDescription);
 
-      // V2.8: Enhanced price extraction with more selectors
-      const priceSelectors = [
-        '.price', '.product-price', '.cost',
-        '[itemprop="price"]', '[data-price]',
-        '.price-tag', '.price-now',
-        // V2.8: Additional selectors based on common e-commerce patterns
-        '.price-box', '.price-container', '.price-value',
-        '.current-price', '.sale-price', '.regular-price',
-        '.product-price-value', '.item-price', '.pricing',
-        '[class*="price"]', '[id*="price"]',  // Generic price classes/ids
-        '.msrp', '.retail-price', '.list-price',
-        // Spirit-specific selectors
-        '.bottle-price', '.spirit-price', '.whiskey-price',
-      ];
+      // V2.9: Enhanced price extraction with more selectors and structured data
+      
+      // First try to extract from structured data (JSON-LD)
+      const structuredPrice = this.extractFromJsonLd($);
+      if (structuredPrice && structuredPrice.price) {
+        parsed.price = structuredPrice.price;
+      }
+      
+      // If no structured data price, try meta tags
+      if (!parsed.price) {
+        const metaPrice = this.extractFromMetaTags($);
+        if (metaPrice) {
+          parsed.price = metaPrice;
+        }
+      }
+      
+      // If still no price, try CSS selectors
+      if (!parsed.price) {
+        const priceSelectors = [
+          '.price', '.product-price', '.cost',
+          '[itemprop="price"]', '[data-price]',
+          '.price-tag', '.price-now',
+          // V2.8: Additional selectors based on common e-commerce patterns
+          '.price-box', '.price-container', '.price-value',
+          '.current-price', '.sale-price', '.regular-price',
+          '.product-price-value', '.item-price', '.pricing',
+          '[class*="price"]', '[id*="price"]',  // Generic price classes/ids
+          '.msrp', '.retail-price', '.list-price',
+          // Spirit-specific selectors
+          '.bottle-price', '.spirit-price', '.whiskey-price',
+          // V2.9: Additional e-commerce patterns from database analysis
+          '.price-current', '.price-final', '.price-display',
+          '.product-cost', '.item-cost', '.bottle-cost',
+          '.price-amount', '.amount', '.cost-amount',
+          '.price-per-bottle', '.unit-price',
+          '[data-testid*="price"]', '[data-qa*="price"]',
+          // Wine/spirit specific sites
+          '.wine-price', '.spirit-cost', '.liquor-price',
+        ];
 
-      for (const selector of priceSelectors) {
-        const priceText = $(selector).first().text();
-        const price = this.extractPrice(priceText);
-        if (price) {
-          parsed.price = price;
-          break;
+        for (const selector of priceSelectors) {
+          const priceText = $(selector).first().text();
+          const price = this.extractPrice(priceText);
+          if (price) {
+            parsed.price = price;
+            break;
+          }
         }
       }
 
@@ -667,6 +693,110 @@ export class ContentParser {
     );
     
     return hasProductKeyword;
+  }
+
+  /**
+   * V2.9: Extract price from JSON-LD structured data
+   */
+  private extractFromJsonLd($: CheerioStatic): { price?: string; [key: string]: any } | null {
+    let result: any = {};
+    
+    $('script[type="application/ld+json"]').each((_, elem) => {
+      try {
+        const jsonLd = JSON.parse($(elem).text());
+        
+        // Handle arrays of JSON-LD objects
+        const objects = Array.isArray(jsonLd) ? jsonLd : [jsonLd];
+        
+        for (const obj of objects) {
+          // Product schema
+          if (obj['@type'] === 'Product') {
+            if (obj.name) result.name = obj.name;
+            if (obj.brand?.name) result.brand = obj.brand.name;
+            if (obj.description) result.description = obj.description;
+            
+            // Price extraction from offers
+            if (obj.offers) {
+              const offers = Array.isArray(obj.offers) ? obj.offers[0] : obj.offers;
+              if (offers.price) {
+                result.price = this.formatPrice(parseFloat(offers.price));
+              } else if (offers.lowPrice) {
+                result.price = this.formatPrice(parseFloat(offers.lowPrice));
+              } else if (offers.priceRange) {
+                // Extract first price from range like "$25-$35"
+                const match = offers.priceRange.match(/\$?(\d+(?:\.\d{2})?)/);
+                if (match) {
+                  result.price = this.formatPrice(parseFloat(match[1]));
+                }
+              }
+              
+              if (offers.availability) result.availability = offers.availability;
+              if (offers.priceCurrency) result.currency = offers.priceCurrency;
+            }
+            
+            // Additional product properties
+            if (obj.sku) result.sku = obj.sku;
+            if (obj.gtin13 || obj.gtin12) result.gtin = obj.gtin13 || obj.gtin12;
+            if (obj.mpn) result.mpn = obj.mpn;
+          }
+          
+          // Offer schema
+          if (obj['@type'] === 'Offer') {
+            if (obj.price) {
+              result.price = this.formatPrice(parseFloat(obj.price));
+            }
+            if (obj.priceCurrency) result.currency = obj.priceCurrency;
+          }
+        }
+      } catch (e) {
+        // Invalid JSON, continue to next script tag
+      }
+    });
+    
+    return Object.keys(result).length > 0 ? result : null;
+  }
+
+  /**
+   * V2.9: Extract price from meta tags
+   */
+  private extractFromMetaTags($: CheerioStatic): string | null {
+    const metaTags = [
+      'product:price:amount',
+      'product:price',
+      'price',
+      'og:price:amount',
+      'twitter:data1', // Sometimes used for price
+    ];
+    
+    for (const tag of metaTags) {
+      const content = $(`meta[property="${tag}"]`).attr('content') || 
+                     $(`meta[name="${tag}"]`).attr('content');
+      
+      if (content) {
+        const price = this.extractPrice(content);
+        if (price) return price;
+      }
+    }
+    
+    // Check for microdata price
+    const microdataPrice = $('[itemprop="price"]').attr('content') || 
+                          $('[itemprop="price"]').text();
+    if (microdataPrice) {
+      const price = this.extractPrice(microdataPrice);
+      if (price) return price;
+    }
+    
+    return null;
+  }
+
+  /**
+   * V2.9: Format price consistently
+   */
+  private formatPrice(value: number): string | null {
+    if (value >= 5 && value <= 5000) {
+      return `$${value.toFixed(2)}`;
+    }
+    return null;
   }
 
 }

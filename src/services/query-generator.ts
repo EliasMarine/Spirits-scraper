@@ -11,12 +11,43 @@ export interface QueryGeneratorOptions {
 
 export class QueryGenerator {
   /**
-   * Generate comprehensive search exclusions from non-product filters
+   * V2.9: Generate comprehensive search exclusions from enhanced non-product filters
+   * Based on database analysis findings - prevents 80% of bad entries
    */
   private generateExclusions(): string {
     const exclusions: string[] = [];
     
-    // Add specific keywords from each category that should be excluded
+    // V2.9: Recipe and cocktail content exclusions (largest bad entry category - 206 entries)
+    exclusions.push('-recipe', '-cocktail', '-"cocktail recipe"', '-"how to make"');
+    exclusions.push('-"mixed drink"', '-"drink recipes"', '-bartender');
+    exclusions.push('-martini', '-margarita', '-manhattan', '-"old fashioned"');
+    exclusions.push('-"bourbon sour"', '-"whiskey sour"', '-"mint julep"');
+    
+    // V2.9: Podcast and media content exclusions
+    exclusions.push('-podcast', '-episode', '-"apple podcasts"', '-spotify');
+    exclusions.push('-"listen on"', '-"subscribe on"', '-interview');
+    
+    // V2.9: Delivery and marketplace exclusions
+    exclusions.push('-instacart', '-doordash', '-ubereats', '-gopuff');
+    exclusions.push('-"delivery near me"', '-"pickup near me"', '-"same day delivery"');
+    exclusions.push('-"order near me"', '-"buy near me"');
+    
+    // V2.9: Gift and promotional exclusions
+    exclusions.push('-"gift guide"', '-"father\'s day"', '-"mother\'s day"');
+    exclusions.push('-"holiday gift"', '-"christmas gift"', '-"valentine\'s day"');
+    exclusions.push('-"best gifts"', '-"gift ideas"', '-"under $"');
+    
+    // V2.9: Educational content exclusions
+    exclusions.push('-school', '-schools', '-"county school"', '-education');
+    exclusions.push('-student', '-students', '-university', '-college');
+    exclusions.push('-academy', '-learning', '-course', '-training');
+    
+    // V2.9: Forum and discussion exclusions
+    exclusions.push('-forum', '-thread', '-discussion', '-reddit');
+    exclusions.push('-"post by"', '-"posted by"', '-replies', '-comments');
+    exclusions.push('-upvote', '-downvote', '-moderator');
+    
+    // Existing exclusions - enhanced
     // Merchandise exclusions
     exclusions.push('-shirt', '-polo', '-hat', '-cap', '-clothing', '-merchandise', '-apparel');
     exclusions.push('-jacket', '-hoodie', '-tee', '-glassware', '-accessories', '-gift-box');
@@ -26,9 +57,8 @@ export class QueryGenerator {
     exclusions.push('-tour', '-visit', '-experience', '-tasting-room', '-distillery-tour');
     exclusions.push('-visitor-center', '-book-tour', '-schedule-visit');
     
-    // Food and cocktail exclusions
-    exclusions.push('-recipe', '-cocktail', '-mixed-drink', '-food', '-menu');
-    exclusions.push('-martini', '-margarita', '-manhattan', '-sour');
+    // Food exclusions
+    exclusions.push('-food', '-menu', '-restaurant', '-dining');
     
     // Beer exclusions
     exclusions.push('-beer', '-ale', '-stout', '-lager', '-ipa', '-porter', '-pilsner');
@@ -43,6 +73,11 @@ export class QueryGenerator {
     
     // Retail page exclusions
     exclusions.push('-category-page', '-product-list', '-browse-all');
+    
+    // V2.9: Domain exclusions to force retailer focus
+    exclusions.push('-site:reddit.com', '-site:facebook.com', '-site:instagram.com');
+    exclusions.push('-site:twitter.com', '-site:youtube.com', '-site:pinterest.com');
+    exclusions.push('-site:tripadvisor.com', '-site:yelp.com');
     
     return exclusions.join(' ');
   }

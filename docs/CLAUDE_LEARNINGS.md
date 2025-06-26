@@ -744,3 +744,85 @@ const handleSpiritClick = async (spirit: Spirit) => {
 - Apply `whitespace-nowrap` for single-line content that needs to stay intact
 - Implement custom scrollbar styling to match the design system
 - Test modals with longest possible content to ensure no overflow
+
+### Session: 2025-06-26
+
+#### Learning 52: V2.8 Scraper Data Quality Analysis Patterns
+**Context**: Analyzed 2,699 spirits from latest scraper run to identify quality issues
+**Key Findings**:
+- 73% missing prices (1,968 entries without price data)
+- 31% classified as "Other" category (837 entries)
+- Average quality score: 56.8
+- Many non-product entries (podcasts, recipes, store pages)
+
+**Patterns Identified**:
+```typescript
+// Common bad entry patterns found
+const nonProductPatterns = [
+  /\bcocktail\s+recipe/i,
+  /\bpodcast/i,
+  /\bepisode/i,
+  /\brestaurant\s+menu/i,
+  /\bgift\s+guide/i,
+  /\bbuy.*online/i,
+  /\bnear\s+me/i,
+  /\bdelivery/i,
+];
+
+// Buffalo Trace specific issue
+if (name.includes('Buffalo Trace') && 
+    (name.endsWith('Bourbon Whiskey') || name.includes('products'))) {
+  // Likely a store collection page, not individual product
+}
+```
+
+**Database Cleanup Approach**:
+1. Created comprehensive SQL cleanup script with DO block
+2. Identified 16 categories of bad entries
+3. Deleted 623 bad entries total
+4. Fixed categories for salvageable entries
+5. Reduced "Other" category from 31% to 0%
+
+**Will Follow**:
+- Always analyze data quality metrics before implementing fixes
+- Create categorized deletion queries for different issue types
+- Use DO blocks with tracking variables for cleanup scripts
+- Fix salvageable entries rather than deleting when possible
+- Document patterns for prevention in future scraping
+
+#### Learning 53: Price Extraction Failure Patterns
+**Context**: 73% of spirits missing price data despite many having prices in source
+**Root Causes**:
+1. Price patterns too restrictive (skipping valid prices)
+2. Years (1993, 2024) being interpreted as prices
+3. Missing extraction from structured data (JSON-LD)
+4. International currency formats not handled
+
+**Solution Patterns**:
+```typescript
+// Skip disqualifying patterns FIRST
+const skipPatterns = [
+  /\b(19\d{2}|20\d{2})\b/, // Years
+  /\b\d+\s*(year|yr|age)\b/i, // Ages
+  /\b\d+\s*proof\b/i, // Proof values
+  /\bbatch\s*#?\s*\d+/i, // Batch numbers
+];
+
+if (skipPatterns.some(pattern => pattern.test(text))) {
+  return null; // Skip extraction
+}
+
+// Then extract with enhanced patterns
+const pricePatterns = [
+  /\$(\d{1,4}(?:\.\d{2})?)/,
+  /price:?\s*\$?(\d{1,4}(?:\.\d{2})?)/i,
+  // ... more patterns
+];
+```
+
+**Will Follow**:
+- Filter out non-price numbers BEFORE extraction
+- Add structured data extraction for prices
+- Handle international formats (€, £, etc.)
+- Test price extraction with real failed examples
+- Validate price ranges (spirits typically $5-$5000)

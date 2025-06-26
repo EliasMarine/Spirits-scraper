@@ -18,7 +18,8 @@ import { getDistilleryForBrand, inferDistilleryFromName } from '../config/brand-
 import { 
   containsNonProductPatterns, 
   hasRequiredSpiritIndicators,
-  hasAlcoholContent 
+  hasAlcoholContent,
+  isNonProductUrl 
 } from '../config/non-product-filters.js';
 import { detectSpiritType, getWhiskeyStyle, validateSpiritType } from '../config/spirit-types.js';
 import { isExcludedDomain } from '../config/excluded-domains.js';
@@ -86,7 +87,14 @@ export class SpiritExtractor {
         });
 
         if (results.items) {
-          allResults.push(...results.items);
+          // V2.9: Filter out non-product URLs before processing
+          const validResults = results.items.filter(item => {
+            if (!item.link) return false;
+            return this.isValidProductUrl(item.link);
+          });
+          
+          logger.debug(`Filtered ${results.items.length - validResults.length} invalid URLs from query results`);
+          allResults.push(...validResults);
         }
       } catch (error: any) {
         console.error(`Search failed for query "${query}":`, error);
@@ -2059,25 +2067,40 @@ export class SpiritExtractor {
   }
   
   /**
-   * V2.8: Validate if URL is likely a product page
+   * V2.9: Validate if URL is likely a product page (Enhanced with database analysis)
    */
   private isValidProductUrl(url: string): boolean {
     const lowerUrl = url.toLowerCase();
     
-    // Reject URLs with non-product patterns
-    const invalidPatterns = [
-      '/collections/', '/brands/', '/category/', '/categories/',
-      '/search', '/browse', '/shop', '/store',
-      '?sort=', '?filter=', '/page/', '/products?',
-      '/all-products', '/bourbon-collection', '/whiskey-collection',
-      // Delivery services
-      'instacart.com', 'ubereats.com', 'doordash.com', 'gopuff.com',
-      // Store navigation
-      '/near-me', '/delivery', '/pickup'
+    // V2.9: Use the comprehensive non-product URL patterns
+    const urlCheck = isNonProductUrl(url);
+    if (urlCheck.isNonProduct) {
+      logger.debug(`Rejecting URL (${urlCheck.category}): ${url}`);
+      return false;
+    }
+    
+    // V2.9: Additional specific invalid patterns from database analysis
+    const additionalInvalidPatterns = [
+      // Podcast platforms
+      'podcasts.apple.com', 'spotify.com/show', 'podcasts.google.com',
+      // Social media
+      'instagram.com', 'facebook.com', 'twitter.com', 'pinterest.com',
+      // Recipe sites
+      '/recipe', '/recipes', '/cocktail', '/cocktails', '/how-to-make',
+      // Forum/discussion
+      'reddit.com', '/forum', '/forums', '/discussion', '/thread',
+      // News/blog
+      '/blog', '/news', '/article', '/articles', '/press',
+      // Navigation pages
+      '/sitemap', '/about', '/contact', '/terms', '/privacy',
+      // Non-specific patterns that indicate non-product pages
+      '/gift-guide', '/father-day', '/mother-day', '/holiday',
+      '/events', '/tours', '/experience', '/visit',
     ];
     
-    for (const pattern of invalidPatterns) {
+    for (const pattern of additionalInvalidPatterns) {
       if (lowerUrl.includes(pattern)) {
+        logger.debug(`Rejecting URL (additional pattern): ${url}`);
         return false;
       }
     }
@@ -2086,24 +2109,33 @@ export class SpiritExtractor {
     const validPatterns = [
       '/product/', '/products/', '/item/', '/spirits/',
       '/bourbon/', '/whiskey/', '/whisky/', '/rum/', '/gin/', '/vodka/', '/tequila/',
+      '/cognac/', '/brandy/', '/scotch/', '/irish-whiskey/',
       // Common product ID patterns
       /\/[a-z0-9-]+-\d{3,}/, // slug-123 pattern
       /\/\d{5,}/, // numeric product ID
       /\/[a-z0-9]{8,}$/, // alphanumeric product ID at end
+      // Specific product indicators
+      /\/(750ml|1l|liter|bottle)/,
+      /\/proof-\d+/, // proof-86 pattern
+      /\/age-\d+/, // age-12 pattern
     ];
     
     for (const pattern of validPatterns) {
       if (pattern instanceof RegExp) {
         if (pattern.test(lowerUrl)) {
+          logger.debug(`Accepting URL (valid pattern): ${url}`);
           return true;
         }
       } else if (lowerUrl.includes(pattern)) {
+        logger.debug(`Accepting URL (valid pattern): ${url}`);
         return true;
       }
     }
     
-    // Default to true if no patterns match (allow by default)
-    return true;
+    // V2.9: Be more restrictive - default to false if no patterns match
+    // This prevents scraping ambiguous URLs that might be non-product pages
+    logger.debug(`Rejecting URL (no valid patterns matched): ${url}`);
+    return false;
   }
 
 }

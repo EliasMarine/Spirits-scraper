@@ -6,11 +6,19 @@ import { config } from '../config/index.js';
 import { loggers } from '../utils/logger.js';
 import { BatchResult, SpiritData, SpiritSearchItem } from '../types/index.js';
 import { cacheService } from './cache-service.js';
+import { 
+  containsNonProductPatterns, 
+  hasRequiredSpiritIndicators,
+  isNonProductUrl 
+} from '../config/non-product-filters.js';
+import { dataValidator } from './data-validator.js';
 
 export interface BatchOptions {
   concurrency?: number;
   saveProgress?: boolean;
   progressCallback?: (progress: BatchProgress) => void;
+  qualityThreshold?: number; // V2.9: Minimum quality score to store (0-100)
+  enableRealTimeFiltering?: boolean; // V2.9: Enable real-time filtering
 }
 
 export interface BatchProgress {
@@ -19,8 +27,10 @@ export interface BatchProgress {
   successful: number;
   failed: number;
   duplicates: number;
+  filtered: number; // V2.9: Filtered out by quality/non-product checks
   currentItem?: string;
   estimatedTimeRemaining?: number;
+  averageQualityScore?: number; // V2.9: Running average quality score
 }
 
 export class BatchProcessor {
@@ -33,7 +43,9 @@ export class BatchProcessor {
     successful: 0,
     failed: 0,
     duplicates: 0,
+    filtered: 0, // V2.9: Initialize filtered count
   };
+  private qualityScores: number[] = []; // V2.9: Track quality scores for averaging
 
   constructor(private options: BatchOptions = {}) {
     // Limit to 50 requests per minute to stay under 100/min quota
@@ -52,7 +64,9 @@ export class BatchProcessor {
       successful: 0,
       failed: 0,
       duplicates: 0,
+      filtered: 0, // V2.9: Reset filtered count
     };
+    this.qualityScores = []; // V2.9: Reset quality scores
 
     loggers.scrapeStart(`Batch processing ${items.length} spirits`, {
       concurrency: this.concurrency,
@@ -100,13 +114,44 @@ export class BatchProcessor {
             Object.assign(extracted, item.metadata);
           }
 
+          // V2.9: Real-time filtering before storage
+          if (this.options.enableRealTimeFiltering !== false) {
+            const filterResult = this.applyRealTimeFiltering(extracted);
+            if (!filterResult.shouldStore) {
+              this.progress.filtered++;
+              loggers.scrapeError(item.name, new Error(`Filtered out: ${filterResult.reason}`));
+              return;
+            }
+          }
+
           // Validate that this is a real spirit name, not a search query
           if (this.looksLikeSearchQuery(extracted.name)) {
             throw new Error(`Invalid spirit name detected: "${extracted.name}" appears to be a search query, not a spirit name`);
           }
 
+          // V2.9: Quality validation before storage
+          const validation = dataValidator.validate(extracted);
+          if (!validation.isValid) {
+            throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
+          }
+
+          // Check quality threshold
+          if (this.options.qualityThreshold && validation.qualityScore) {
+            if (validation.qualityScore < this.options.qualityThreshold) {
+              this.progress.filtered++;
+              loggers.scrapeError(item.name, new Error(`Quality score ${validation.qualityScore} below threshold ${this.options.qualityThreshold}`));
+              return;
+            }
+            // Track quality score
+            this.qualityScores.push(validation.qualityScore);
+            this.progress.averageQualityScore = this.qualityScores.reduce((a, b) => a + b, 0) / this.qualityScores.length;
+          }
+
+          // Use cleaned/validated data for storage
+          const finalData = validation.cleaned || extracted;
+
           // Store in database
-          const storeResult = await supabaseStorage.storeSpirit(extracted);
+          const storeResult = await supabaseStorage.storeSpirit(finalData);
 
           if (storeResult.success) {
             results.push(extracted as SpiritData);
@@ -322,6 +367,57 @@ export class BatchProcessor {
    */
   getProgress(): BatchProgress {
     return { ...this.progress };
+  }
+
+  /**
+   * V2.9: Apply real-time filtering to prevent bad entries from being stored
+   */
+  private applyRealTimeFiltering(data: Partial<SpiritData>): { shouldStore: boolean; reason?: string } {
+    // Check if name looks like a search query
+    if (!data.name || this.looksLikeSearchQuery(data.name)) {
+      return { shouldStore: false, reason: 'Name appears to be a search query rather than product name' };
+    }
+
+    // Check for non-product patterns in name
+    const nonProductCategories = ['recipeContent', 'podcast', 'deliveryMarketplace', 'giftPromotion', 'educational', 'forumDiscussion'];
+    for (const category of nonProductCategories) {
+      if (containsNonProductPatterns(data.name, category as any)) {
+        return { shouldStore: false, reason: `Name contains ${category} patterns` };
+      }
+    }
+
+    // Check for required spirit indicators
+    const fullText = [data.name, data.description, data.brand].filter(Boolean).join(' ');
+    if (!hasRequiredSpiritIndicators(fullText)) {
+      return { shouldStore: false, reason: 'Missing required spirit indicators' };
+    }
+
+    // Check source URL quality
+    if (data.source_url) {
+      const urlCheck = isNonProductUrl(data.source_url);
+      if (urlCheck.isNonProduct) {
+        return { shouldStore: false, reason: `Source URL indicates ${urlCheck.category} content` };
+      }
+    }
+
+    // Check for generic/placeholder content
+    if (data.description) {
+      const placeholderPatterns = [
+        /lorem ipsum/i,
+        /description not available/i,
+        /coming soon/i,
+        /under construction/i,
+        /page not found/i,
+        /error 404/i,
+        /^.{0,20}$/  // Very short descriptions
+      ];
+      
+      if (placeholderPatterns.some(pattern => pattern.test(data.description!))) {
+        return { shouldStore: false, reason: 'Description contains placeholder or generic content' };
+      }
+    }
+
+    return { shouldStore: true };
   }
 
   /**
