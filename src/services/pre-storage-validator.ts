@@ -13,7 +13,7 @@
 import { logger } from '../utils/logger.js';
 import { TextProcessor } from './text-processor.js';
 import { smartProductValidator } from './smart-product-validator.js';
-import { containsNonProductPatterns } from '../config/non-product-filters.js';
+import { containsNonProductPatterns, NON_PRODUCT_FILTERS } from '../config/non-product-filters.js';
 
 export interface PreStorageValidationResult {
   isValid: boolean;
@@ -25,14 +25,77 @@ export interface PreStorageValidationResult {
 }
 
 export class PreStorageValidator {
-  private readonly MIN_QUALITY_SCORE = 55; // V2.8: Reduced from 60 based on database analysis (avg 56.8)
-  private readonly MIN_QUALITY_SCORE_COGNAC = 50; // V2.8: Reduced from 55 to allow more cognac/brandy
-  private readonly MIN_QUALITY_SCORE_WITH_PRICE = 45; // V2.8: Lower threshold if spirit has price data
+  // V2.9.1: ULTRATHINK - Dynamic quality thresholds based on database analysis
+  private readonly MIN_QUALITY_SCORE = 50; // V2.9.1: Reduced to 50 based on price extraction improvements
+  private readonly MIN_QUALITY_SCORE_COGNAC = 45; // V2.9.1: Reduced for special spirits
+  private readonly MIN_QUALITY_SCORE_WITH_PRICE = 35; // V2.9.1: Much lower if has price (strong signal)
+  private readonly EMERGENCY_REJECT_THRESHOLD = 25; // V2.9.1: Emergency rejection for very bad entries
+  
+  // V2.9.1: Real-time filtering gates
+  private readonly GATE_1_PATTERNS = [
+    /\(Ship As A \d+\.\)/i,
+    /\(Ships As A \d+\.\)/i,
+    /Sku \d+$/i,
+    /Product Detail$/i,
+    /Get .* Online Today/i,
+  ];
+  
+  private readonly GATE_2_PATTERNS = [
+    /\bcocktail\s+recipe/i,
+    /\bhow\s+to\s+make\b/i,
+    /\bmixed\s+drink\s+recipe/i,
+    /\bpodcast\b/i,
+    /\bepisode\s+\d+/i,
+    /\bgift\s+guide/i,
+  ];
+  
+  private readonly GATE_3_PATTERNS = [
+    /\binstacart\b/i,
+    /\bdoordash\b/i,
+    /\bdelivery\s+near\s+me\b/i,
+    /\bpickup\s+near\s+me\b/i,
+    /\bfree\s+delivery\b/i,
+  ];
   
   /**
-   * Perform final validation before storing to database
+   * V2.9.1: ULTRATHINK - Real-time quality gates with enhanced validation
    */
   async validate(spiritData: any): Promise<PreStorageValidationResult> {
+    // V2.9.1: Gate 1 - Immediate e-commerce metadata rejection
+    for (const pattern of this.GATE_1_PATTERNS) {
+      if (pattern.test(spiritData.name)) {
+        return {
+          isValid: false,
+          qualityScore: 0,
+          issues: ['E-commerce metadata pattern detected'],
+          rejectionReason: 'ecommerce_metadata'
+        };
+      }
+    }
+    
+    // V2.9.1: Gate 2 - Recipe/content pattern rejection
+    for (const pattern of this.GATE_2_PATTERNS) {
+      if (pattern.test(spiritData.name) || pattern.test(spiritData.description || '')) {
+        return {
+          isValid: false,
+          qualityScore: 0,
+          issues: ['Recipe/content pattern detected'],
+          rejectionReason: 'recipe_content'
+        };
+      }
+    }
+    
+    // V2.9.1: Gate 3 - Delivery/marketplace pattern rejection
+    for (const pattern of this.GATE_3_PATTERNS) {
+      if (pattern.test(spiritData.name) || pattern.test(spiritData.description || '')) {
+        return {
+          isValid: false,
+          qualityScore: 0,
+          issues: ['Delivery/marketplace pattern detected'],
+          rejectionReason: 'delivery_marketplace'
+        };
+      }
+    }
     const issues: string[] = [];
     let qualityScore = 100;
     
@@ -307,47 +370,155 @@ export class PreStorageValidator {
     // Calculate final score
     qualityScore = Math.max(0, qualityScore);
     
-    // V2.8: Use appropriate threshold based on spirit type and price availability
+    // V2.9.1: Dynamic threshold calculation based on available data signals
     let threshold = isSpecialType ? this.MIN_QUALITY_SCORE_COGNAC : this.MIN_QUALITY_SCORE;
     
-    // V2.8: Lower threshold if spirit has valid price data
-    const hasValidPrice = spiritData.price && 
-                         typeof spiritData.price === 'number' && 
-                         spiritData.price > 0 && 
-                         spiritData.price < 5000;
+    // V2.9.1: Enhanced price validation with string support
+    const hasValidPrice = (spiritData.price && 
+                          ((typeof spiritData.price === 'number' && spiritData.price > 0 && spiritData.price < 8000) ||
+                           (typeof spiritData.price === 'string' && /\$\d+/.test(spiritData.price))));
     
-    if (hasValidPrice) {
+    // V2.9.1: Multiple signal threshold adjustment
+    const qualitySignals = [
+      hasValidPrice,
+      spiritData.abv || spiritData.proof,
+      spiritData.age,
+      spiritData.distillery,
+      spiritData.region,
+      spiritData.type && spiritData.type !== 'Other',
+    ].filter(Boolean).length;
+    
+    // V2.9.1: Adaptive threshold based on signals
+    if (qualitySignals >= 3) {
+      threshold = Math.min(threshold, this.MIN_QUALITY_SCORE_WITH_PRICE - 5); // Even lower for multiple signals
+    } else if (hasValidPrice) {
       threshold = Math.min(threshold, this.MIN_QUALITY_SCORE_WITH_PRICE);
-      qualityScore = Math.min(100, qualityScore + 10); // Bonus for having price
     }
     
-    // V2.8: Enhanced validation with price consideration
+    // V2.9.1: Price bonus
+    if (hasValidPrice) {
+      qualityScore = Math.min(100, qualityScore + 15); // Increased bonus for price
+    }
+    
+    // V2.9.1: Emergency rejection for extremely poor quality
+    if (qualityScore < this.EMERGENCY_REJECT_THRESHOLD) {
+      return {
+        isValid: false,
+        qualityScore,
+        issues: [...issues, 'Emergency rejection - extremely low quality'],
+        cleanedName,
+        cleanedBrand,
+        rejectionReason: 'emergency_low_quality'
+      };
+    }
+    
+    // V2.9.1: Enhanced validation with price consideration and dynamic scoring
     const isValid = qualityScore >= threshold;
     
-    if (!isValid) {
+    // V2.9.1: Additional quality bonuses for V2.9.1 improvements
+    if (hasValidPrice) {
+      // Bonus for price extraction success (indicates good source)
+      qualityScore = Math.min(100, qualityScore + 15);
+    }
+    
+    // V2.9.1: Category bonus (successful type detection)
+    if (spiritData.type && spiritData.type !== 'Other' && spiritData.type !== 'Spirit') {
+      qualityScore = Math.min(100, qualityScore + 10);
+    }
+    
+    // V2.9.1: ABV/Proof bonus (indicates technical product info)
+    if (spiritData.abv || spiritData.proof) {
+      qualityScore = Math.min(100, qualityScore + 8);
+    }
+    
+    // V2.9.1: Age statement bonus
+    if (spiritData.age) {
+      qualityScore = Math.min(100, qualityScore + 12);
+    }
+    
+    // V2.9.1: Distillery/region bonus
+    if (spiritData.distillery || spiritData.region) {
+      qualityScore = Math.min(100, qualityScore + 8);
+    }
+    
+    // Recalculate validity with bonuses
+    const finalValid = qualityScore >= threshold;
+    
+    if (!finalValid) {
       logger.warn(`🔍 Pre-storage validation FAILED for "${spiritData.name}"`);
       logger.warn(`   Cleaned name: "${cleanedName}"`);
       logger.warn(`   Brand: "${spiritData.brand || 'none'}"`);
       logger.warn(`   Type: "${spiritData.type || 'none'}"`);
       logger.warn(`   Price: ${hasValidPrice ? `$${spiritData.price}` : 'none'}`);
+      logger.warn(`   ABV/Proof: ${spiritData.abv || spiritData.proof || 'none'}`);
+      logger.warn(`   Age: ${spiritData.age || 'none'}`);
       logger.warn(`   Is Special Type (Cognac/Japanese): ${isSpecialType}`);
       logger.warn(`   Has Valid Price: ${hasValidPrice}`);
       logger.warn(`   Quality score: ${qualityScore} (threshold: ${threshold})`);
       logger.warn(`   Issues: ${issues.join(', ')}`);
     } else {
-      // V2.8: Log successful validations with price info
+      // V2.9.1: Enhanced logging with more data points
       const priceInfo = hasValidPrice ? ` [price: $${spiritData.price}]` : '';
-      logger.info(`✅ Pre-storage validation PASSED for "${spiritData.name}" (score: ${qualityScore}/${threshold})${priceInfo}`);
+      const abvInfo = spiritData.abv ? ` [abv: ${spiritData.abv}%]` : '';
+      const typeInfo = spiritData.type ? ` [type: ${spiritData.type}]` : '';
+      logger.info(`✅ Pre-storage validation PASSED for "${spiritData.name}" (score: ${qualityScore}/${threshold})${priceInfo}${abvInfo}${typeInfo}`);
     }
     
     return {
-      isValid,
+      isValid: finalValid,
       qualityScore,
       issues,
       cleanedName: cleanedName !== spiritData.name ? cleanedName : undefined,
       cleanedBrand: cleanedBrand !== spiritData.brand ? cleanedBrand : undefined,
-      rejectionReason: !isValid ? 'low_quality_score' : undefined
+      rejectionReason: !finalValid ? 'low_quality_score' : undefined
     };
+  }
+  
+  /**
+   * V2.9.1: ULTRATHINK - Real-time quality assessment for early filtering
+   */
+  quickQualityCheck(spiritData: any): { shouldProcess: boolean; reason?: string } {
+    // Quick rejection patterns - don't even process these
+    const quickRejectPatterns = [
+      ...this.GATE_1_PATTERNS,
+      ...this.GATE_2_PATTERNS,
+      ...this.GATE_3_PATTERNS,
+      /\bschools?\b/i,
+      /\bcounty\s+school/i,
+      /\brestaurant\s+menu/i,
+      /\bbar\s+menu/i,
+      /\btap\s+list/i,
+    ];
+    
+    for (const pattern of quickRejectPatterns) {
+      if (pattern.test(spiritData.name || '') || pattern.test(spiritData.description || '')) {
+        return { shouldProcess: false, reason: 'quick_reject_pattern' };
+      }
+    }
+    
+    // Quick quality indicators - fast approval
+    const qualityIndicators = [
+      // Has price (strong signal)
+      spiritData.price && spiritData.price > 5 && spiritData.price < 5000,
+      // Has ABV/Proof
+      spiritData.abv || spiritData.proof,
+      // Has age statement
+      spiritData.age,
+      // Has known brand
+      spiritData.brand && spiritData.brand.length > 3,
+      // Has specific spirit type
+      spiritData.type && spiritData.type !== 'Other' && spiritData.type !== 'Spirit',
+    ];
+    
+    const qualityCount = qualityIndicators.filter(Boolean).length;
+    
+    // If has 3+ quality indicators, likely good
+    if (qualityCount >= 3) {
+      return { shouldProcess: true, reason: 'quality_indicators' };
+    }
+    
+    // Default: process for full validation
+    return { shouldProcess: true };
   }
   
   /**

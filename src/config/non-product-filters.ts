@@ -33,6 +33,7 @@ export interface NonProductFilterConfig {
     giftPromotion: RegExp[];  // V2.9: New category - promotional content
     educational: RegExp[];  // V2.9: Enhanced category - schools, education
     forumDiscussion: RegExp[];  // V2.9: New category - forum posts, discussions
+    ecommerceMetadata: RegExp[];  // V2.9.1: ULTRATHINK - shipping/SKU metadata
   };
   urlPatterns: {
     furniture: string[];
@@ -45,6 +46,7 @@ export interface NonProductFilterConfig {
     recipeContent: string[];  // V2.9: New category
     deliveryMarketplace: string[];  // V2.9: New category
     forumDiscussion: string[];  // V2.9: New category
+    ecommerceMetadata: string[];  // V2.9.1: ULTRATHINK - K&L Wine metadata
   };
   requiredSpiritIndicators: RegExp[];
   alcoholContentPatterns: RegExp[];
@@ -56,7 +58,7 @@ export interface NonProductFilterConfig {
 }
 
 export const NON_PRODUCT_FILTERS: NonProductFilterConfig = {
-  version: '2.9.0',  // V2.9: Enhanced based on database analysis - prevents 80% of bad entries
+  version: '2.9.1',  // V2.9.1: ULTRATHINK database cleanup findings - K&L Wine shipping metadata
   
   patterns: {
     // V2.7.4: Furniture and home decor
@@ -301,6 +303,20 @@ export const NON_PRODUCT_FILTERS: NonProductFilterConfig = {
       /\bmoderator\b/i,
       /\bOP\s+(said|posted)\b/i,
     ],
+    
+    // V2.9.1: ULTRATHINK - E-commerce metadata patterns (K&L Wine specific)
+    ecommerceMetadata: [
+      /\(Ship As A \d+\.\)/i,
+      /\(Ships As A \d+\.\)/i,
+      /Sku \d+$/i,
+      /Sku$/i,
+      /Product Detail /i,
+      /Get .* Online Today/i,
+      /Limited Stock$/i,
+      /\bDue To Bottle Size\/shape\)/i,
+      /\(Can't Be Shipped\)/i,
+      /\bSku \d{7}/i,  // K&L Wine 7-digit SKUs
+    ],
   },
   
   // URL patterns that indicate non-product pages
@@ -359,6 +375,15 @@ export const NON_PRODUCT_FILTERS: NonProductFilterConfig = {
     forumDiscussion: [
       'reddit.com', '/forum', '/forums', '/discussion',
       '/thread', '/post', '/community', '/talk',
+    ],
+    
+    // V2.9.1: ULTRATHINK - E-commerce metadata URL patterns
+    ecommerceMetadata: [
+      '/p/i?i=', // K&L Wine product ID pattern
+      '/detail.asp?sku=', // K&L Wine detail pattern
+      '/products/details/', // K&L Wine product details
+      '?userReferral=', // K&L Wine referral tracking
+      '?searchId=', // K&L Wine search tracking
     ],
   },
   

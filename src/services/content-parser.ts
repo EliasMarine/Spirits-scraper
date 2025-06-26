@@ -49,12 +49,60 @@ export class ContentParser {
         brand: meta['product:brand'] || meta['brand'] || '',
       };
 
-      // Try to extract price
-      const priceMatch = this.extractPrice(
-        meta['product:price:amount'] ||
-        meta['price'] ||
-        result.snippet,
-      );
+      // V2.9.1: ULTRATHINK - Enhanced price extraction with comprehensive meta source strategy
+      let priceMatch = null;
+      
+      // Strategy 1: Structured product price meta tags (highest priority)
+      const structuredPriceFields = [
+        'product:price:amount',
+        'product:price:value', 
+        'og:price:amount',
+        'twitter:label1',  // Often used for price
+        'twitter:data1',   // Price value
+      ];
+      
+      for (const field of structuredPriceFields) {
+        if (meta[field] && !priceMatch) {
+          priceMatch = this.extractPrice(meta[field]);
+        }
+      }
+      
+      // Strategy 2: Generic price meta tags
+      const genericPriceFields = [
+        'price',
+        'product:price',
+        'og:price',
+        'item-price',
+        'retail-price',
+      ];
+      
+      for (const field of genericPriceFields) {
+        if (meta[field] && !priceMatch) {
+          priceMatch = this.extractPrice(meta[field]);
+        }
+      }
+      
+      // Strategy 3: E-commerce platform specific tags
+      const ecommercePriceFields = [
+        'shopify-price',
+        'woocommerce-price', 
+        'magento-price',
+        'price-current',
+        'price-regular',
+        'sale-price',
+      ];
+      
+      for (const field of ecommercePriceFields) {
+        if (meta[field] && !priceMatch) {
+          priceMatch = this.extractPrice(meta[field]);
+        }
+      }
+      
+      // Strategy 4: Try snippet with enhanced patterns
+      if (!priceMatch) {
+        priceMatch = this.extractPriceAdvanced(result.snippet);
+      }
+      
       if (priceMatch) {
         parsed.price = priceMatch;
       }
@@ -159,36 +207,75 @@ export class ContentParser {
         }
       }
       
-      // If still no price, try CSS selectors
+      // If still no price, try comprehensive CSS selector strategy
       if (!parsed.price) {
+        // V2.9.1: ULTRATHINK - Comprehensive CSS selector strategy 
         const priceSelectors = [
-          '.price', '.product-price', '.cost',
-          '[itemprop="price"]', '[data-price]',
-          '.price-tag', '.price-now',
-          // V2.8: Additional selectors based on common e-commerce patterns
-          '.price-box', '.price-container', '.price-value',
-          '.current-price', '.sale-price', '.regular-price',
-          '.product-price-value', '.item-price', '.pricing',
-          '[class*="price"]', '[id*="price"]',  // Generic price classes/ids
-          '.msrp', '.retail-price', '.list-price',
-          // Spirit-specific selectors
-          '.bottle-price', '.spirit-price', '.whiskey-price',
-          // V2.9: Additional e-commerce patterns from database analysis
-          '.price-current', '.price-final', '.price-display',
-          '.product-cost', '.item-cost', '.bottle-cost',
-          '.price-amount', '.amount', '.cost-amount',
-          '.price-per-bottle', '.unit-price',
+          // High priority selectors (most specific)
+          '[itemprop="price"]', '[data-price]', '[data-cost]',
+          '.price', '.product-price', '.item-price',
+          
+          // E-commerce platform specific
+          '.price-current', '.price-now', '.current-price',
+          '.sale-price', '.regular-price', '.list-price',
+          '.retail-price', '.msrp', '.srp',
+          
+          // Container/wrapper selectors
+          '.price-box', '.price-container', '.price-wrapper',
+          '.price-section', '.pricing', '.price-area',
+          
+          // Value/amount selectors
+          '.price-value', '.price-amount', '.amount',
+          '.cost', '.cost-amount', '.product-cost',
+          
+          // Display/format selectors
+          '.price-display', '.price-final', '.price-total',
+          '.price-tag', '.price-label', '.price-text',
+          
+          // Action-specific selectors
+          '.add-to-cart-price', '.buy-now-price', '.checkout-price',
+          '.cart-price', '.order-price',
+          
+          // Unit/bottle specific
+          '.price-per-bottle', '.unit-price', '.bottle-price',
+          '.per-unit', '.each-price',
+          
+          // Industry specific selectors
+          '.wine-price', '.spirit-price', '.whiskey-price',
+          '.liquor-price', '.bottle-cost', '.spirit-cost',
+          
+          // Generic attribute selectors
+          '[class*="price"]', '[id*="price"]',
+          '[class*="cost"]', '[id*="cost"]',
           '[data-testid*="price"]', '[data-qa*="price"]',
-          // Wine/spirit specific sites
-          '.wine-price', '.spirit-cost', '.liquor-price',
+          '[data-test*="price"]',
+          
+          // CSS class variations
+          '.Price', '.PRICE', // Case variations
+          '.price_current', '.price-current', // Underscore variations
+          '.priceNow', '.priceRegular', '.priceSale', // CamelCase
+          
+          // Last resort generic selectors
+          '.money', '.currency', '.dollar', '.usd',
+          '.cost-value', '.amount-value', '.price-info',
         ];
 
         for (const selector of priceSelectors) {
-          const priceText = $(selector).first().text();
-          const price = this.extractPrice(priceText);
-          if (price) {
-            parsed.price = price;
-            break;
+          const element = $(selector).first();
+          if (element.length > 0) {
+            // Try content attribute first, then text
+            const priceText = element.attr('content') || 
+                             element.attr('data-price') || 
+                             element.attr('data-cost') ||
+                             element.text();
+            
+            if (priceText) {
+              const price = this.extractPriceAdvanced(priceText);
+              if (price) {
+                parsed.price = price;
+                break;
+              }
+            }
           }
         }
       }
@@ -378,6 +465,119 @@ export class ContentParser {
             continue;
           }
           return value;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * V2.9.1: ULTRATHINK - Advanced price extraction with comprehensive patterns
+   */
+  private extractPriceAdvanced(text: string): string | null {
+    if (!text) return null;
+
+    // Clean the text
+    const cleanText = text.replace(/\s+/g, ' ').trim();
+
+    // V2.9.1: Enhanced disqualification patterns
+    const disqualifyingPatterns = [
+      // Years (but allow in price context)
+      /\b(19\d{2}|20\d{2})\b(?!.*(?:\$|price|cost|usd|eur|gbp))/i,
+      // Age statements
+      /\b\d+\s*(year|yr|age)\s*old\b/i,
+      // Proof values
+      /\b\d+\s*(?:proof|°\s*proof)\b/i,
+      // Batch/lot numbers
+      /\bbatch\s*#?\s*\d+/i,
+      /\blot\s*#?\s*\d+/i,
+      // ABV percentages
+      /\b\d+(?:\.\d+)?\s*%\s*(?:abv|alc)/i,
+      // Volume measurements
+      /\b\d+\s*(?:ml|cl|L|liter|litre)\b/i,
+      // Ratings and scores
+      /\b\d+\s*(?:points?|stars?|rating)\b/i,
+      /\b\d+\/\d+\b/, // X/Y ratings
+    ];
+
+    // Check for disqualifying patterns
+    for (const pattern of disqualifyingPatterns) {
+      if (pattern.test(cleanText)) {
+        return null;
+      }
+    }
+
+    // V2.9.1: Comprehensive price extraction patterns
+    const patterns = [
+      // Currency symbols with amounts (highest priority)
+      /\$\s*(\d{1,4}(?:\.\d{2})?)\b/,
+      /USD\s*(\d{1,4}(?:\.\d{2})?)\b/i,
+      /€\s*(\d{1,4}(?:\.\d{2})?)\b/,
+      /£\s*(\d{1,4}(?:\.\d{2})?)\b/,
+      /(\d{1,4}(?:\.\d{2})?)\s*(?:USD|EUR|GBP|dollars?)\b/i,
+      
+      // Explicit price context patterns
+      /\b(?:price|cost|retail|msrp|srp)\s*:?\s*\$?(\d{1,4}(?:\.\d{2})?)\b/i,
+      /\b(?:was|now|sale|regular|list)\s*:?\s*\$?(\d{1,4}(?:\.\d{2})?)\b/i,
+      /\b(?:starting|from)\s+\$?(\d{1,4}(?:\.\d{2})?)\b/i,
+      
+      // E-commerce action patterns
+      /\b(?:buy|purchase|order)\s+(?:for|at)?\s*\$?(\d{1,4}(?:\.\d{2})?)\b/i,
+      /\b(?:add\s+to\s+cart|buy\s+now).*?\$?(\d{1,4}(?:\.\d{2})?)\b/i,
+      /\$?(\d{1,4}(?:\.\d{2})?)\s+(?:add\s+to\s+cart|buy\s+now)/i,
+      
+      // Structured data patterns
+      /"?price"?\s*:\s*"?\$?(\d{1,4}(?:\.\d{2})?)/i,
+      /"?amount"?\s*:\s*"?(\d{1,4}(?:\.\d{2})?)/i,
+      
+      // Range patterns (extract lower price)
+      /\$?(\d{1,4}(?:\.\d{2})?)\s*[-–—]\s*\$?\d{1,4}(?:\.\d{2})?/,
+      /\bbetween\s+\$?(\d{1,4}(?:\.\d{2})?)\s+(?:and|to)/i,
+      
+      // Simple amount patterns (with validation)
+      /\b(\d{2,3})\.\d{2}\b/,  // XX.XX or XXX.XX patterns
+      /\$(\d{2,4})\b/,  // Simple dollar amounts
+      
+      // Context-specific patterns
+      /\b(?:bottle|each|per\s+bottle)\s*:?\s*\$?(\d{1,4}(?:\.\d{2})?)\b/i,
+      /\$?(\d{1,4}(?:\.\d{2})?)\s+(?:per\s+bottle|each)\b/i,
+      
+      // Wine/spirit specific patterns
+      /\b(?:750ml|1L|liter)\s+(?:for|at|costs?)\s*\$?(\d{1,4}(?:\.\d{2})?)\b/i,
+      /\b(?:priced|pricing)\s+at\s*\$?(\d{1,4}(?:\.\d{2})?)\b/i,
+    ];
+
+    for (const pattern of patterns) {
+      const match = cleanText.match(pattern);
+      if (match) {
+        let value = parseFloat(match[1]);
+        
+        // Handle large integers as cents (e.g., 2999 -> 29.99)
+        if (value >= 1000 && value < 100000 && !match[1].includes('.')) {
+          value = value / 100;
+        }
+        
+        // Validate price range for spirits (more permissive for V2.9.1)
+        if (value >= 3 && value <= 8000) {
+          // Additional validation: avoid common false positives
+          const invalidPrices = [
+            // Years
+            ...Array.from({length: 50}, (_, i) => 1975 + i),
+            // Common ages 
+            ...Array.from({length: 49}, (_, i) => 2 + i),
+            // Common proof values
+            ...Array.from({length: 100}, (_, i) => 70 + i),
+            // Bottle sizes
+            375, 500, 700, 750, 1000, 1500, 1750,
+            // Common batch/lot numbers
+            ...Array.from({length: 50}, (_, i) => 100 + i),
+          ];
+          
+          // Allow the price if it doesn't match common false positives
+          if (!invalidPrices.includes(Math.round(value))) {
+            return `$${value.toFixed(2)}`;
+          }
         }
       }
     }
@@ -696,7 +896,7 @@ export class ContentParser {
   }
 
   /**
-   * V2.9: Extract price from JSON-LD structured data
+   * V2.9.1: ULTRATHINK - Enhanced JSON-LD structured data extraction
    */
   private extractFromJsonLd($: CheerioStatic): { price?: string; [key: string]: any } | null {
     let result: any = {};
@@ -715,37 +915,96 @@ export class ContentParser {
             if (obj.brand?.name) result.brand = obj.brand.name;
             if (obj.description) result.description = obj.description;
             
-            // Price extraction from offers
+            // Enhanced price extraction from offers
             if (obj.offers) {
               const offers = Array.isArray(obj.offers) ? obj.offers[0] : obj.offers;
-              if (offers.price) {
-                result.price = this.formatPrice(parseFloat(offers.price));
-              } else if (offers.lowPrice) {
-                result.price = this.formatPrice(parseFloat(offers.lowPrice));
-              } else if (offers.priceRange) {
-                // Extract first price from range like "$25-$35"
-                const match = offers.priceRange.match(/\$?(\d+(?:\.\d{2})?)/);
-                if (match) {
-                  result.price = this.formatPrice(parseFloat(match[1]));
+              
+              // Primary price fields
+              const priceFields = ['price', 'lowPrice', 'highPrice', 'minPrice', 'maxPrice'];
+              
+              for (const field of priceFields) {
+                if (offers[field] && !result.price) {
+                  const price = parseFloat(offers[field]);
+                  if (price >= 3 && price <= 8000) {
+                    result.price = this.formatPrice(price);
+                    break;
+                  }
                 }
               }
               
+              // Price range extraction
+              if (!result.price && offers.priceRange) {
+                const rangePatterns = [
+                  /\$?(\d+(?:\.\d{2})?)\s*[-–—]\s*\$?\d+/,
+                  /from\s+\$?(\d+(?:\.\d{2})?)/i,
+                  /starting\s+at\s+\$?(\d+(?:\.\d{2})?)/i,
+                ];
+                
+                for (const pattern of rangePatterns) {
+                  const match = offers.priceRange.match(pattern);
+                  if (match) {
+                    const price = parseFloat(match[1]);
+                    if (price >= 3 && price <= 8000) {
+                      result.price = this.formatPrice(price);
+                      break;
+                    }
+                  }
+                }
+              }
+              
+              // Additional offer properties
               if (offers.availability) result.availability = offers.availability;
               if (offers.priceCurrency) result.currency = offers.priceCurrency;
+              if (offers.priceValidUntil) result.priceValidUntil = offers.priceValidUntil;
             }
             
             // Additional product properties
             if (obj.sku) result.sku = obj.sku;
             if (obj.gtin13 || obj.gtin12) result.gtin = obj.gtin13 || obj.gtin12;
             if (obj.mpn) result.mpn = obj.mpn;
+            if (obj.model) result.model = obj.model;
+            if (obj.category) result.category = obj.category;
+            
+            // Additional brand information
+            if (obj.manufacturer?.name && !result.brand) {
+              result.brand = obj.manufacturer.name;
+            }
           }
           
-          // Offer schema
+          // Standalone Offer schema
           if (obj['@type'] === 'Offer') {
-            if (obj.price) {
-              result.price = this.formatPrice(parseFloat(obj.price));
+            const priceFields = ['price', 'lowPrice', 'highPrice', 'minPrice', 'maxPrice'];
+            
+            for (const field of priceFields) {
+              if (obj[field] && !result.price) {
+                const price = parseFloat(obj[field]);
+                if (price >= 3 && price <= 8000) {
+                  result.price = this.formatPrice(price);
+                  break;
+                }
+              }
             }
+            
             if (obj.priceCurrency) result.currency = obj.priceCurrency;
+            if (obj.availability) result.availability = obj.availability;
+          }
+          
+          // AggregateOffer schema (for products with multiple offers)
+          if (obj['@type'] === 'AggregateOffer') {
+            const priceFields = ['lowPrice', 'highPrice', 'minPrice', 'maxPrice'];
+            
+            for (const field of priceFields) {
+              if (obj[field] && !result.price) {
+                const price = parseFloat(obj[field]);
+                if (price >= 3 && price <= 8000) {
+                  result.price = this.formatPrice(price);
+                  break;
+                }
+              }
+            }
+            
+            if (obj.priceCurrency) result.currency = obj.priceCurrency;
+            if (obj.offerCount) result.offerCount = obj.offerCount;
           }
         }
       } catch (e) {
@@ -757,43 +1016,108 @@ export class ContentParser {
   }
 
   /**
-   * V2.9: Extract price from meta tags
+   * V2.9.1: ULTRATHINK - Comprehensive meta tag price extraction
    */
   private extractFromMetaTags($: CheerioStatic): string | null {
-    const metaTags = [
-      'product:price:amount',
-      'product:price',
-      'price',
-      'og:price:amount',
-      'twitter:data1', // Sometimes used for price
+    // Comprehensive meta tag strategy
+    const metaTagStrategies = [
+      // High priority structured data
+      { tags: ['product:price:amount', 'product:price:value'], priority: 1 },
+      { tags: ['og:price:amount', 'og:price:value'], priority: 1 },
+      
+      // Medium priority e-commerce tags
+      { tags: ['product:price', 'og:price', 'price'], priority: 2 },
+      { tags: ['item-price', 'retail-price', 'list-price'], priority: 2 },
+      
+      // Social media price tags
+      { tags: ['twitter:data1', 'twitter:label1'], priority: 3 },
+      { tags: ['twitter:app:name:iphone', 'twitter:app:name:ipad'], priority: 3 },
+      
+      // Platform-specific price tags
+      { tags: ['shopify:price', 'woocommerce:price'], priority: 2 },
+      { tags: ['magento:price', 'prestashop:price'], priority: 2 },
+      
+      // Generic price indicators
+      { tags: ['price-current', 'price-regular', 'sale-price'], priority: 4 },
+      { tags: ['cost', 'amount', 'value'], priority: 5 },
     ];
     
-    for (const tag of metaTags) {
-      const content = $(`meta[property="${tag}"]`).attr('content') || 
-                     $(`meta[name="${tag}"]`).attr('content');
-      
-      if (content) {
-        const price = this.extractPrice(content);
-        if (price) return price;
+    // Sort by priority and try extraction
+    const sortedStrategies = metaTagStrategies.sort((a, b) => a.priority - b.priority);
+    
+    for (const strategy of sortedStrategies) {
+      for (const tag of strategy.tags) {
+        // Try both property and name attributes
+        const content = $(`meta[property="${tag}"]`).attr('content') || 
+                       $(`meta[name="${tag}"]`).attr('content') ||
+                       $(`meta[itemprop="${tag}"]`).attr('content');
+        
+        if (content) {
+          const price = this.extractPriceAdvanced(content);
+          if (price) return price;
+        }
       }
     }
     
-    // Check for microdata price
-    const microdataPrice = $('[itemprop="price"]').attr('content') || 
-                          $('[itemprop="price"]').text();
-    if (microdataPrice) {
-      const price = this.extractPrice(microdataPrice);
-      if (price) return price;
+    // Microdata extraction (comprehensive)
+    const microdataSelectors = [
+      '[itemprop="price"]',
+      '[itemprop="lowPrice"]', 
+      '[itemprop="highPrice"]',
+      '[itemtype*="Product"] [itemprop="offers"] [itemprop="price"]',
+      '[itemtype*="Offer"] [itemprop="price"]',
+    ];
+    
+    for (const selector of microdataSelectors) {
+      const element = $(selector);
+      if (element.length > 0) {
+        const content = element.attr('content') || element.text();
+        if (content) {
+          const price = this.extractPriceAdvanced(content);
+          if (price) return price;
+        }
+      }
+    }
+    
+    // Data attributes (last resort)
+    const dataSelectors = [
+      '[data-price]',
+      '[data-cost]', 
+      '[data-amount]',
+      '[data-product-price]',
+      '[data-regular-price]',
+      '[data-sale-price]',
+    ];
+    
+    for (const selector of dataSelectors) {
+      const element = $(selector);
+      if (element.length > 0) {
+        const content = element.attr('data-price') || 
+                       element.attr('data-cost') ||
+                       element.attr('data-amount') ||
+                       element.text();
+        if (content) {
+          const price = this.extractPriceAdvanced(content);
+          if (price) return price;
+        }
+      }
     }
     
     return null;
   }
 
   /**
-   * V2.9: Format price consistently
+   * V2.9.1: ULTRATHINK - Enhanced price formatting with better validation
    */
   private formatPrice(value: number): string | null {
-    if (value >= 5 && value <= 5000) {
+    // More permissive range for V2.9.1 to catch more valid prices
+    if (value >= 3 && value <= 8000) {
+      // Handle special cases
+      if (value < 1) {
+        return null; // Too low to be a real price
+      }
+      
+      // Round to 2 decimal places
       return `$${value.toFixed(2)}`;
     }
     return null;

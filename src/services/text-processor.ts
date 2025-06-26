@@ -224,6 +224,14 @@ export class TextProcessor {
       /\s+cana\s+wine\s+company\s*$/i,
       /\s+food\s+4\s+less\s*$/i,
       /\s+knast\s+liquor\s*$/i,
+      
+      // V2.9.1: ULTRATHINK - E-commerce metadata suffixes
+      /\s+\(Ship As A \d+\.\)$/i,
+      /\s+\(Ships As A \d+\.\)$/i,
+      /\s+Sku \d+$/i,
+      /\s+Sku$/i,
+      /\s+Limited Stock$/i,
+      /\s+Product Detail$/i,
     ];
     
     for (const pattern of suffixPatterns) {

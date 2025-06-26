@@ -93,8 +93,17 @@ export class SpiritExtractor {
             return this.isValidProductUrl(item.link);
           });
           
-          logger.debug(`Filtered ${results.items.length - validResults.length} invalid URLs from query results`);
-          allResults.push(...validResults);
+          // V2.9.1: ULTRATHINK - Additional e-commerce metadata filtering
+          const cleanResults = validResults.filter(item => {
+            // Filter out K&L Wine shipping metadata in titles
+            if (item.title && /\(Ship As A \d+\.\)|Sku \d+$|Product Detail /i.test(item.title)) {
+              return false;
+            }
+            return true;
+          });
+          
+          logger.debug(`Filtered ${results.items.length - cleanResults.length} invalid URLs and metadata from query results`);
+          allResults.push(...cleanResults);
         }
       } catch (error: any) {
         console.error(`Search failed for query "${query}":`, error);
