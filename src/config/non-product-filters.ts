@@ -149,6 +149,17 @@ export const NON_PRODUCT_FILTERS: NonProductFilterConfig = {
       /\b(continues expansion|responds to|announces|unveils)\b/i,
       /\b(why .+ stands out|best .+ of \d{4})\b/i,
       /\b(archives?|press release|media)\b/i,
+      
+      // V3.0: Blog post patterns from database analysis
+      /^we['']re\s+/i,  // "We're Living In A Golden Age"
+      /^i['']ve\s+tried/i,  // "I've Tried Hundreds Of"
+      /^we\s+tasted/i,  // "We Tasted 19 Non Alcoholic"
+      /^we['']ve\s+tasted/i,  // "We've Tasted Hundreds"
+      /^top\s+\d+\s+/i,  // "Top 10", "Top 5"
+      /^\d+\s+(best|absolute\s+best)/i,  // "14 Absolute Best", "8 Best"
+      /\bthe\s+fifty\s+best\b/i,  // "The Fifty Best"
+      /\bcritici?['']s\s+choice\b/i,  // "Critic's Choice"
+      /\bbest\s+of\s+\d{4}\b/i,  // "Best Of 2025"
     ],
     
     // Retail and category pages - V2.8: Enhanced based on database analysis
@@ -174,6 +185,17 @@ export const NON_PRODUCT_FILTERS: NonProductFilterConfig = {
       /\bgift\s+guide\b/i,
       /\bcase\s+bundle\b/i,
       /\b(find|order|locate)\s+.+\s+near\s+(me|you)\b/i,
+      
+      // V3.0: Category and collection pages
+      /^discover\s+/i,  // "Discover Premium Gold Rum"
+      /\bbest\s+price\s+guarantee\b/i,
+      /^all\s+extra\s+.+\s+best\s+selection\b/i,
+      /\b(ratings|ratings\s+and\s+reviews)\b/i,
+      /^product\s+(detail|description)\b/i,
+      /^products\s+/i,  // "Products The Southern Whiskey Society"
+      /\bcollection\s+(bourbon|gin|vodka|rum|whiskey|tequila)\b/i,
+      /^new\s+.+\s+arrivals?\b/i,
+      /^contact\s+us\b/i,
     ],
     
     // Cocktails and mixed drinks - V2.7.5: Only match clear cocktail contexts

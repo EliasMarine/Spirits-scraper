@@ -227,6 +227,15 @@ export class TextProcessor {
       
       // V2.9.1: ULTRATHINK - E-commerce metadata suffixes
       /\s+\(Ship As A \d+\.\)$/i,
+      
+      // V3.0: Common suffixes from database analysis
+      /\s+Bottle\s*$/i,
+      /\s+70\s*cl\s*$/i,
+      /\s+70\s*C\s*L\s*$/i,
+      /\s+750\s*ml\s*$/i,
+      /\s+1\s*L\s*$/i,
+      /\s+1\.75\s*L\s*$/i,
+      /\s+Mini\s+Bottle\s*$/i,
       /\s+\(Ships As A \d+\.\)$/i,
       /\s+Sku \d+$/i,
       /\s+Sku$/i,

@@ -30,6 +30,23 @@ export class SmartProductValidator {
   
   // V2.6.4: Enhanced hard rejection patterns for non-products
   private readonly HARD_REJECT_PATTERNS = [
+    // V3.0: Blog post and article patterns (MUST BE FIRST)
+    /^we['']re\s+/i,  // "We're Living In A Golden Age"
+    /^i['']ve\s+tried/i,  // "I've Tried Hundreds Of"
+    /^we\s+tasted/i,  // "We Tasted 19 Non Alcoholic"
+    /^we['']ve\s+tasted/i,  // "We've Tasted Hundreds"
+    /^top\s+\d+\s+/i,  // "Top 10", "Top 5"
+    /^\d+\s+(best|absolute\s+best)/i,  // "14 Absolute Best", "8 Best"
+    /^the\s+\d+\s+best/i,  // "The 10 Best"
+    /^discover\s+/i,  // "Discover Premium Gold Rum"
+    /^products\s+/i,  // "Products The Southern Whiskey Society"
+    /^product\s+(detail|description)/i,  // "Product Detail", "Product Description"
+    /^contact\s+us/i,  // "Contact Us Best White Rum"
+    /^discussion\s+/i,  // "Discussion Looking For"
+    /\bfacundo\s+is\s+a\s+premium/i,  // "Facundo Is A Premium Range"
+    /^if\s+you\s+like/i,  // "If You Like Hot Buttered Rum"
+    /\byou\s+need\s+to\s+try/i,  // "You Need To Try"
+    
     // V2.7.1: Generic age-only patterns (MUST BE FIRST)
     /^\d+\s+year\s+old\s+(whisky|whiskey|bourbon|rum|gin|vodka|tequila)$/i,
     

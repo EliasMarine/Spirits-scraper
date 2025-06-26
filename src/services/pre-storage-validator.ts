@@ -286,6 +286,23 @@ export class PreStorageValidator {
         issues.push('Generic single-word brand');
       }
       
+      // V3.0: Reject invalid brands from database analysis
+      if (/^(we['']re|top\s+premium|discussion|facundo\s+is|product\s+description|aged?\s+rum|\d+\s+year\s+old|white|the\s+\d+|critics?\s+choice)$/i.test(cleanedBrand)) {
+        return {
+          isValid: false,
+          qualityScore: 0,
+          issues: ['Invalid brand name pattern'],
+          cleanedName,
+          rejectionReason: 'invalid_brand_v3'
+        };
+      }
+      
+      // V3.0: Reject single-word generic spirit type brands
+      if (/^(rum|whiskey|whisky|bourbon|gin|vodka|tequila|brandy|cognac|scotch)$/i.test(cleanedBrand)) {
+        qualityScore -= 30;
+        issues.push('Generic spirit type as brand');
+      }
+      
       // V2.7.2: Reject possessive brands with bad apostrophes
       if (/[''´`]s$/i.test(cleanedBrand) && !/^[A-Z][a-z]+['']s$/i.test(cleanedBrand)) {
         qualityScore -= 15;
