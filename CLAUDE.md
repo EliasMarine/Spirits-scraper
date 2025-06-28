@@ -403,3 +403,58 @@ The frontend design system is inspired by luxury silk fabric, creating an elegan
 - Mobile-first responsive design with simplified animations on small screens
 
 **For complete design documentation including detailed examples, accessibility requirements, and future considerations, see `spirits-frontend/DESIGN_STYLE_GUIDE.md`**
+
+# ⚠️ Code Preservation & Change History Guidelines
+
+## Directive
+When implementing **new code** — whether fixing a bug, adding a new feature, or refactoring logic — **you must preserve the original code block** by commenting it out. **Never delete existing code outright.**
+
+---
+
+## ✅ Required Procedure
+
+1. **Comment Out, Don't Delete**
+   - Surround the original code with clear `// OLD CODE START` and `// OLD CODE END` (or equivalent for the language).
+   - Follow it with the **new implementation**.
+   - Example:
+     ```js
+     // OLD CODE START: legacy parsing logic
+     // const result = parseInput(rawText);
+     // OLD CODE END
+
+     const result = parseAndNormalize(rawText);
+     ```
+
+2. **Explain the Change**
+   - Leave a **comment above the new block** briefly stating:
+     - Why the change was made (bug fix? feature improvement?)
+     - Any known side effects or tests run
+     - Reference to a ticket/issue if available
+     - Example:
+       ```js
+       // Replaced legacy parsing with normalized variant to fix issue #123 (empty fields)
+       ```
+
+3. **Preserve Context**
+   - If a removed block involves important logic or edge case handling, **note that** in the comment (e.g., "handled null case here").
+
+4. **No Permanent Deletion Without Approval**
+   - **Do not remove commented-out code** unless:
+     - The feature has been live and stable for 3+ cycles
+     - There is explicit directive to clean up
+     - It has been moved into a legacy archive module or code history file
+
+---
+
+## 🔍 Rationale
+
+- Preserving old code creates an **inline version history**.
+- Enables fast **rollback**, A/B testing, and understanding of past logic.
+- Helps document **intent** and evolution, especially during aggressive development cycles or scraper iterations.
+
+---
+
+## 🚫 Violations
+
+- **Deleting code without leaving a trace is strictly prohibited.**
+- The AI agent must never assume code is "obsolete" without human confirmation.

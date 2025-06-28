@@ -429,6 +429,18 @@ export const NON_PRODUCT_FILTERS: NonProductFilterConfig = {
       '?userReferral=', // K&L Wine referral tracking
       '?searchId=', // K&L Wine search tracking
     ],
+    
+    // V3.1: Mystery subscription URLs
+    mysterySubscription: [
+      '/subscription', '/mystery-box', '/monthly-box',
+      '/membership', '/club', '/subscribe',
+    ],
+    
+    // V3.1: Restaurant URLs
+    restaurant: [
+      '/restaurant', '/steakhouse', '/dining',
+      '/menu', '/reservations', '/book-table',
+    ],
   },
   
   // Patterns that MUST be present for a valid spirit product

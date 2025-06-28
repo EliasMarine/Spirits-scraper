@@ -990,6 +990,23 @@ export class TextProcessor {
     if (brandFixes[lowerResult]) {
       return brandFixes[lowerResult];
     }
+    
+    // V3.1: Map single-word brands to full names
+    const singleWordMappings: Record<string, string> = {
+      'colonel': 'Colonel E.H. Taylor',
+      'george': 'George T. Stagg',
+      'elijah': 'Elijah Craig',
+      'rhum': 'Rhum Barbancourt',
+      'kirk': 'Kirk & Sweeney',
+      'santa': 'Santa Teresa',
+      'captain': 'Captain Morgan',
+      'flor': 'Flor de Cana',
+      'ten': 'Ten To One'
+    };
+    
+    if (singleWordMappings[lowerResult]) {
+      return singleWordMappings[lowerResult];
+    }
 
     // Title case formatting with special handling
     result = result.split(/\s+/).map((word, index) => {
@@ -1018,6 +1035,10 @@ export class TextProcessor {
 
     // Final cleanup
     result = result.replace(/\s+/g, ' ').trim();
+    
+    // V3.1: Fix specific possessive patterns
+    result = result.replace(/\b(Baker|Booker|Gosling|Michter|Rowan|Pusser)s\b/gi, "$1's");
+    result = result.replace(/\b(Baker|Booker|Gosling|Michter|Rowan|Pusser)['']S\b/gi, "$1's");
 
     return result;
   }

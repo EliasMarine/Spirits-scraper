@@ -36,23 +36,48 @@ export class EnhancedPriceExtractor {
   static extractPriceFromSnippet(snippet: string, volumeHint?: string): number | undefined {
     if (!snippet) return undefined;
     
-    // Enhanced price patterns in order of reliability
+    // V3.1.3: Enhanced price patterns in order of reliability
     const patterns = [
+      // Structured data patterns (highest priority)
+      /"price":\s*"?(\d+\.?\d*)"?/i,
+      /"offers".*?"price":\s*"?(\d+\.?\d*)"?/is,
+      /itemprop="price"[^>]*content="(\d+\.?\d*)"/i,
+      
       // Price with clear markers
       /(?:price|msrp|our\s+price|sale|now):\s*\$?([\d,]+\.?\d*)/i,
+      /retail\s*(?:price)?:\s*\$?([\d,]+\.?\d*)/i,
+      /cost:\s*\$?([\d,]+\.?\d*)/i,
       
       // Price after volume (most reliable for spirits)
       /\d+ml\s*[.-]*\s*\$?([\d,]+\.?\d*)/i,
       /\d+\s*liter\s*[.-]*\s*\$?([\d,]+\.?\d*)/i,
+      /750ml.*?\$\s*([\d,]+\.?\d*)/i,
+      /\$\s*([\d,]+\.?\d*).*?750ml/i,
+      
+      // Add to cart patterns
+      /add\s+to\s+cart.*?\$\s*([\d,]+\.?\d*)/is,
+      /\$\s*([\d,]+\.?\d*).*?add\s+to\s+cart/is,
       
       // Price with currency symbol
       /\$\s*([\d,]+\.?\d{0,2})(?:\s|$|[^\d])/,
       /USD\s*([\d,]+\.?\d{0,2})/i,
+      /£\s*([\d,]+\.?\d*)/,  // GBP
+      /€\s*([\d,]+\.?\d*)/,   // EUR
+      
+      // Price range patterns (take lower bound)
+      /\$\s*([\d,]+\.?\d*)\s*-\s*\$\s*[\d,]+\.?\d*/,
+      /from\s*\$\s*([\d,]+\.?\d*)/i,
+      /starting\s+at\s*\$\s*([\d,]+\.?\d*)/i,
       
       // Price in common formats
       /(?:^|\s)([\d,]+\.99)(?:\s|$)/,
       /(?:^|\s)([\d,]+\.95)(?:\s|$)/,
-      /(?:^|\s)([\d,]+\.00)(?:\s|$)/
+      /(?:^|\s)([\d,]+\.00)(?:\s|$)/,
+      
+      // V3.1.3: Fallback patterns
+      /\bprice[^$]*?\$\s*([\d,]+\.?\d*)/i,
+      /\bbuy[^$]*?\$\s*([\d,]+\.?\d*)/i,
+      /\bpurchase[^$]*?\$\s*([\d,]+\.?\d*)/i
     ];
     
     // Extract all potential prices
@@ -257,6 +282,149 @@ export class EnhancedPriceExtractor {
     
     const rate = rates[fromCurrency.toUpperCase()];
     return rate ? price * rate : price;
+  }
+  
+  /**
+   * V3.1.3: Enhanced multi-strategy price extraction
+   */
+  static extractPriceWithRetry(html: string, url?: string): number | undefined {
+    // Strategy 1: Try standard extraction
+    let price = this.extractPriceFromSnippet(html);
+    if (price) return price;
+    
+    // Strategy 2: Try structured data extraction
+    const structuredPrice = this.extractFromStructuredDataV3(html);
+    if (structuredPrice) return structuredPrice;
+    
+    // Strategy 3: Try near-volume extraction
+    const volumePrice = this.extractPriceNearVolume(html);
+    if (volumePrice) return volumePrice;
+    
+    // Strategy 4: Try buy button extraction
+    const buyButtonPrice = this.extractPriceNearBuyButton(html);
+    if (buyButtonPrice) return buyButtonPrice;
+    
+    // Strategy 5: Fallback context extraction
+    const contextPrice = this.extractPriceFromContext(html);
+    if (contextPrice) return contextPrice;
+    
+    return undefined;
+  }
+  
+  /**
+   * V3.1.3: Extract from structured data with more patterns
+   */
+  private static extractFromStructuredDataV3(html: string): number | undefined {
+    // JSON-LD patterns
+    const jsonLdPattern = /<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/gi;
+    const jsonLdMatches = html.matchAll(jsonLdPattern);
+    
+    for (const match of jsonLdMatches) {
+      try {
+        const data = JSON.parse(match[1]);
+        const price = this.extractPriceFromJsonLd(data);
+        if (price) return price;
+      } catch (e) {
+        // Continue to next match
+      }
+    }
+    
+    return undefined;
+  }
+  
+  /**
+   * V3.1.3: Extract price from JSON-LD data
+   */
+  private static extractPriceFromJsonLd(data: any): number | undefined {
+    if (!data) return undefined;
+    
+    // Check direct price
+    if (data.offers?.price) {
+      const price = this.parsePrice(data.offers.price.toString());
+      if (price && this.isReasonablePrice(price)) return price;
+    }
+    
+    // Check array of offers
+    if (Array.isArray(data.offers)) {
+      for (const offer of data.offers) {
+        const price = this.parsePrice(offer.price?.toString());
+        if (price && this.isReasonablePrice(price)) return price;
+      }
+    }
+    
+    // Check nested product
+    if (data['@graph']) {
+      for (const item of data['@graph']) {
+        if (item['@type'] === 'Product') {
+          return this.extractPriceFromJsonLd(item);
+        }
+      }
+    }
+    
+    return undefined;
+  }
+  
+  /**
+   * V3.1.3: Extract price near volume indicators
+   */
+  private static extractPriceNearVolume(html: string): number | undefined {
+    const volumePatterns = [
+      /750\s*ml[^$]{0,50}\$\s*([\d,]+\.?\d*)/gi,
+      /1\s*L[^$]{0,50}\$\s*([\d,]+\.?\d*)/gi,
+      /\$\s*([\d,]+\.?\d*)[^$]{0,50}750\s*ml/gi,
+      /\$\s*([\d,]+\.?\d*)[^$]{0,50}1\s*L/gi
+    ];
+    
+    for (const pattern of volumePatterns) {
+      const matches = html.matchAll(pattern);
+      for (const match of matches) {
+        const price = this.parsePrice(match[1]);
+        if (price && this.isReasonablePrice(price)) return price;
+      }
+    }
+    
+    return undefined;
+  }
+  
+  /**
+   * V3.1.3: Extract price near buy/add to cart buttons
+   */
+  private static extractPriceNearBuyButton(html: string): number | undefined {
+    const buyPatterns = [
+      /<button[^>]*>.*?add\s+to\s+cart.*?<\/button>[^$]{0,200}\$\s*([\d,]+\.?\d*)/gis,
+      /\$\s*([\d,]+\.?\d*)[^$]{0,200}<button[^>]*>.*?add\s+to\s+cart.*?<\/button>/gis,
+      /<button[^>]*>.*?buy\s+now.*?<\/button>[^$]{0,200}\$\s*([\d,]+\.?\d*)/gis
+    ];
+    
+    for (const pattern of buyPatterns) {
+      const matches = html.matchAll(pattern);
+      for (const match of matches) {
+        const price = this.parsePrice(match[1]);
+        if (price && this.isReasonablePrice(price)) return price;
+      }
+    }
+    
+    return undefined;
+  }
+  
+  /**
+   * V3.1.3: Extract price from context clues
+   */
+  private static extractPriceFromContext(html: string): number | undefined {
+    // Look for prices in product containers
+    const containerPattern = /<div[^>]*class="[^"]*product[^"]*"[^>]*>([\s\S]*?)<\/div>/gi;
+    const containers = html.matchAll(containerPattern);
+    
+    for (const container of containers) {
+      const content = container[1];
+      const priceMatch = content.match(/\$\s*([\d,]+\.?\d*)/);
+      if (priceMatch) {
+        const price = this.parsePrice(priceMatch[1]);
+        if (price && this.isReasonablePrice(price)) return price;
+      }
+    }
+    
+    return undefined;
   }
 }
 

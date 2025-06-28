@@ -38,6 +38,9 @@ export class PreStorageValidator {
     /Sku \d+$/i,
     /Product Detail$/i,
     /Get .* Online Today/i,
+    /^Louisville['']s\s+Premier/i,  // V3.1: Restaurant/steakhouse patterns
+    /\bsurf\s+city\s+still\s+works\s+collection/i,  // V3.1: Collection pages
+    /\blost\s+lantern.*collection/i,  // V3.1: Collection pages
   ];
   
   private readonly GATE_2_PATTERNS = [
@@ -55,6 +58,39 @@ export class PreStorageValidator {
     /\bdelivery\s+near\s+me\b/i,
     /\bpickup\s+near\s+me\b/i,
     /\bfree\s+delivery\b/i,
+  ];
+  
+  // V3.1: Additional filtering gates
+  private readonly GATE_4_PATTERNS = [
+    /\bmystery\s+(whiskey|box|case)/i,
+    /\bsubscription\s+box/i,
+    /\bsteakhouse|restaurant|bar\s+offering/i,
+    /\breview(ing)?\s+\w+/i,
+    /\bnews\s+\w+|bourbon\s+news/i,
+    /\brelease\s+calendar/i,
+    /\bstash\s+best/i,
+    /\bcask\s+aged.*chocolate/i,
+    /\bcollection\s+(page|of\s+bourbon)/i,
+    /\b(bourbon|whiskey)\s+page\s+\d+/i,
+    /\b25\s+year\s+old\s+\w+\s+marketplace/i,
+  ];
+  
+  // V3.1.3: GATE 5 - Sources that MUST have prices
+  private readonly PRICE_REQUIRED_SOURCES = [
+    'totalwine.com',
+    'thewhiskyexchange.com',
+    'whiskyexchange.com',
+    'klwines.com',
+    'wine-searcher.com',
+    'masterofmalt.com',
+    'drizly.com',
+    'reservebar.com',
+    'caskers.com',
+    'flaviar.com',
+    'thewhiskyworld.com',
+    'finedrams.com',
+    'whisky.com',
+    'dekanta.com'
   ];
   
   /**
@@ -96,6 +132,32 @@ export class PreStorageValidator {
         };
       }
     }
+    
+    // V3.1: Gate 4 - Mystery box/subscription/review patterns
+    for (const pattern of this.GATE_4_PATTERNS) {
+      if (pattern.test(spiritData.name) || pattern.test(spiritData.description || '')) {
+        return {
+          isValid: false,
+          qualityScore: 0,
+          issues: ['Mystery box/subscription/review pattern detected'],
+          rejectionReason: 'mystery_subscription_review'
+        };
+      }
+    }
+    
+    // V3.1.3: Gate 5 - Price requirement for premium sources
+    if (spiritData.source_domain) {
+      const domain = spiritData.source_domain.toLowerCase().replace('www.', '');
+      if (this.PRICE_REQUIRED_SOURCES.includes(domain) && !spiritData.price) {
+        return {
+          isValid: false,
+          qualityScore: 0,
+          issues: ['Price required from premium source'],
+          rejectionReason: 'missing_required_price'
+        };
+      }
+    }
+    
     const issues: string[] = [];
     let qualityScore = 100;
     
@@ -123,6 +185,16 @@ export class PreStorageValidator {
     cleanedName = TextProcessor.removeStoreSuffixes(cleanedName);  // V2.7.2: Remove store suffixes
     cleanedName = TextProcessor.fixTextSpacing(cleanedName);
     cleanedName = TextProcessor.removeStoreNames(cleanedName);
+    
+    // V3.1.3: Enhanced name cleaning
+    // Remove "Bottle" suffix variations (expanded list)
+    cleanedName = cleanedName.replace(/\s+(Bottle|bottle|70\s*cl|750\s*ml|375\s*ml|1\s*L|1L|1\.75\s*L|50\s*ml|200\s*ml|liter|litre)$/i, '');
+    // Fix spacing issues like "L L" or "Ll"
+    cleanedName = cleanedName.replace(/\bL\s+L\b/g, 'll').replace(/\bLl\b/g, 'll');
+    // Fix possessive apostrophes in names
+    cleanedName = cleanedName.replace(/['']S\s/gi, "'s ");
+    // Remove trailing dots or incomplete words
+    cleanedName = cleanedName.replace(/\.\.\.$/, '').replace(/\s+\w{1,2}$/, '');
     
     // V2.7.4: Early rejection for store references and non-spirit items
     if (TextProcessor.containsStoreReference(cleanedName) || TextProcessor.containsStoreReference(spiritData.name)) {
@@ -295,6 +367,33 @@ export class PreStorageValidator {
           cleanedName,
           rejectionReason: 'invalid_brand_v3'
         };
+      }
+      
+      // V3.1.3: Reject more invalid brand patterns (expanded)
+      if (/^(news|review|reviewing|here\s+are|mystery|overrated|top\s+shelf|wheated|technically\s+not|collection|marketplace|essential|our|the\s+\d+|best\s+of|top\s+\d+)$/i.test(cleanedBrand)) {
+        return {
+          isValid: false,
+          qualityScore: 0,
+          issues: ['Invalid brand name pattern V3.1.3'],
+          cleanedName,
+          rejectionReason: 'invalid_brand_v3_1_3'
+        };
+      }
+      
+      // V3.1.3: Reject brands that are just ages
+      if (/^\d+\s*(year|yr)s?\s*(old)?$/i.test(cleanedBrand)) {
+        return {
+          isValid: false,
+          qualityScore: 0,
+          issues: ['Age used as brand name'],
+          cleanedName,
+          rejectionReason: 'age_as_brand'
+        };
+      }
+      
+      // V3.1: Fix possessive brand apostrophes
+      if (/['']S$/i.test(cleanedBrand)) {
+        cleanedBrand = cleanedBrand.replace(/['']S$/i, "'s");
       }
       
       // V3.0: Reject single-word generic spirit type brands
@@ -500,6 +599,7 @@ export class PreStorageValidator {
       ...this.GATE_1_PATTERNS,
       ...this.GATE_2_PATTERNS,
       ...this.GATE_3_PATTERNS,
+      ...this.GATE_4_PATTERNS,  // V3.1: Include gate 4 patterns
       /\bschools?\b/i,
       /\bcounty\s+school/i,
       /\brestaurant\s+menu/i,

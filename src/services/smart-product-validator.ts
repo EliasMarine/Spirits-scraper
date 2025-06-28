@@ -47,6 +47,18 @@ export class SmartProductValidator {
     /^if\s+you\s+like/i,  // "If You Like Hot Buttered Rum"
     /\byou\s+need\s+to\s+try/i,  // "You Need To Try"
     
+    // V3.1.3: Enhanced blog/review patterns
+    /^news\s+/i,  // "News Kentucky Senator Bourbon"
+    /^reviewing\s+/i,  // "Reviewing Penelope Wheated Bourbon"
+    /\bwhiskey\s+reviews$/i,  // "Bourbon & Banter Whiskey Reviews"
+    /^here\s+are\s+/i,  // "Here Are The Best"
+    /^technically\s+not\s+/i,  // "Technically Not A Bourbon"
+    /^these\s+/i,  // "These Peaty Scotches Taste Like"
+    /^why\s+/i,  // "Why This Bourbon Is"
+    /^what\s+makes\s+/i,  // "What Makes This Special"
+    /\breview\s+of\s+/i,  // "Review of Buffalo Trace"
+    /^is\s+.+\s+worth/i,  // "Is Buffalo Trace Worth The Hype"
+    
     // V2.7.1: Generic age-only patterns (MUST BE FIRST)
     /^\d+\s+year\s+old\s+(whisky|whiskey|bourbon|rum|gin|vodka|tequila)$/i,
     
@@ -229,7 +241,38 @@ export class SmartProductValidator {
     
     // Multiple products
     /\b(trace|roses?|turkey|beam|west|daniel|benchmark)\s*(&|&amp;)\s*(trace|roses?|turkey|beam|west|daniel|benchmark)\b/i,
-    /\b\w+\s+(trace|roses?|turkey|beam|west|daniel)\s*(&|&amp;)\s*\w+\s+(trace|roses?|turkey|beam|west|daniel)\b/i
+    /\b\w+\s+(trace|roses?|turkey|beam|west|daniel)\s*(&|&amp;)\s*\w+\s+(trace|roses?|turkey|beam|west|daniel)\b/i,
+    
+    // V3.1: Mystery box/subscription patterns
+    /\bmystery\s+(whiskey|box|case)/i,
+    /\bsubscription\s+box/i,
+    /\bbourbon\s+subscription/i,
+    
+    // V3.1: Restaurant/steakhouse patterns
+    /^louisville['']s\s+premier/i,
+    /\bsteakhouse/i,
+    /\bsteak\s+and\s+bourbon/i,
+    
+    // V3.1.3: Collection/marketplace/store pages
+    /\bcollection$/i,
+    /\bmarketplace$/i,
+    /\bpage\s+\d+$/i,
+    /\bstyles\s+&\s+categories$/i,
+    /\bproducts\s+page$/i,
+    /\ball\s+products$/i,
+    /\bshop\s+all$/i,
+    /\bview\s+all$/i,
+    
+    // V3.1.3: Invalid name endings
+    /\s+(bottle|70\s*cl|750\s*ml|1\s*l|liter|litre)$/i,
+    /\.\.\.$/, // Truncation
+    /\s+\w{1,2}$/, // Single/double char endings
+    
+    // V3.1.3: Generic titles
+    /^whisky\s+and\s+words/i,
+    /^the\s+art\s+of\s+/i,
+    /^learn\s+about\s+/i,
+    /^everything\s+you\s+need/i
   ];
 
   constructor() {
@@ -297,7 +340,17 @@ export class SmartProductValidator {
         'spice': 'NonProduct',
         'spices': 'NonProduct',
         'coffee': 'NonProduct',
-        'honey': 'NonProduct'
+        'honey': 'NonProduct',
+        // V3.1: Additional non-product words
+        'mystery': 'NonProduct',
+        'subscription': 'NonProduct',
+        'steakhouse': 'NonProduct',
+        'restaurant': 'NonProduct',
+        'marketplace': 'NonProduct',
+        'collection': 'NonProduct',
+        'news': 'NonProduct',
+        'review': 'NonProduct',
+        'reviews': 'NonProduct'
       }
     });
   }
@@ -368,6 +421,16 @@ export class SmartProductValidator {
       };
     }
     
+    // V3.1: Early rejection for names ending with suffixes
+    if (/\s+(Bottle|70\s*cl|750\s*ml|1\s*L)$/i.test(name)) {
+      return {
+        isValid: false,
+        confidence: 0,
+        issues: ['Product name contains suffix that should be removed'],
+        suggestions: ['Remove "Bottle", "70 cl", etc. from product names']
+      };
+    }
+    
     // V2.7.1: Additional quality checks before normalization
     // Check for broken spacing patterns
     if (/\b[A-Z]\s+[a-z]{1,4}\b/.test(name) && !/\b(La|Le|De|Di|Du|Van|Von|Mac|Mc)\s+/i.test(name)) {
@@ -400,6 +463,17 @@ export class SmartProductValidator {
       issues.push('Contains venue/event/tour terminology');
     }
     
+    // V3.1: Additional problematic patterns
+    if (/\b(mystery|subscription|steakhouse|restaurant|marketplace|collection)\b/i.test(normalizedName)) {
+      confidence -= 0.6;
+      issues.push('Contains non-product terminology');
+    }
+    
+    if (/\b(news|review|reviews|reviewing)\b/i.test(normalizedName)) {
+      confidence -= 0.7;
+      issues.push('Appears to be news or review content');
+    }
+    
     // Check for food/non-beverage products
     if (/\b(brittle|spices?|coffee|honey|sauce|cake|cookie)\b/i.test(normalizedName)) {
       confidence -= 0.7;
@@ -420,12 +494,22 @@ export class SmartProductValidator {
     
     // Check for valid spirit brand patterns
     const knownBrands = [
+      // Bourbon/American Whiskey brands
       'buffalo trace', 'four roses', 'high west', 'bardstown', 'belle meade',
       'wild turkey', 'maker\'s mark', 'jim beam', 'jack daniel', 'woodford',
-      // V2.7.3: Add cognac brands
+      'elijah craig', 'colonel e.h. taylor', 'george t. stagg', 'basil hayden',
+      'baker\'s', 'booker\'s', 'michter\'s', 'rowan\'s creek',
+      'evan williams', 'henry mckenna', 'heaven hill', 'larceny',
+      'old forester', 'woodford reserve', 'knob creek', 'old grand-dad',
+      'very old barton', 'early times', 'ancient age', '1792',
+      'old ezra', 'ezra brooks', 'redemption', 'smooth ambler', 'whistlepig',
+      // Cognac brands
       'hennessy', 'remy martin', 'rémy martin', 'martell', 'courvoisier', 'hine',
       'camus', 'pierre ferrand', 'delamain', 'frapin', 'hardy', 'gautier',
-      'd\'usse', 'd\'ussé', 'abk6', 'abk 6', 'louis xiii', 'baron otard'
+      'd\'usse', 'd\'ussé', 'abk6', 'abk 6', 'louis xiii', 'baron otard',
+      // Rum brands
+      'gosling\'s', 'pusser\'s', 'bacardi', 'captain morgan', 'el dorado', 
+      'rhum barbancourt', 'kirk & sweeney', 'santa teresa', 'flor de cana', 'ten to one'
     ];
     
     const hasKnownBrand = knownBrands.some(brand => lowerName.includes(brand));
