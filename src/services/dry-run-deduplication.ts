@@ -204,7 +204,11 @@ export class DryRunDeduplicationService {
       let blocksToProcess: Map<string, any> | undefined;
 
       if (useBlocking && spirits.length > 100) {
-        logger.info('Running blocking analysis for optimization');
+        // V3.1.4: Suppress verbose logging if DEDUP_QUIET is set
+        const isQuiet = process.env.DEDUP_QUIET === 'true';
+        if (!isQuiet) {
+          logger.info('Running blocking analysis for optimization');
+        }
         blocksToProcess = this.blockingService.createBlocks(spirits);
         const reduction = this.blockingService.calculateReduction(spirits.length, blocksToProcess);
         
@@ -219,7 +223,10 @@ export class DryRunDeduplicationService {
         };
         
         report.blockingStats = blockingStats;
-        logger.info(`Blocking reduces comparisons by ${reduction.reductionPercentage.toFixed(1)}%`);
+        // V3.1.4: Already using isQuiet from above
+        if (!isQuiet) {
+          logger.info(`Blocking reduces comparisons by ${reduction.reductionPercentage.toFixed(1)}%`);
+        }
       }
 
       // Analyze matches

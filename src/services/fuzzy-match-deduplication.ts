@@ -52,13 +52,13 @@ export interface FuzzyDeduplicationConfig {
 }
 
 const DEFAULT_FUZZY_CONFIG: FuzzyDeduplicationConfig = {
-  sameBrandThreshold: 0.7, // As specified in task 4.4
-  differentBrandThreshold: 0.85,
+  sameBrandThreshold: 0.8, // V3.1.4: Increased from 0.7 to reduce false positives
+  differentBrandThreshold: 0.9, // V3.1.4: Increased from 0.85 for stricter matching
   tfidfWeight: 0.4,
   fuzzyWeight: 0.6,
   minDescriptionLength: 50,
   fuzzyMatchConfig: {
-    threshold: 0.6,
+    threshold: 0.7, // V3.1.4: Increased from 0.6 for more conservative matching
     weights: {
       levenshtein: 0.2,
       jaroWinkler: 0.3,
@@ -98,14 +98,21 @@ export class FuzzyMatchDeduplicationService {
     spirits: DatabaseSpirit[],
     excludeIds?: Set<string>
   ): Promise<FuzzyMatchCandidate[]> {
-    logger.info('Starting fuzzy match deduplication');
+    // V3.1.4: Suppress verbose logging if DEDUP_QUIET is set
+    const isQuiet = process.env.DEDUP_QUIET === 'true';
+    
+    if (!isQuiet) {
+      logger.info('Starting fuzzy match deduplication');
+    }
     
     // Filter out spirits that were already processed by exact match
     const eligibleSpirits = excludeIds 
       ? spirits.filter(s => !excludeIds.has(s.id))
       : spirits;
     
-    logger.info(`Processing ${eligibleSpirits.length} spirits for fuzzy matching`);
+    if (!isQuiet) {
+      logger.info(`Processing ${eligibleSpirits.length} spirits for fuzzy matching`);
+    }
     
     // Build TF-IDF corpus
     this.buildTFIDFCorpus(eligibleSpirits);
@@ -123,14 +130,18 @@ export class FuzzyMatchDeduplicationService {
       
       // Log progress every 100 spirits
       if ((i + 1) % 100 === 0) {
-        logger.info(`Processed ${i + 1}/${eligibleSpirits.length} spirits`);
+        if (!isQuiet && (i + 1) % 100 === 0) {
+          logger.info(`Processed ${i + 1}/${eligibleSpirits.length} spirits`);
+        }
       }
     }
     
     // Sort by similarity (highest first)
     candidates.sort((a, b) => b.similarity - a.similarity);
     
-    logger.info(`Found ${candidates.length} fuzzy match candidates`);
+    if (!isQuiet) {
+      logger.info(`Found ${candidates.length} fuzzy match candidates`);
+    }
     
     return candidates;
   }
@@ -272,6 +283,47 @@ export class FuzzyMatchDeduplicationService {
     const key2 = createNormalizedKey(spirit2.name);
     if (key1 === key2) {
       return null; // Skip, should be handled by exact match
+    }
+    
+    // V3.1.4: Pre-filter critical attributes to prevent false positives
+    const fullName1 = `${spirit1.brand || ''} ${spirit1.name}`.toLowerCase();
+    const fullName2 = `${spirit2.brand || ''} ${spirit2.name}`.toLowerCase();
+    
+    // Check for age mismatches
+    const ageMatch1 = fullName1.match(/(\d+)\s*-?\s*year/i);
+    const ageMatch2 = fullName2.match(/(\d+)\s*-?\s*year/i);
+    if (ageMatch1 && ageMatch2) {
+      const age1 = parseInt(ageMatch1[1]);
+      const age2 = parseInt(ageMatch2[1]);
+      if (Math.abs(age1 - age2) > 2) { // Allow 2 year tolerance for rounding
+        return null; // Skip comparison for significantly different ages
+      }
+    }
+    
+    // Check for bourbon vs rye confusion
+    const isBourbon1 = fullName1.includes('bourbon') || spirit1.type?.toLowerCase() === 'bourbon';
+    const isRye1 = fullName1.includes('rye') && !fullName1.includes('bourbon');
+    const isBourbon2 = fullName2.includes('bourbon') || spirit2.type?.toLowerCase() === 'bourbon';
+    const isRye2 = fullName2.includes('rye') && !fullName2.includes('bourbon');
+    
+    if ((isBourbon1 && isRye2) || (isRye1 && isBourbon2)) {
+      return null; // Skip comparison between bourbon and rye
+    }
+    
+    // Check for critical product variant mismatches
+    const singleBarrel1 = fullName1.match(/single\s*barrel/i);
+    const singleBarrel2 = fullName2.match(/single\s*barrel/i);
+    const smallBatch1 = fullName1.match(/small\s*batch/i);
+    const smallBatch2 = fullName2.match(/small\s*batch/i);
+    const yellowLabel1 = fullName1.match(/yellow\s*label/i);
+    const yellowLabel2 = fullName2.match(/yellow\s*label/i);
+    
+    // If one is specifically a variant and the other is not, skip
+    if ((singleBarrel1 && !singleBarrel2 && (smallBatch2 || yellowLabel2)) ||
+        (singleBarrel2 && !singleBarrel1 && (smallBatch1 || yellowLabel1)) ||
+        (smallBatch1 && !smallBatch2 && (singleBarrel2 || yellowLabel2)) ||
+        (smallBatch2 && !smallBatch1 && (singleBarrel1 || yellowLabel1))) {
+      return null; // Skip comparison between different product variants
     }
     
     // Fuzzy match on names

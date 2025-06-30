@@ -53,6 +53,13 @@ interface SpiritAttributes {
   isLiqueur?: boolean;
   isCaskStrength?: boolean;
   isSingleBarrel?: boolean;
+  isSmallBatch?: boolean;
+  isBiB?: boolean; // Bottled-in-Bond
+  productVariant?: string; // Single Barrel, Small Batch, Yellow Label, etc.
+  spiritType?: string; // bourbon, rye, scotch, etc.
+  anniversaryEdition?: string; // 130th, 135th, etc.
+  voyageNumber?: string; // For Jefferson's Ocean
+  isWheated?: boolean; // For wheated bourbons
 }
 
 /**
@@ -104,20 +111,20 @@ export interface DeduplicationResult {
  * Default deduplication configuration
  */
 export const DEFAULT_DEDUP_CONFIG: DeduplicationConfig = {
-  nameThreshold: 0.7,  // Based on analysis: same-brand products need lower threshold
-  brandThreshold: 0.85,  // For different brands
-  combinedThreshold: 0.6,  // General threshold for all comparisons
+  nameThreshold: 0.8,  // V3.1.4: Increased from 0.7 to reduce false positives
+  brandThreshold: 0.9,  // V3.1.4: Increased from 0.85 for stricter matching
+  combinedThreshold: 0.75,  // V3.1.4: Increased from 0.6 for more conservative matching
   fuzzyConfig: DEFAULT_CONFIG,
   brandConfig: DEFAULT_BRAND_CONFIG,
   batchSize: 100,
   maxDuplicates: 1000,
-  autoMergeThreshold: 0.9,  // Auto-merge high confidence matches
+  autoMergeThreshold: 0.95,  // V3.1.4: Increased from 0.9 for higher confidence auto-merge
   requireManualReview: true,
   // Enhanced matching settings based on duplicate analysis
   extractAttributes: true,
-  agePenaltyWeight: 0.2,  // Reduced from 0.3 - age differences less important
-  proofPenaltyWeight: 0.15,  // Reduced from 0.2
-  grainTypePenaltyWeight: 0.2,  // Reduced from 0.25
+  agePenaltyWeight: 0.4,  // V3.1.4: Increased from 0.2 - age differences are critical
+  proofPenaltyWeight: 0.25,  // V3.1.4: Increased from 0.15
+  grainTypePenaltyWeight: 0.3,  // V3.1.4: Increased from 0.2
   sameBrandWeight: 0.15, // Only 15% weight when same brand
   differentBrandWeight: 0.4, // 40% weight when different brands
 };
@@ -160,6 +167,7 @@ export class DeduplicationService {
     duplicatesFound: number;
     blockingStats?: any;
     processingTime: number;
+    matches?: DuplicateMatch[];
   }> {
     const {
       incrementalOnly = false,
@@ -174,21 +182,32 @@ export class DeduplicationService {
     try {
       // Fetch spirits to process
       const spirits = await this.fetchSpiritsForDeduplication(incrementalOnly);
-      logger.info(`Processing ${spirits.length} spirits for optimized deduplication`);
+      
+      // V3.1.4: Suppress verbose logging if DEDUP_QUIET is set
+      const isQuiet = process.env.DEDUP_QUIET === 'true';
+      if (!isQuiet) {
+        logger.info(`Processing ${spirits.length} spirits for optimized deduplication`);
+      }
 
       let totalDuplicatesFound = 0;
       let blockingStats: any = null;
+      const allMatches: DuplicateMatch[] = [];
 
       if (useBlocking && spirits.length > 100) {
         // Use blocking for large datasets
-        logger.info('Using blocking optimization for large dataset');
+        if (!isQuiet) {
+          logger.info('Using blocking optimization for large dataset');
+        }
         
         // Create blocks
         const blocks = this.blockingService.createBlocks(spirits);
         
         // Calculate reduction in comparisons
         const reduction = this.blockingService.calculateReduction(spirits.length, blocks);
-        logger.info(`Blocking reduces comparisons by ${reduction.reductionPercentage.toFixed(1)}%`);
+        // V3.1.4: Already using isQuiet from above
+        if (!isQuiet) {
+          logger.info(`Blocking reduces comparisons by ${reduction.reductionPercentage.toFixed(1)}%`);
+        }
         
         blockingStats = {
           totalBlocks: blocks.size,
@@ -206,7 +225,27 @@ export class DeduplicationService {
             const exactGroups = await this.exactMatchService.findExactDuplicates(block.spirits);
             totalDuplicatesFound += exactGroups.reduce((sum, g) => sum + g.spirits.length - 1, 0);
             
-            if (!dryRun) {
+            // Collect exact matches for dry-run display
+            if (dryRun) {
+              for (const group of exactGroups) {
+                if (group.spirits.length > 1) {
+                  for (let i = 1; i < group.spirits.length; i++) {
+                    allMatches.push({
+                      spirit1: group.primarySpirit,
+                      spirit2: group.spirits[i],
+                      similarity: group.score,
+                      confidence: group.score >= 0.95 ? 'high' : group.score >= 0.85 ? 'medium' : 'low',
+                      matchType: 'exact',
+                      details: {
+                        nameMatch: { similarity: 1.0, algorithm: 'exact', confidence: 1.0 },
+                        combinedScore: group.score
+                      },
+                      recommendedAction: group.mergeStrategy === 'auto' ? 'merge' : 'flag_for_review'
+                    });
+                  }
+                }
+              }
+            } else {
               await this.exactMatchService.mergeDuplicateGroups(
                 exactGroups.filter(g => g.mergeStrategy === 'auto'),
                 false
@@ -226,7 +265,23 @@ export class DeduplicationService {
             );
             totalDuplicatesFound += fuzzyMatches.length;
             
-            if (!dryRun) {
+            // Collect fuzzy matches for dry-run display
+            if (dryRun) {
+              for (const match of fuzzyMatches) {
+                allMatches.push({
+                  spirit1: match.spirit1,
+                  spirit2: match.spirit2,
+                  similarity: match.similarity,
+                  confidence: match.confidence,
+                  matchType: 'fuzzy_name',
+                  details: {
+                    nameMatch: match.matchDetails.nameSimilarity,
+                    combinedScore: match.similarity
+                  },
+                  recommendedAction: match.recommendedAction === 'merge' ? 'merge' : 'flag_for_review'
+                });
+              }
+            } else {
               await this.fuzzyMatchService.processFuzzyMatches(
                 fuzzyMatches.filter(m => m.recommendedAction !== 'ignore'),
                 false
@@ -251,7 +306,8 @@ export class DeduplicationService {
         totalProcessed: spirits.length,
         duplicatesFound: totalDuplicatesFound,
         blockingStats,
-        processingTime
+        processingTime,
+        matches: dryRun ? allMatches : undefined
       };
       
     } catch (error) {
@@ -555,7 +611,7 @@ export class DeduplicationService {
     const attributes: SpiritAttributes = {};
     const fullName = `${spirit.brand || ''} ${spirit.name}`.toLowerCase();
 
-    // Extract age statement
+    // Extract age statement - CRITICAL for matching
     const ageMatch = fullName.match(/(\d+)\s*-?\s*year/i);
     if (ageMatch) {
       attributes.age = parseInt(ageMatch[1]);
@@ -569,14 +625,58 @@ export class DeduplicationService {
       attributes.proof = spirit.abv * 2; // Convert ABV to proof
     }
 
+    // Extract spirit type - CRITICAL for bourbon vs rye distinction
+    if (spirit.type) {
+      attributes.spiritType = spirit.type.toLowerCase();
+    } else if (fullName.includes('rye whiskey') || fullName.includes('straight rye')) {
+      attributes.spiritType = 'rye';
+    } else if (fullName.includes('bourbon')) {
+      attributes.spiritType = 'bourbon';
+    } else if (fullName.includes('scotch')) {
+      attributes.spiritType = 'scotch';
+    }
+
     // Extract grain type
-    if (fullName.includes('rye')) attributes.grainType = 'rye';
-    else if (fullName.includes('wheat')) attributes.grainType = 'wheat';
-    else if (fullName.includes('corn')) attributes.grainType = 'corn';
-    else if (fullName.includes('barley')) attributes.grainType = 'barley';
+    if (fullName.includes('rye') && !fullName.includes('rye whiskey')) {
+      attributes.grainType = 'rye'; // Could be high-rye bourbon
+    } else if (fullName.includes('wheated')) {
+      attributes.grainType = 'wheat';
+      attributes.isWheated = true;
+    } else if (fullName.includes('corn')) {
+      attributes.grainType = 'corn';
+    } else if (fullName.includes('barley')) {
+      attributes.grainType = 'barley';
+    }
+
+    // Extract product variant - CRITICAL for Four Roses distinction
+    if (fullName.includes('single barrel')) {
+      attributes.productVariant = 'Single Barrel';
+      attributes.isSingleBarrel = true;
+    } else if (fullName.includes('small batch')) {
+      attributes.productVariant = 'Small Batch';
+      attributes.isSmallBatch = true;
+    } else if (fullName.includes('yellow label')) {
+      attributes.productVariant = 'Yellow Label';
+    } else if (fullName.includes('private selection')) {
+      attributes.productVariant = 'Private Selection';
+    } else if (fullName.includes('super premium')) {
+      attributes.productVariant = 'Super Premium';
+    }
+
+    // Extract anniversary editions - CRITICAL for Four Roses
+    const anniversaryMatch = fullName.match(/(\d+)(?:st|nd|rd|th)\s*anniversary/i);
+    if (anniversaryMatch) {
+      attributes.anniversaryEdition = anniversaryMatch[1];
+    }
+
+    // Extract voyage number for Jefferson's Ocean
+    const voyageMatch = fullName.match(/voyage\s*(\d+)/i);
+    if (voyageMatch) {
+      attributes.voyageNumber = voyageMatch[1];
+    }
 
     // Extract cask type
-    const caskTypes = ['sherry', 'bourbon', 'port', 'madeira', 'rum', 'wine'];
+    const caskTypes = ['sherry', 'bourbon', 'port', 'madeira', 'rum', 'wine', 'twin oak'];
     for (const cask of caskTypes) {
       if (fullName.includes(cask)) {
         attributes.caskType = cask;
@@ -586,7 +686,7 @@ export class DeduplicationService {
 
     // Extract vintage
     const vintageMatch = fullName.match(/\b(19\d{2}|20\d{2})\b/);
-    if (vintageMatch && !fullName.includes('release')) {
+    if (vintageMatch && !fullName.includes('release') && !fullName.includes('anniversary')) {
       attributes.vintage = parseInt(vintageMatch[1]);
     }
 
@@ -599,12 +699,16 @@ export class DeduplicationService {
     // Special editions
     if (fullName.includes('limited edition') || fullName.includes('special edition')) {
       attributes.edition = 'limited';
+    } else if (fullName.includes('distillers edition') || fullName.includes("distiller's edition")) {
+      attributes.edition = 'distillers';
+    } else if (fullName.includes('special release')) {
+      attributes.edition = 'special release';
     }
 
     // Product types
     attributes.isLiqueur = fullName.includes('liqueur') || fullName.includes('cream');
     attributes.isCaskStrength = fullName.includes('cask strength') || fullName.includes('barrel proof');
-    attributes.isSingleBarrel = fullName.includes('single barrel') || fullName.includes('single cask');
+    attributes.isBiB = fullName.includes('bottled in bond') || fullName.includes('bib');
 
     return attributes;
   }
@@ -615,11 +719,31 @@ export class DeduplicationService {
   private calculateAttributePenalty(attrs1: SpiritAttributes, attrs2: SpiritAttributes, config: DeduplicationConfig): number {
     let penalty = 0;
 
-    // Age mismatch penalty
+    // Age mismatch penalty - CRITICAL (nearly blocking)
     if (attrs1.age !== undefined && attrs2.age !== undefined && attrs1.age !== attrs2.age) {
       const ageDiff = Math.abs(attrs1.age - attrs2.age);
-      // Severe penalty for different ages
-      penalty += (config.agePenaltyWeight || 0.3) * Math.min(1, ageDiff / 10);
+      // Very severe penalty for different ages - essentially blocking
+      penalty += 0.8 + (0.2 * Math.min(1, ageDiff / 10));
+    }
+
+    // Spirit type mismatch - COMPLETE BLOCK (bourbon vs rye)
+    if (attrs1.spiritType && attrs2.spiritType && attrs1.spiritType !== attrs2.spiritType) {
+      return 1.0; // Complete block - these should never match
+    }
+
+    // Product variant mismatch - SEVERE (Single Barrel vs Small Batch)
+    if (attrs1.productVariant && attrs2.productVariant && attrs1.productVariant !== attrs2.productVariant) {
+      penalty += 0.7;
+    }
+
+    // Anniversary edition mismatch - SIGNIFICANT (130th vs 135th)
+    if (attrs1.anniversaryEdition && attrs2.anniversaryEdition && attrs1.anniversaryEdition !== attrs2.anniversaryEdition) {
+      penalty += 0.6;
+    }
+
+    // Voyage number mismatch for Jefferson's Ocean
+    if (attrs1.voyageNumber && attrs2.voyageNumber && attrs1.voyageNumber !== attrs2.voyageNumber) {
+      penalty += 0.5;
     }
 
     // Proof mismatch penalty
@@ -630,24 +754,31 @@ export class DeduplicationService {
       }
     }
 
-    // Grain type mismatch penalty (severe)
-    if (attrs1.grainType && attrs2.grainType && attrs1.grainType !== attrs2.grainType) {
-      penalty += (config.grainTypePenaltyWeight || 0.25);
+    // Grain type mismatch penalty (for wheated vs non-wheated)
+    if (attrs1.isWheated !== attrs2.isWheated) {
+      penalty += 0.4;
     }
 
     // Product type mismatches
-    if (attrs1.isLiqueur !== attrs2.isLiqueur) penalty += 0.3;
-    if (attrs1.isCaskStrength !== attrs2.isCaskStrength) penalty += 0.15;
-    if (attrs1.isSingleBarrel !== attrs2.isSingleBarrel) penalty += 0.1;
+    if (attrs1.isLiqueur !== attrs2.isLiqueur) penalty += 0.5;
+    if (attrs1.isCaskStrength !== attrs2.isCaskStrength) penalty += 0.3;
+    if (attrs1.isSingleBarrel !== attrs2.isSingleBarrel) penalty += 0.4;
+    if (attrs1.isSmallBatch !== attrs2.isSmallBatch) penalty += 0.4;
+    if (attrs1.isBiB !== attrs2.isBiB) penalty += 0.3;
+
+    // Special edition mismatches
+    if (attrs1.edition && attrs2.edition && attrs1.edition !== attrs2.edition) {
+      penalty += 0.3;
+    }
 
     // Vintage mismatch
     if (attrs1.vintage && attrs2.vintage && attrs1.vintage !== attrs2.vintage) {
-      penalty += 0.2;
+      penalty += 0.4;
     }
 
     // Different releases of same product (less severe)
     if (attrs1.release && attrs2.release && attrs1.release !== attrs2.release) {
-      penalty += 0.05; // Small penalty as these might be mergeable
+      penalty += 0.1; // Small penalty as these might be mergeable
     }
 
     return Math.min(1, penalty); // Cap at 1.0

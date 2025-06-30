@@ -129,7 +129,11 @@ export class BlockingDeduplicationService {
     const overallStartTime = Date.now();
     const initialMemory = this.getMemoryUsageMB();
     
-    logger.info(`Creating blocks for ${spirits.length} spirits`);
+    // V3.1.4: Suppress verbose logging if DEDUP_QUIET is set
+    const isQuiet = process.env.DEDUP_QUIET === 'true';
+    if (!isQuiet) {
+      logger.info(`Creating blocks for ${spirits.length} spirits`);
+    }
     
     // Check if we need progressive blocking for large datasets
     const useProgressiveBlocking = this.shouldUseProgressiveBlocking(spirits.length);
@@ -288,20 +292,25 @@ export class BlockingDeduplicationService {
    * Log detailed performance metrics
    */
   private logPerformanceMetrics(metrics: PerformanceMetrics, usedProgressive: boolean): void {
-    logger.info('Blocking Performance Metrics:', {
-      totalTime: `${metrics.totalProcessingTime}ms`,
-      throughput: `${metrics.throughputSpiritsPerSecond.toFixed(2)} spirits/sec`,
-      memoryUsed: `${metrics.memoryUsageMB}MB`,
-      memoryEfficiency: `${metrics.memoryEfficiency > 0 ? '+' : ''}${metrics.memoryEfficiency}MB`,
-      blocksCreated: metrics.blocksCreated,
-      comparisonsAvoided: `${metrics.comparisonsAvoidedPercentage.toFixed(2)}%`,
-      progressiveBlocking: usedProgressive,
-      passBreakdown: metrics.blockingPassTimes
-    });
+    // V3.1.4: Suppress verbose logging if DEDUP_QUIET is set
+    const isQuiet = process.env.DEDUP_QUIET === 'true';
+    
+    if (!isQuiet) {
+      logger.info('Blocking Performance Metrics:', {
+        totalTime: `${metrics.totalProcessingTime}ms`,
+        throughput: `${metrics.throughputSpiritsPerSecond.toFixed(2)} spirits/sec`,
+        memoryUsed: `${metrics.memoryUsageMB}MB`,
+        memoryEfficiency: `${metrics.memoryEfficiency > 0 ? '+' : ''}${metrics.memoryEfficiency}MB`,
+        blocksCreated: metrics.blocksCreated,
+        comparisonsAvoided: `${metrics.comparisonsAvoidedPercentage.toFixed(2)}%`,
+        progressiveBlocking: usedProgressive,
+        passBreakdown: metrics.blockingPassTimes
+      });
+    }
   }
 
   /**
-   * Create brand-based blocks
+   * Create brand-based blocks with age awareness
    */
   private createBrandBlocks(spirits: DatabaseSpirit[], blocks: Map<string, SpiritBlock>): void {
     const brandGroups = new Map<string, DatabaseSpirit[]>();
@@ -320,8 +329,10 @@ export class BlockingDeduplicationService {
     for (const [brand, brandSpirits] of brandGroups.entries()) {
       if (brandSpirits.length < this.config.minBlockSize) continue;
       
-      // Split large blocks if needed
-      if (brandSpirits.length > this.config.maxBlockSize) {
+      // Split by age ranges for better precision
+      if (brandSpirits.length > 20) {
+        this.createAgeAwareBrandBlocks(brand, brandSpirits, blocks);
+      } else if (brandSpirits.length > this.config.maxBlockSize) {
         this.splitLargeBlock(brand, brandSpirits, blocks, 'brand');
       } else {
         const blockKey: BlockingKey = {
@@ -336,6 +347,52 @@ export class BlockingDeduplicationService {
           size: brandSpirits.length
         });
       }
+    }
+  }
+
+  /**
+   * Create age-aware brand blocks to prevent mismatching different ages
+   */
+  private createAgeAwareBrandBlocks(brand: string, spirits: DatabaseSpirit[], blocks: Map<string, SpiritBlock>): void {
+    // Group by age ranges
+    const ageGroups = new Map<string, DatabaseSpirit[]>();
+    
+    for (const spirit of spirits) {
+      const fullName = `${spirit.brand || ''} ${spirit.name}`.toLowerCase();
+      const ageMatch = fullName.match(/(\d+)\s*-?\s*year/i);
+      
+      let ageKey = 'nas'; // No Age Statement
+      if (ageMatch) {
+        const age = parseInt(ageMatch[1]);
+        // Group into ranges: 0-12, 13-18, 19-25, 26+
+        if (age <= 12) ageKey = '0-12';
+        else if (age <= 18) ageKey = '13-18';
+        else if (age <= 25) ageKey = '19-25';
+        else ageKey = '26+';
+      }
+      
+      const key = `${brand}:age:${ageKey}`;
+      if (!ageGroups.has(key)) {
+        ageGroups.set(key, []);
+      }
+      ageGroups.get(key)!.push(spirit);
+    }
+    
+    // Create blocks from age groups
+    for (const [key, ageSpirits] of ageGroups.entries()) {
+      if (ageSpirits.length < this.config.minBlockSize) continue;
+      
+      const blockKey: BlockingKey = {
+        key: `brand:${key}`,
+        type: 'brand',
+        confidence: 0.95
+      };
+      
+      blocks.set(blockKey.key, {
+        blockKey,
+        spirits: ageSpirits,
+        size: ageSpirits.length
+      });
     }
   }
 

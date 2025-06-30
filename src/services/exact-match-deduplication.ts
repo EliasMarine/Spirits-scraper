@@ -83,14 +83,21 @@ export class ExactMatchDeduplicationService {
   ): Promise<DuplicateGroup[]> {
     const config = { ...this.config, ...customConfig };
     
-    logger.info('Starting exact match deduplication');
+    // V3.1.4: Suppress verbose logging if DEDUP_QUIET is set
+    const isQuiet = process.env.DEDUP_QUIET === 'true';
+    
+    if (!isQuiet) {
+      logger.info('Starting exact match deduplication');
+    }
     
     // Fetch spirits if not provided
     if (!spirits) {
       spirits = await this.fetchAllSpirits();
     }
     
-    logger.info(`Processing ${spirits.length} spirits for exact matches`);
+    if (!isQuiet) {
+      logger.info(`Processing ${spirits.length} spirits for exact matches`);
+    }
     
     // Group by normalized keys
     const groups = this.groupByNormalizedKeys(spirits, config);
@@ -99,7 +106,9 @@ export class ExactMatchDeduplicationService {
     const duplicateGroups = Array.from(groups.values())
       .filter(group => group.length >= config.minGroupSize);
     
-    logger.info(`Found ${duplicateGroups.length} groups with potential duplicates`);
+    if (!isQuiet) {
+      logger.info(`Found ${duplicateGroups.length} groups with potential duplicates`);
+    }
     
     // Convert to DuplicateGroup format with scoring
     const scoredGroups = duplicateGroups.map(spirits => 

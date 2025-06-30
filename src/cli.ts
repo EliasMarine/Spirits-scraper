@@ -659,7 +659,14 @@ program
   .option('--fuzzy-only', 'Run only fuzzy match deduplication')
   .option('--no-blocking', 'Disable blocking optimization for large datasets')
   .option('--blocking-only', 'Show blocking statistics without deduplication')
+  .option('--verbose', 'Show detailed logging output')
+  .option('--show-all', 'Show all duplicate matches (default: show first 20)')
   .action(async (options) => {
+    // V3.1.4: Set environment variable to suppress verbose logging
+    if (!options.verbose) {
+      process.env.DEDUP_QUIET = 'true';
+    }
+    
     const spinner = ora('Analyzing spirits for duplicates...').start();
     
     try {
@@ -729,6 +736,32 @@ program
         
         if (options.dryRun && result.duplicatesFound > 0) {
           console.log('\n💡 Run without --dry-run to merge these duplicates');
+          
+          // Show duplicate matches
+          if (result.matches && result.matches.length > 0) {
+            console.log('\n📋 DUPLICATE MATCHES FOUND:');
+            console.log('─'.repeat(60));
+            
+            // Sort matches by similarity score
+            const sortedMatches = result.matches.sort((a, b) => b.similarity - a.similarity);
+            
+            // Show up to 20 matches (or all if less)
+            const matchesToShow = options.showAll ? sortedMatches : sortedMatches.slice(0, 20);
+            
+            matchesToShow.forEach((match, index) => {
+              console.log(`\n${index + 1}. [${match.confidence.toUpperCase()} confidence - ${(match.similarity * 100).toFixed(1)}%]`);
+              console.log(`   🥃 ${match.spirit1.name}`);
+              console.log(`      Brand: ${match.spirit1.brand || 'Unknown'} | Price: ${match.spirit1.price_usd || match.spirit1.price_range || 'N/A'}`);
+              console.log(`   🔗 ${match.spirit2.name}`);
+              console.log(`      Brand: ${match.spirit2.brand || 'Unknown'} | Price: ${match.spirit2.price_usd || match.spirit2.price_range || 'N/A'}`);
+              console.log(`   Action: ${match.recommendedAction === 'merge' ? '✅ Ready to merge' : '⚠️  Needs review'}`);
+            });
+            
+            if (sortedMatches.length > matchesToShow.length) {
+              console.log(`\n... and ${sortedMatches.length - matchesToShow.length} more matches`);
+              console.log('Use --show-all to see all matches');
+            }
+          }
         }
         
       } else {
@@ -794,6 +827,11 @@ program
       spinner.fail('Deduplication failed');
       logger.error('Error:', error);
       process.exit(1);
+    } finally {
+      // V3.1.4: Clean up environment variable
+      if (!options.verbose) {
+        delete process.env.DEDUP_QUIET;
+      }
     }
   });
 
