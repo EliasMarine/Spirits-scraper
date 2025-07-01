@@ -23,6 +23,7 @@ import {
 } from '../config/non-product-filters.js';
 import { detectSpiritType, getWhiskeyStyle, validateSpiritType } from '../config/spirit-types.js';
 import { isExcludedDomain } from '../config/excluded-domains.js';
+import EnhancedPriceExtractor from './enhanced-price-extractor.js';
 
 export interface ExtractionOptions {
   maxResults?: number;
@@ -175,7 +176,9 @@ export class SpiritExtractor {
     // Extract basic data
     extractedData.abv = this.findConsensusABV(parsedResults);
     extractedData.proof = this.findProof(parsedResults);
-    extractedData.price = this.findPrice(parsedResults);
+    
+    // V3.1.3: Enhanced price extraction with retry logic
+    extractedData.price = this.findPriceEnhanced(parsedResults, allResults);
     extractedData.price_range = this.findPriceRange(parsedResults);
     extractedData.volume = this.findVolume(parsedResults) || '750ml'; // Default to 750ml
     // Extract age statement from name, description, and all text
@@ -628,7 +631,65 @@ export class SpiritExtractor {
   }
 
   /**
-   * Find numeric price from multiple sources
+   * V3.1.3: Enhanced price extraction with multiple strategies
+   */
+  private findPriceEnhanced(parsedResults: any[], searchResults: any[]): number | undefined {
+    // Strategy 1: Try existing parsed prices
+    const existingPrice = this.findPrice(parsedResults);
+    if (existingPrice) {
+      return existingPrice;
+    }
+    
+    // Strategy 2: Try enhanced extraction from snippets and HTML
+    for (const result of searchResults) {
+      if (result.snippet) {
+        const snippetPrice = EnhancedPriceExtractor.extractPriceWithRetry(result.snippet, result.link);
+        if (snippetPrice) {
+          logger.info(`💰 Enhanced price extraction found: $${snippetPrice} from snippet`);
+          return snippetPrice;
+        }
+      }
+      
+      // Try from HTML snippet if available
+      if (result.htmlSnippet) {
+        const htmlPrice = EnhancedPriceExtractor.extractPriceWithRetry(result.htmlSnippet, result.link);
+        if (htmlPrice) {
+          logger.info(`💰 Enhanced price extraction found: $${htmlPrice} from HTML`);
+          return htmlPrice;
+        }
+      }
+    }
+    
+    // Strategy 3: Try from pagemap data
+    for (const result of searchResults) {
+      if (result.pagemap) {
+        const pagemap = result.pagemap;
+        
+        // Check product data
+        if (pagemap.product) {
+          const productPrice = EnhancedPriceExtractor.extractFromStructuredData(pagemap);
+          if (productPrice) {
+            logger.info(`💰 Enhanced price extraction found: $${productPrice} from pagemap`);
+            return productPrice;
+          }
+        }
+        
+        // Check offer data
+        if (pagemap.offer) {
+          const offerPrice = EnhancedPriceExtractor.extractFromStructuredData(pagemap);
+          if (offerPrice) {
+            logger.info(`💰 Enhanced price extraction found: $${offerPrice} from offer data`);
+            return offerPrice;
+          }
+        }
+      }
+    }
+    
+    return undefined;
+  }
+
+  /**
+   * Find numeric price from multiple sources (original method)
    */
   private findPrice(results: any[]): number | undefined {
     const prices = results

@@ -285,26 +285,155 @@ export class EnhancedPriceExtractor {
   }
   
   /**
+   * V3.1.3: Source-specific price extraction patterns
+   */
+  private static extractPriceBySource(html: string, url: string): number | undefined {
+    const domain = url.toLowerCase();
+    
+    // Total Wine patterns
+    if (domain.includes('totalwine.com')) {
+      const patterns = [
+        /data-price="([\d.]+)"/i,
+        /class="price"[^>]*>\s*\$([\d,]+\.?\d*)/i,
+        /productprice['"]:[\s]*['"]([\d.]+)['"]/i,
+        /"price":\s*"?([\d.]+)"?/i
+      ];
+      
+      for (const pattern of patterns) {
+        const match = html.match(pattern);
+        if (match) {
+          const price = this.parsePrice(match[1]);
+          if (price && this.isReasonablePrice(price)) return price;
+        }
+      }
+    }
+    
+    // K&L Wines patterns
+    if (domain.includes('klwines.com')) {
+      const patterns = [
+        /class="price[^"]*"[^>]*>\s*\$([\d,]+\.?\d*)/i,
+        /itemprop="price"[^>]*content="([\d.]+)"/i,
+        /<span[^>]*price[^>]*>\s*\$([\d,]+\.?\d*)/i,
+        /data-product-price="([\d.]+)"/i
+      ];
+      
+      for (const pattern of patterns) {
+        const match = html.match(pattern);
+        if (match) {
+          const price = this.parsePrice(match[1]);
+          if (price && this.isReasonablePrice(price)) return price;
+        }
+      }
+    }
+    
+    // Whisky Exchange patterns
+    if (domain.includes('thewhiskyexchange.com')) {
+      const patterns = [
+        /data-product-price="([\d.]+)"/i,
+        /class="product-action__price"[^>]*>.*?£([\d,]+\.?\d*)/is,
+        /"price":\s*"?([\d.]+)"?.*?"priceCurrency":\s*"GBP"/is,
+        /product-price[^>]*>.*?£([\d,]+\.?\d*)/is
+      ];
+      
+      for (const pattern of patterns) {
+        const match = html.match(pattern);
+        if (match) {
+          const price = this.parsePrice(match[1]);
+          if (price && this.isReasonablePrice(price)) {
+            // Convert GBP to USD
+            return this.convertCurrency(price, 'GBP');
+          }
+        }
+      }
+    }
+    
+    // Master of Malt patterns (best price extraction)
+    if (domain.includes('masterofmalt.com')) {
+      const patterns = [
+        /data-price="([\d.]+)"/i,
+        /itemprop="price"[^>]*content="([\d.]+)"/i,
+        /class="product-price"[^>]*>.*?£([\d,]+\.?\d*)/is,
+        /"price":\s*"?([\d.]+)"?/i
+      ];
+      
+      for (const pattern of patterns) {
+        const match = html.match(pattern);
+        if (match) {
+          const price = this.parsePrice(match[1]);
+          if (price && this.isReasonablePrice(price)) {
+            // Convert GBP to USD
+            return this.convertCurrency(price, 'GBP');
+          }
+        }
+      }
+    }
+    
+    // Wine.com patterns
+    if (domain.includes('wine.com')) {
+      const patterns = [
+        /data-price="([\d.]+)"/i,
+        /class="price"[^>]*>\s*\$([\d,]+\.?\d*)/i,
+        /"price":\s*\{[^}]*"amount":\s*([\d.]+)/i,
+        /productPrice['"]:[\s]*['"]([\d.]+)['"]/i
+      ];
+      
+      for (const pattern of patterns) {
+        const match = html.match(pattern);
+        if (match) {
+          const price = this.parsePrice(match[1]);
+          if (price && this.isReasonablePrice(price)) return price;
+        }
+      }
+    }
+    
+    // ReserveBar patterns
+    if (domain.includes('reservebar.com')) {
+      const patterns = [
+        /data-product-price="([\d.]+)"/i,
+        /class="price[^"]*"[^>]*>\s*\$([\d,]+\.?\d*)/i,
+        /"price":\s*"?([\d.]+)"?/i,
+        /itemprop="price"[^>]*content="([\d.]+)"/i
+      ];
+      
+      for (const pattern of patterns) {
+        const match = html.match(pattern);
+        if (match) {
+          const price = this.parsePrice(match[1]);
+          if (price && this.isReasonablePrice(price)) return price;
+        }
+      }
+    }
+    
+    return undefined;
+  }
+  
+  /**
    * V3.1.3: Enhanced multi-strategy price extraction
    */
   static extractPriceWithRetry(html: string, url?: string): number | undefined {
-    // Strategy 1: Try standard extraction
+    // Strategy 1: Try source-specific extraction first
+    if (url) {
+      const sourcePrice = this.extractPriceBySource(html, url);
+      if (sourcePrice) return sourcePrice;
+    }
+    
+    // Strategy 2: Try standard extraction
     let price = this.extractPriceFromSnippet(html);
     if (price) return price;
     
-    // Strategy 2: Try structured data extraction
+    // Strategy 3: Try structured data extraction
     const structuredPrice = this.extractFromStructuredDataV3(html);
     if (structuredPrice) return structuredPrice;
     
-    // Strategy 3: Try near-volume extraction
+    // Strategy 4: Try near-volume extraction
     const volumePrice = this.extractPriceNearVolume(html);
     if (volumePrice) return volumePrice;
     
-    // Strategy 4: Try buy button extraction
+    // Strategy 5: Try buy button extraction
     const buyButtonPrice = this.extractPriceNearBuyButton(html);
     if (buyButtonPrice) return buyButtonPrice;
     
-    // Strategy 5: Fallback context extraction
+    // Strategy 6: Fallback context extraction
     const contextPrice = this.extractPriceFromContext(html);
     if (contextPrice) return contextPrice;
     

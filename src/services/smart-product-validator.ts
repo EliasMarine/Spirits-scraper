@@ -59,6 +59,16 @@ export class SmartProductValidator {
     /\breview\s+of\s+/i,  // "Review of Buffalo Trace"
     /^is\s+.+\s+worth/i,  // "Is Buffalo Trace Worth The Hype"
     
+    // V3.1.4: Additional blog/list patterns
+    /^\d+\s+new\s+/i,  // "8 New Bourbon Releases", "10 New Whiskeys"
+    /^(eight|nine|ten|eleven|twelve)\s+new\s+/i,  // "Eight New Bourbon Releases"
+    /\s+you['']ll\s+want\s+to\s+try$/i,  // "You'll Want To Try"
+    /\s+to\s+try\s+right\s+now$/i,  // "To Try Right Now"
+    /^the\s+best\s+.+\s+(over|under)\s+\$/i,  // "The Best Bourbon Over $50"
+    /^(best|worst|top|bottom)\s+.+\s+of\s+\d{4}$/i,  // "Best Whiskeys of 2024"
+    /\s+we\s+can['']t\s+wait\s+to\s+/i,  // "We Can't Wait To Try"
+    /^everything\s+you\s+need\s+to\s+know/i,  // "Everything You Need To Know About"
+    
     // V2.7.1: Generic age-only patterns (MUST BE FIRST)
     /^\d+\s+year\s+old\s+(whisky|whiskey|bourbon|rum|gin|vodka|tequila)$/i,
     
@@ -464,7 +474,9 @@ export class SmartProductValidator {
     }
     
     // V3.1: Additional problematic patterns
-    if (/\b(mystery|subscription|steakhouse|restaurant|marketplace|collection)\b/i.test(normalizedName)) {
+    // V3.1.4: Exclude "Collection" when it's part of a product name (e.g., "Antique Collection")
+    if (/\b(mystery|subscription|steakhouse|restaurant|marketplace)\b/i.test(normalizedName) ||
+        (/\bcollection\b/i.test(normalizedName) && !/\b(antique|master|private|special|limited|annual|distiller'?s?)\s+collection\b/i.test(normalizedName))) {
       confidence -= 0.6;
       issues.push('Contains non-product terminology');
     }
@@ -544,7 +556,9 @@ export class SmartProductValidator {
     // V2.7.5: More lenient validation to allow legitimate spirits
     // Include Japanese whisky and other spirit types, lower confidence threshold
     const hasValidSpiritType = /\b(bourbon|whiskey|whisky|rye|vodka|gin|rum|tequila|mezcal|cognac|brandy|sake|shochu|baijiu|aquavit|grappa|pisco|calvados|armagnac)\b/i.test(normalizedName);
-    const isValid = confidence >= 0.02 && issues.length <= 2 && hasValidSpiritType;
+    // V3.1.4: Also accept if it has known brand names even without explicit spirit type
+    const hasKnownBrandInName = /\b(four roses|buffalo trace|jack daniel|maker'?s mark|jim beam|wild turkey|woodford|elijah craig|knob creek|eagle rare|blanton|henry mckenna|old forester|bulleit|michter|whistlepig|high west|angel'?s envy)\b/i.test(normalizedName);
+    const isValid = confidence >= 0.02 && issues.length <= 2 && (hasValidSpiritType || hasKnownBrandInName);
 
     return {
       isValid,

@@ -3,6 +3,7 @@ import axios from 'axios';
 import { GoogleSearchResult } from '../types/index.js';
 import { cacheService } from './cache-service.js';
 import { logger } from '../utils/logger.js';
+import EnhancedPriceExtractor from './enhanced-price-extractor.js';
 
 export interface ParsedContent {
   title: string;
@@ -120,6 +121,18 @@ export class ContentParser {
         if (priceFromTitle) {
           parsed.price = priceFromTitle;
         }
+      }
+    }
+    
+    // V3.1.3: Final fallback - use enhanced price extractor with retry
+    if (!parsed.price && (result.snippet || result.htmlSnippet)) {
+      const enhancedPrice = EnhancedPriceExtractor.extractPriceWithRetry(
+        result.htmlSnippet || result.snippet, 
+        result.link
+      );
+      if (enhancedPrice) {
+        parsed.price = enhancedPrice.toString();
+        logger.info(`💰 V3.1.3: Enhanced price extraction found $${enhancedPrice}`);
       }
     }
 

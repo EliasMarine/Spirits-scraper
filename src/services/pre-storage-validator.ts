@@ -209,8 +209,10 @@ export class PreStorageValidator {
     // V2.8: Specific Buffalo Trace store page detection
     if (/\b(buffalo\s+trace)\b/i.test(cleanedName)) {
       // Check for store listing patterns
-      if (/\b(products|collection|bourbon\s+whiskey$|whiskey$|distillery$)\b/i.test(cleanedName) &&
-          !/\b(single\s+barrel|barrel\s+select|antique|kosher|experimental|special\s+edition)\b/i.test(cleanedName)) {
+      // V3.1.4: More specific check - only reject if it's JUST "Buffalo Trace Bourbon Whiskey" or has "products"
+      if ((/^buffalo\s+trace\s+(bourbon\s+)?whiskey$/i.test(cleanedName) ||
+           /\b(products|distillery\s+products)\b/i.test(cleanedName)) &&
+          !/\b(single\s+barrel|barrel\s+select|antique|kosher|experimental|special\s+edition|kentucky\s+straight|small\s+batch)\b/i.test(cleanedName)) {
         return {
           isValid: false,
           qualityScore: 0,
@@ -377,6 +379,28 @@ export class PreStorageValidator {
           issues: ['Invalid brand name pattern V3.1.3'],
           cleanedName,
           rejectionReason: 'invalid_brand_v3_1_3'
+        };
+      }
+      
+      // V3.1.4: Reject brands starting with numbers followed by "new"
+      if (/^\d+\s+new|^(eight|nine|ten|eleven|twelve)\s+new/i.test(cleanedBrand)) {
+        return {
+          isValid: false,
+          qualityScore: 0,
+          issues: ['Blog pattern in brand name'],
+          cleanedName,
+          rejectionReason: 'blog_pattern_brand'
+        };
+      }
+      
+      // V3.1.4: Reject single letter or very short brands
+      if (/^[A-Z]\.?$/.test(cleanedBrand) || cleanedBrand.length < 2) {
+        return {
+          isValid: false,
+          qualityScore: 0,
+          issues: ['Brand name too short'],
+          cleanedName,
+          rejectionReason: 'brand_too_short'
         };
       }
       
