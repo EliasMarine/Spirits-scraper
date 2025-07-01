@@ -5,6 +5,7 @@ import { dataValidator } from './data-validator.js';
 import { logger } from '../utils/logger.js';
 import { V25CriticalFixes } from '../fixes/v2.5-critical-fixes.js';
 import { preStorageValidator } from './pre-storage-validator.js';
+import { contentValidator } from './content-validator.js';
 
 export interface StorageResult {
   success: boolean;
@@ -62,6 +63,32 @@ export class SupabaseStorage {
       }
       if (preValidation.cleanedBrand) {
         spiritData.brand = preValidation.cleanedBrand;
+      }
+      
+      // V3.1.5: Perform content validation after pre-storage validation
+      const contentValidation = contentValidator.validateSpirit(spiritData);
+      if (!contentValidation.isValid || contentValidation.qualityScore < 60) {
+        logger.warn(`❌ Content validation failed: ${spiritData.name}`);
+        logger.warn(`   Quality score: ${contentValidation.qualityScore}`);
+        logger.warn(`   Issues: ${contentValidation.issues.join(', ')}`);
+        return {
+          success: false,
+          error: `Content validation failed: ${contentValidation.issues.join(', ')}`,
+        };
+      }
+      
+      // Apply suggestions from content validator
+      if (contentValidation.suggestions.name) {
+        spiritData.name = contentValidation.suggestions.name;
+      }
+      if (contentValidation.suggestions.brand) {
+        spiritData.brand = contentValidation.suggestions.brand;
+      }
+      if (contentValidation.suggestions.description) {
+        spiritData.description = contentValidation.suggestions.description;
+      }
+      if (contentValidation.suggestions.volume) {
+        spiritData.volume = contentValidation.suggestions.volume;
       }
 
       // Check for duplicates
