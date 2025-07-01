@@ -112,8 +112,47 @@ export class SpiritExtractor {
             return true;
           });
           
-          logger.debug(`Filtered ${results.items.length - cleanResults.length} invalid URLs and metadata from query results`);
-          allResults.push(...cleanResults);
+          // V3.1.6: Enhanced early rejection for blog/article/forum content
+          const productResults = cleanResults.filter(item => {
+            if (!item.title) return false;
+            
+            // Use comprehensive quality validator for early rejection
+            if (comprehensiveDataQualityValidator.hasCriticalErrors({ 
+              name: item.title, 
+              source_url: item.link 
+            })) {
+              logger.debug(`🚨 Early rejection - Non-product content: "${item.title}" from ${item.link}`);
+              return false;
+            }
+            
+            // Additional early rejection patterns specific to search results
+            const title = item.title.toLowerCase();
+            
+            // Reject obvious blog/article titles
+            if (title.includes('review') && (title.includes('blog') || title.includes('article'))) {
+              return false;
+            }
+            
+            // Reject forum posts and discussions
+            if (title.includes('forum') || title.includes('discussion') || title.includes('thread')) {
+              return false;
+            }
+            
+            // Reject podcast/show content
+            if (title.includes('podcast') || title.includes('episode') || title.includes('show')) {
+              return false;
+            }
+            
+            // Reject "top X" and "best of" lists
+            if (/top\s+\d+|best\s+of\s+\d{4}|my\s+top\s+\d+/i.test(title)) {
+              return false;
+            }
+            
+            return true;
+          });
+          
+          logger.debug(`Filtered ${results.items.length - productResults.length} invalid URLs, metadata, and non-product content from query results`);
+          allResults.push(...productResults);
         }
       } catch (error: any) {
         console.error(`Search failed for query "${query}":`, error);

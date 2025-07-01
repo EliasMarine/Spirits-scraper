@@ -53,6 +53,46 @@ const INVALID_NAME_PATTERNS = [
   // Review fragments
   /^(I love|I hate|This is|Highly recommend|Not recommended)/i,
   /\b(5 stars|4 stars|excellent choice|great choice)\b/i,
+  
+  // V3.1.6: Blog and article title patterns (from spirits_rows-7.csv analysis)
+  /\breviews\s+ratings\s+and\s+facts\b/i,
+  /\bwords\s+of\s+whisky\b/i,
+  /\bwhisky\s+blog\b/i,
+  /\bheadbangers\s+whisky\b/i,
+  /\bgame\s+of\s+thrones\s+(single\s+malts|whisky)\b/i,
+  /^if\s+you\s+had\s+to\s+choose\b/i,
+  /^my\s+top\s+\d+\s+list\b/i,
+  /\btop\s+\d+\s+list\s+of\b/i,
+  /\btaste\s+the\s+dram\b/i,
+  
+  // V3.1.6: Generic category page patterns
+  /^scotch\s+\d+\s+year\s+old\s+whisky$/i,  // Too generic
+  /^year\s+old\s+(single\s+malt\s+)?scotch\s+whisky$/i,  // Incomplete name
+  /^(single\s+malt\s+)?scotch\s+whisky$/i,  // Too generic without brand
+  /^(whiskey|whisky|bourbon|scotch)\s+(reviews?|ratings?|facts?)\b/i,
+  
+  // V3.1.6: Blog post and forum content patterns
+  /\b(podcast|episode|show|interview)\b.*\b(whisky|whiskey|bourbon)\b/i,
+  /\b(forum|discussion|thread|post)\b.*\b(whisky|whiskey|bourbon)\b/i,
+  /\bblog\s+(post|article|entry)\b/i,
+  /\b(reddit|facebook|twitter)\b.*\b(whisky|whiskey|bourbon)\b/i,
+  
+  // V3.1.6: Comparison and list article patterns
+  /\bversus\s+/i,
+  /\bvs\.?\s+/i,
+  /\bcompared\s+to\b/i,
+  /\b\d+\s+(best|worst|top|absolute\s+best)\b/i,
+  /\bthe\s+(fifty|fifty\s+best|ultimate|complete)\b/i,
+  /\bcritic[''']?s\s+choice\b/i,
+  /\bbest\s+of\s+\d{4}\b/i,
+  
+  // V3.1.6: Question and instructional patterns
+  /^(why|how|what|when|where)\s+/i,
+  /\s+(stands\s+out|responds\s+to|announces|unveils)\b/i,
+  /\bcontinues\s+expansion\b/i,
+  /^we['']?re\s+(living|tasting|trying)\b/i,
+  /^i['']?ve\s+(tried|tasted)\s+hundreds\b/i,
+  /^we\s+(tasted|tried)\s+\d+\b/i,
 ];
 
 /**
@@ -150,7 +190,33 @@ const BANNED_DOMAINS = [
   'youtube.com',
   'pinterest.com',
   'tripadvisor.com',
-  'yelp.com'
+  'yelp.com',
+  
+  // V3.1.6: Blog and content domains (from spirits_rows-7.csv analysis)
+  'whiskygospel.com',
+  'wordsofwhisky.com',
+  'tastethedram.com',
+  'scotchmaltwhisky.co.uk',
+  'thefiftybestwhiskies.com',
+  'whiskybase.com/forum',
+  'whiskybase.com/whiskies',
+  
+  // V3.1.6: Forum and discussion domains
+  'scotchmaltwhisky.co.uk/forum',
+  'straightbourbon.com/forum',
+  'whiskymagazine.com/forum',
+  'reddit.com/r/whiskey',
+  'reddit.com/r/bourbon',
+  'reddit.com/r/scotch',
+  
+  // V3.1.6: General content and media sites
+  'medium.com',
+  'wordpress.com',
+  'blogspot.com',
+  'substack.com',
+  'podcasts.apple.com',
+  'spotify.com/show',
+  'podcasts.google.com'
 ];
 
 export class ComprehensiveDataQualityValidator {
@@ -182,6 +248,11 @@ export class ComprehensiveDataQualityValidator {
     const descriptionValidation = this.validateDescription(spirit.description, spirit.name);
     errors.push(...descriptionValidation.errors);
     warnings.push(...descriptionValidation.warnings);
+
+    // HIGH PRIORITY: Generic Product Detection
+    const genericValidation = this.validateNotGenericProduct(spirit.name, spirit.brand);
+    errors.push(...genericValidation.errors);
+    warnings.push(...genericValidation.warnings);
 
     // MEDIUM PRIORITY: Data Consistency
     const consistencyValidation = this.validateDataConsistency(spirit);
@@ -314,13 +385,47 @@ export class ComprehensiveDataQualityValidator {
     try {
       const url = new URL(sourceUrl);
       
-      // Check for banned domains (social media, forums)
+      // Check for banned domains (social media, forums, blogs)
       const domain = url.hostname.toLowerCase();
+      const fullUrl = sourceUrl.toLowerCase();
+      
       for (const bannedDomain of BANNED_DOMAINS) {
-        if (domain.includes(bannedDomain)) {
+        if (domain.includes(bannedDomain) || fullUrl.includes(bannedDomain)) {
           errors.push({
             code: 'URL_BANNED_DOMAIN',
             message: `Source URL from banned domain: ${domain}`,
+            severity: 'CRITICAL',
+            field: 'source_url',
+            value: sourceUrl
+          });
+          return { errors, warnings };
+        }
+      }
+      
+      // V3.1.6: Check for specific problematic URL patterns from CSV analysis
+      const problematicUrlPatterns = [
+        /\/forum\//i,
+        /\/viewtopic\.php/i,
+        /\/blog\//i,
+        /\/post\//i,
+        /\/article\//i,
+        /\/review\//i,
+        /\/comparison\//i,
+        /\/guide\//i,
+        /\/episode\//i,
+        /\/podcast\//i,
+        /\/show\//i,
+        /about-scotch-whisky/i,
+        /category\.aspx/i,
+        /single-post/i,
+        /wp-content/i
+      ];
+      
+      for (const pattern of problematicUrlPatterns) {
+        if (pattern.test(fullUrl)) {
+          errors.push({
+            code: 'URL_NON_PRODUCT_PATTERN',
+            message: `Source URL appears to be blog/forum/article content: ${url.pathname}`,
             severity: 'CRITICAL',
             field: 'source_url',
             value: sourceUrl
@@ -472,6 +577,115 @@ export class ComprehensiveDataQualityValidator {
         field: 'description',
         suggestion: 'Add more detailed product information'
       });
+    }
+
+    return { errors, warnings };
+  }
+
+  /**
+   * V3.1.6: Validate that the product is not a generic category or incomplete name
+   * Prevents entries like "Scotch 18 Year Old Whisky" or "Year Old Single Malt Scotch Whisky"
+   */
+  private validateNotGenericProduct(name?: string, brand?: string): { errors: QualityError[], warnings: QualityWarning[] } {
+    const errors: QualityError[] = [];
+    const warnings: QualityWarning[] = [];
+
+    if (!name || name.trim() === '') {
+      return { errors, warnings };
+    }
+
+    const normalizedName = name.toLowerCase().trim();
+
+    // Generic spirit type patterns without specific brand/product
+    const genericPatterns = [
+      /^(single\s+malt\s+)?scotch\s+whisky?$/i,
+      /^(single\s+malt\s+)?whisky?$/i,
+      /^bourbon\s+whiskey$/i,
+      /^irish\s+whiskey$/i,
+      /^rye\s+whiskey$/i,
+      /^tennessee\s+whiskey$/i,
+      /^vodka$/i,
+      /^gin$/i,
+      /^rum$/i,
+      /^tequila$/i,
+      /^cognac$/i,
+      /^brandy$/i
+    ];
+
+    // Check for generic patterns
+    for (const pattern of genericPatterns) {
+      if (pattern.test(normalizedName)) {
+        errors.push({
+          code: 'NAME_TOO_GENERIC',
+          message: `Product name is too generic: "${name}" - lacks specific brand or product identification`,
+          severity: 'CRITICAL',
+          field: 'name',
+          value: name
+        });
+        return { errors, warnings };
+      }
+    }
+
+    // Incomplete name patterns (missing brand information)
+    const incompletePatterns = [
+      /^\d+\s+year\s+old\s+(single\s+malt\s+)?scotch\s+whisky?$/i,  // "18 Year Old Scotch Whisky"
+      /^year\s+old\s/i,  // "Year Old..." (incomplete)
+      /^\d+\s+year\s+old\s+(whisky?|bourbon|vodka|gin|rum)$/i,  // Age without brand
+      /^(single\s+malt\s+)?(scotch|irish|bourbon|rye)\s+\d+\s+year\s+old$/i  // Type + age without brand
+    ];
+
+    // Check for incomplete patterns
+    for (const pattern of incompletePatterns) {
+      if (pattern.test(normalizedName)) {
+        errors.push({
+          code: 'NAME_INCOMPLETE',
+          message: `Product name appears incomplete or generic: "${name}" - missing brand or specific product name`,
+          severity: 'HIGH',
+          field: 'name',
+          value: name
+        });
+        return { errors, warnings };
+      }
+    }
+
+    // Category description patterns (like category pages)
+    const categoryPatterns = [
+      /^(discover|browse|explore|shop)\s+/i,
+      /\s+(category|collection|selection|range)$/i,
+      /^all\s+/i,
+      /\s+(products|items|spirits)$/i
+    ];
+
+    for (const pattern of categoryPatterns) {
+      if (pattern.test(normalizedName)) {
+        warnings.push({
+          code: 'NAME_CATEGORY_LIKE',
+          message: `Product name resembles a category or collection page`,
+          field: 'name',
+          suggestion: 'Verify this is a specific product, not a category page'
+        });
+      }
+    }
+
+    // If brand is provided but name is still generic relative to brand
+    if (brand && brand.trim() !== '') {
+      const brandName = brand.toLowerCase().trim();
+      // If the name is just the brand + generic type, it's likely not a specific product
+      const brandGenericPatterns = [
+        new RegExp(`^${brandName}\\s+(whisky?|bourbon|vodka|gin|rum|tequila|scotch)$`, 'i'),
+        new RegExp(`^${brandName}\\s+(single\\s+malt|blended)$`, 'i')
+      ];
+
+      for (const pattern of brandGenericPatterns) {
+        if (pattern.test(normalizedName)) {
+          warnings.push({
+            code: 'NAME_BRAND_GENERIC',
+            message: `Product name appears to be brand + generic type: "${name}"`,
+            field: 'name',
+            suggestion: 'Look for specific product name, age statement, or expression name'
+          });
+        }
+      }
     }
 
     return { errors, warnings };
