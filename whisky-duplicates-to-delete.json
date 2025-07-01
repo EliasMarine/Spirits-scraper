@@ -1,0 +1,29 @@
+{
+  "timestamp": "2025-07-01T16:57:50.726Z",
+  "reason": "Whisky/Whiskey duplicate cleanup",
+  "totalToDelete": 18,
+  "idsToDelete": [
+    "65f9b3f9-7773-40d2-8e26-13bafd3cf519",
+    "9eeaa3b7-5376-45d8-b3d4-90632470e7c3",
+    "288b627e-f510-4d36-ac4a-30f8d3e71ba5",
+    "e1d19203-78c3-4a4d-a57d-d0162b344241",
+    "76a6ab21-1386-4e13-95f8-1044e6e2ce43",
+    "d8ed7bf7-8be7-42df-9c9b-bc6b1742edab",
+    "82c42722-4a7c-4474-8f97-8a92c8426726",
+    "6abd9ad0-f9af-44f7-b2aa-3b878daab1fa",
+    "6e43cc62-a4a3-4a95-b6c8-550a8daa745b",
+    "a30fd727-92b9-4008-9fa9-374958bb9b21",
+    "b4832126-bd1d-45c6-9a3b-b1d40cd30b27",
+    "425a258a-8d39-4f36-89de-f328e44d67e8",
+    "baa88366-fe82-49ce-9d15-42be7bc963d0",
+    "20ad4423-47b1-461f-a6bb-81749879a713",
+    "4f66bb60-dd8c-49b3-a3e7-e70d5d2bc133",
+    "66d868e6-064f-42ce-8964-fda8aacceb53",
+    "4e7b65af-bd11-4374-9c49-56a4d92a459b",
+    "0d70b77b-7a38-4c87-9e6d-2bb6a9226d3e"
+  ],
+  "analysis": {
+    "duplicateGroups": 18,
+    "affectedSpirits": 36
+  }
+}

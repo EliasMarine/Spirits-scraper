@@ -84,6 +84,7 @@ export const SpiritDataSchema = z.object({
   data_quality_score: z.number().min(0).max(100).optional(),
   description_mismatch: z.boolean().optional(),
   awards: z.array(z.string()).optional(),
+  scraped_data: z.record(z.any()).optional(), // Metadata about scraping process
 });
 
 export type SpiritData = z.infer<typeof SpiritDataSchema>;

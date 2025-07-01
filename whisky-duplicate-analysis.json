@@ -1,0 +1,56 @@
+{
+  "duplicateGroups": [],
+  "siteReferenceEntries": [
+    {
+      "id": "6c6ddd33-0d1a-44e1-aa7f-a7f07d31c3ce",
+      "name": "Mortlach 30 Year Old Midnight Malt Scotch Whisky The Whisky",
+      "created_at": "2025-06-27T23:40:49.058014+00:00",
+      "source_url": "https://www.thewhiskyexchange.com/p/66595/mortlach-30-year-old-midnight-malt",
+      "category": "Other",
+      "brand": "Mortlach",
+      "issues": [
+        "Ends with \"The Whisky\" (site reference)"
+      ]
+    },
+    {
+      "id": "cc784a77-617e-413e-a7c1-615c3b9a69b3",
+      "name": "Mortlach 12 Year Old The Wee Witchie Scotch Whisky The Whisky",
+      "created_at": "2025-06-27T23:40:47.400795+00:00",
+      "source_url": "https://www.thewhiskyexchange.com/p/45299/mortlach-12-year-old-the-wee-witchie",
+      "category": "Other",
+      "brand": "Mortlach",
+      "issues": [
+        "Ends with \"The Whisky\" (site reference)"
+      ]
+    },
+    {
+      "id": "e4a2227d-e571-4823-b4cf-fd43f374e62f",
+      "name": "Jefferson's Ch. Suduiraut Finish Grand Selection The Whisky",
+      "created_at": "2025-06-26T21:37:08.319586+00:00",
+      "source_url": "https://www.thewhiskyexchange.com/p/47690/jeffersons-ch-suduiraut-finish-grand-selection",
+      "category": "Other",
+      "brand": "Jefferson's",
+      "issues": [
+        "Ends with \"The Whisky\" (site reference)"
+      ]
+    },
+    {
+      "id": "f945827b-de3a-48db-a279-035edd6f130c",
+      "name": "George Dickel 8 Year Old Small Batch Bourbon The Whisky",
+      "created_at": "2025-06-26T21:36:27.763755+00:00",
+      "source_url": "https://www.thewhiskyexchange.com/p/82462/george-dickel-8-year-old-small-batch-bourbon",
+      "category": "Other",
+      "brand": "George T. Stagg",
+      "issues": [
+        "Ends with \"The Whisky\" (site reference)"
+      ]
+    }
+  ],
+  "statistics": {
+    "totalSpirits": 1000,
+    "duplicateGroups": 0,
+    "affectedSpirits": 0,
+    "siteReferenceEntries": 4,
+    "toDeleteCount": 0
+  }
+}

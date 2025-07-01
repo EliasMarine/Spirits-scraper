@@ -24,6 +24,8 @@ import {
 import { detectSpiritType, getWhiskeyStyle, validateSpiritType } from '../config/spirit-types.js';
 import { isExcludedDomain } from '../config/excluded-domains.js';
 import EnhancedPriceExtractor from './enhanced-price-extractor.js';
+import { comprehensiveDataQualityValidator } from './comprehensive-data-quality-rules.js';
+import { whiskyWhiskeyNormalizer } from './whisky-whiskey-normalizer.js';
 
 export interface ExtractionOptions {
   maxResults?: number;
@@ -56,6 +58,13 @@ export class SpiritExtractor {
     // Fix the spirit name first using text processor
     const fixedName = TextProcessor.fixTextSpacing(name);
     const fixedBrand = brand ? TextProcessor.fixTextSpacing(brand) : undefined;
+    
+    // V3.1.6: CRITICAL - Early quality validation to prevent processing bad data
+    // This prevents the catastrophic issues found in audit where article titles were processed
+    if (comprehensiveDataQualityValidator.hasCriticalErrors({ name: fixedName })) {
+      logger.warn(`🚨 Early quality rejection: "${fixedName}" - appears to be non-product content`);
+      return {}; // Return empty object to prevent further processing
+    }
     
     // Check cache with fixed names
     const cachedData = await cacheService.getCachedSpiritData(fixedName, fixedBrand || '');
@@ -359,6 +368,34 @@ export class SpiritExtractor {
         scraped_at: new Date(),
         data_quality_score: 0,
       };
+    }
+
+    // V3.1.6: CRITICAL - Final quality validation before returning/caching
+    // This prevents storage of data that would fail at storage time
+    const finalQualityCheck = comprehensiveDataQualityValidator.validate(extractedData);
+    
+    if (!finalQualityCheck.canStore) {
+      const criticalErrors = finalQualityCheck.errors.filter(e => e.severity === 'CRITICAL');
+      logger.error(`🚨 Final quality check failed for: "${fixedName}"`);
+      logger.error(`   Quality score: ${finalQualityCheck.score}/100`);
+      logger.error(`   Critical errors: ${criticalErrors.map(e => e.message).join(', ')}`);
+      
+      // Return minimal data to indicate failed extraction
+      return {
+        name: fixedName,
+        source_url: '',
+        scraped_at: new Date(),
+        data_quality_score: finalQualityCheck.score,
+      };
+    }
+    
+    // Store the quality score in the extracted data
+    extractedData.data_quality_score = finalQualityCheck.score;
+    
+    // Log successful extraction with quality metrics
+    logger.info(`✅ Extraction complete: "${fixedName}" (Quality: ${finalQualityCheck.score}/100)`);
+    if (finalQualityCheck.warnings.length > 0) {
+      logger.warn(`   Warnings: ${finalQualityCheck.warnings.length} quality issues detected`);
     }
 
     // Cache the extracted data before returning
@@ -1808,6 +1845,9 @@ export class SpiritExtractor {
     // V2.7.4: Remove store suffixes and clean up
     cleaned = TextProcessor.removeStoreSuffixes(cleaned);
     cleaned = TextProcessor.removeNavigationPrefixes(cleaned);
+    
+    // V3.1.6: Apply whisky/whiskey normalization and site reference removal
+    cleaned = whiskyWhiskeyNormalizer.cleanProductName(cleaned);
     
     return cleaned;
   }

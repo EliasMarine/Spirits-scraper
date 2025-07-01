@@ -6,6 +6,7 @@ import { logger } from '../utils/logger';
 import { apiCallTracker } from './api-call-tracker';
 import { createMultipleKeys } from './normalization-keys';
 import { scrapeSessionTracker } from './scrape-session-tracker';
+import { qualityMonitor } from './real-time-quality-monitor';
 // Enhanced price extraction will be integrated after compilation
 import axios from 'axios';
 import * as cheerio from 'cheerio';
@@ -133,6 +134,10 @@ export class UltraEfficientScraper {
     
     logger.info(`🚀 Ultra-Efficient Scraping Mode - Target: ${targetEfficiency}% efficiency`);
     
+    // V3.1.6: Start quality monitoring to prevent catastrophic data quality failures
+    qualityMonitor.startMonitoring();
+    logger.info('🔍 Real-time quality monitoring enabled');
+    
     // Check if we should skip this category entirely
     const skipCheck = await scrapeSessionTracker.shouldSkipCategory(category, limit);
     if (skipCheck.skip) {
@@ -251,6 +256,27 @@ export class UltraEfficientScraper {
               // Add the search result URL as source
               spirit.source_url = spirit.source_url || result.link;
               
+              // V3.1.6: Monitor spirit quality BEFORE storage attempt
+              const qualityAlerts = qualityMonitor.procesSpirit(spirit);
+              
+              // Handle critical quality alerts
+              if (qualityAlerts.length > 0) {
+                for (const alert of qualityAlerts) {
+                  if (alert.level === 'CRITICAL' || alert.level === 'EMERGENCY') {
+                    logger.error(`🚨 ${alert.level} QUALITY ALERT: ${alert.message}`);
+                  } else {
+                    logger.warn(`⚠️ ${alert.level} QUALITY ALERT: ${alert.message}`);
+                  }
+                }
+              }
+              
+              // Emergency stop if quality is too poor
+              if (qualityMonitor.shouldStopScraping()) {
+                logger.error('🛑 EMERGENCY STOP: Data quality critically low - halting scraping');
+                logger.error(qualityMonitor.generateReport());
+                break;
+              }
+
               const stored = await this.storeSpirit(spirit);
               if (stored) {
                 this.metrics.spiritsStored++;
@@ -335,6 +361,22 @@ export class UltraEfficientScraper {
     const sessionStats = scrapeSessionTracker.getSessionStats(category);
     if (sessionStats) {
       logger.info(`📝 Session tracked: ${sessionStats.spiritsStored} spirits stored, ${sessionStats.uniqueSpirits} unique keys`);
+    }
+    
+    // V3.1.6: Generate final quality report
+    const finalQualityMetrics = qualityMonitor.stopMonitoring();
+    logger.info(qualityMonitor.generateReport());
+    
+    // Log quality summary
+    logger.info('🔍 QUALITY SUMMARY:');
+    logger.info(`   URL Success Rate: ${(finalQualityMetrics.urlSuccessRate * 100).toFixed(1)}%`);
+    logger.info(`   Category Success Rate: ${(finalQualityMetrics.categorySuccessRate * 100).toFixed(1)}%`);
+    logger.info(`   Name Validity Rate: ${(finalQualityMetrics.nameValidityRate * 100).toFixed(1)}%`);
+    logger.info(`   Average Quality Score: ${finalQualityMetrics.averageQualityScore.toFixed(1)}/100`);
+    
+    // Warn if quality was poor
+    if (qualityMonitor.hasCriticalAlerts()) {
+      logger.warn('⚠️ Critical quality issues detected during scraping - review data manually');
     }
     
     return this.metrics;

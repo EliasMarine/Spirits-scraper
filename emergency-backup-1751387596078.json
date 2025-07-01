@@ -1,0 +1,1356 @@
+{
+  "timestamp": "2025-07-01T16:33:16.078Z",
+  "reason": "Emergency cleanup - V3.1.6 data quality issues",
+  "entries": [
+    {
+      "id": "28be8112-7a04-4a5f-a797-beb69388ac05",
+      "name": "Small Size Brandy & Cognac",
+      "category": "Other",
+      "source_url": "https://www.totalwine.com/spirits/brandy-cognac/c/000770?spiritsvolume=small-size",
+      "data_quality_score": 60,
+      "created_at": "2025-07-01T16:00:22.094525+00:00"
+    },
+    {
+      "id": "96e771a6-e51c-447d-b8b8-4b42cbfb6d99",
+      "name": "Hennessy Xo Jean Michel Othoniel Edition Gb 2024 Cognac Total",
+      "category": "Other",
+      "source_url": "https://www.totalwine.com/spirits/brandy-cognac/cognac/hennessy-xo-jean-michel-othoniel-edition-gb-2024-cognac/p/2126259640",
+      "data_quality_score": 40,
+      "created_at": "2025-07-01T16:00:21.435573+00:00"
+    },
+    {
+      "id": "19eedcfc-5aeb-4966-b8b5-a2aa14a53e20",
+      "name": "Hennessy Xo Jean Michel Othoniel Edition Gb 2024 Cognac",
+      "category": "Other",
+      "source_url": "https://www.totalwine.com/spirits/brandy-cognac/cognac/hennessy-xo-jean-michel-othoniel-edition-gb-2024-cognac/p/2126259640",
+      "data_quality_score": 65,
+      "created_at": "2025-07-01T16:00:21.004544+00:00"
+    },
+    {
+      "id": "b412322c-900f-4c71-a520-e8b700eb69ed",
+      "name": "Half Pint & Flask Brandy & Cognac",
+      "category": "Other",
+      "source_url": "https://www.totalwine.com/spirits/brandy-cognac/c/000770?viewall=true&pageSize=24&spiritsvolume=Half%20Pint%20%26%20Flask&sort=most-popular&aty=1,1,0,0",
+      "data_quality_score": 55,
+      "created_at": "2025-07-01T16:00:20.514576+00:00"
+    },
+    {
+      "id": "70ae3b3f-f8b7-4614-8ee2-4fedab7da87d",
+      "name": "France Cognac",
+      "category": "Other",
+      "source_url": "https://www.totalwine.com/theme/shop-the-best-xo-cognacs",
+      "data_quality_score": 55,
+      "created_at": "2025-07-01T16:00:19.787391+00:00"
+    },
+    {
+      "id": "bf62d7ba-7c7b-49f5-953a-f7c248212447",
+      "name": "Cognac Leather",
+      "category": "Other",
+      "source_url": "https://samuelhubbard.com/collections/cognac-leather",
+      "data_quality_score": 70,
+      "created_at": "2025-07-01T00:39:56.307229+00:00"
+    },
+    {
+      "id": "cca22686-013b-48d1-8c17-4c435d00b82c",
+      "name": "Cudi Llero Cognac Leather Sandals Sessu N Official Website",
+      "category": "Other",
+      "source_url": "https://us.sessun.com/catalogue/shoes/cudillero-cognac-leather.html",
+      "data_quality_score": 50,
+      "created_at": "2025-07-01T00:39:55.74455+00:00"
+    },
+    {
+      "id": "5c92d4e5-c4d1-4d73-b7ae-688f13295d16",
+      "name": "Toft Cognac",
+      "category": "Other",
+      "source_url": "https://www.obaku.com/products/toft-cognac",
+      "data_quality_score": 70,
+      "created_at": "2025-07-01T00:39:55.278573+00:00"
+    },
+    {
+      "id": "88d232ee-d648-4e5a-8a79-33a77bae20a4",
+      "name": "Pablo Knit Midi Skirt In Cognac Cashmere Silk Boucle Gabriela",
+      "category": "Other",
+      "source_url": "https://gabrielahearst.com/collections/matching-sets/products/pablo-knit-skirt-cognac-cashmere-silk-boucle?view=productsustainability",
+      "data_quality_score": 25,
+      "created_at": "2025-07-01T00:39:53.706228+00:00"
+    },
+    {
+      "id": "085db9de-53b2-4b86-8bc3-9cadb22d0d70",
+      "name": "Lynn Flat Sandal In Cognac Nappa Leather Gabriela Hearst",
+      "category": "Other",
+      "source_url": "https://gabrielahearst.com/collections/gifting/products/lynn-flat-sandal-cognac-nappa-leather?view=productsustainability",
+      "data_quality_score": 25,
+      "created_at": "2025-07-01T00:39:52.989963+00:00"
+    },
+    {
+      "id": "157f0073-3373-4e5e-b94a-626fc4b3d97c",
+      "name": "Lynn Flat Sandal In Cognac Nappa Leather",
+      "category": "Other",
+      "source_url": "https://gabrielahearst.com/collections/gifting/products/lynn-flat-sandal-cognac-nappa-leather?view=productsustainability",
+      "data_quality_score": 70,
+      "created_at": "2025-07-01T00:39:52.516213+00:00"
+    },
+    {
+      "id": "48dd05ea-e02a-45bc-b4a8-841185ec2326",
+      "name": "Remy Martin Xo Cognac",
+      "category": "Other",
+      "source_url": "https://craftshack.com/products/remy-martin-xo-cognac",
+      "data_quality_score": 70,
+      "created_at": "2025-07-01T00:39:50.31539+00:00"
+    },
+    {
+      "id": "8b92f37d-b877-429c-bc3e-a8b55ad7ca96",
+      "name": "Cognac Richard Hennessy Par",
+      "category": "Other",
+      "source_url": "https://www.cognac-only.com/en/cognac-xxo/1032-cognac-frapin-plume.html",
+      "data_quality_score": 35,
+      "created_at": "2025-07-01T00:39:45.851348+00:00"
+    },
+    {
+      "id": "96ee165b-4ab6-4747-96c8-e2b4d7b05067",
+      "name": "Cognac Tesseron Xo Extreme",
+      "category": "Other",
+      "source_url": "https://www.cognac-only.com/en/cognac-xxo/1032-cognac-frapin-plume.html",
+      "data_quality_score": 35,
+      "created_at": "2025-07-01T00:39:45.192737+00:00"
+    },
+    {
+      "id": "83fea241-6e03-4c8b-91ee-09b1de6b2bfa",
+      "name": "Cognac Baron Otard Fortis",
+      "category": "Other",
+      "source_url": "https://www.cognac-only.com/en/cognac-xxo/1032-cognac-frapin-plume.html",
+      "data_quality_score": 35,
+      "created_at": "2025-07-01T00:39:44.545918+00:00"
+    },
+    {
+      "id": "c3590eb7-66aa-456b-8133-e2e90cfffbe0",
+      "name": "Cognac Remy Martin Louis Xiii",
+      "category": "Other",
+      "source_url": "https://www.cognac-only.com/en/cognac-xxo/1032-cognac-frapin-plume.html",
+      "data_quality_score": 35,
+      "created_at": "2025-07-01T00:39:44.052652+00:00"
+    },
+    {
+      "id": "d75cb2c8-d788-4073-b5de-b732a4f45668",
+      "name": "Cognac Frapin Plume",
+      "category": "Other",
+      "source_url": "https://www.cognac-only.com/en/cognac-xxo/1032-cognac-frapin-plume.html",
+      "data_quality_score": 55,
+      "created_at": "2025-07-01T00:39:43.547202+00:00"
+    },
+    {
+      "id": "7b5c13ba-9234-4dc4-b9a0-748556aec005",
+      "name": "Ararat Brandy",
+      "category": "Other",
+      "source_url": "https://www.armenianbrandyandwine.com/en/50-ararat-armenian-brandy-cognac",
+      "data_quality_score": 55,
+      "created_at": "2025-07-01T00:39:42.969768+00:00"
+    },
+    {
+      "id": "a40ea0bb-07ce-448a-b272-6883d36e39b0",
+      "name": "France Cognac Brandy & Cognac",
+      "category": "Other",
+      "source_url": "https://www.totalwine.com/spirits/brandy-cognac/cognac/c/000774?pageSize=24&userPrice=200-500&aty=1,1,0,0",
+      "data_quality_score": 50,
+      "created_at": "2025-07-01T00:39:42.501172+00:00"
+    },
+    {
+      "id": "8d40bdcf-c44a-43cb-ac9b-2b2c76ad9687",
+      "name": "Hennessy Vsop Deluxe Lunar New Year Of The Snake 2025 By Shuting Qiu",
+      "category": "Other",
+      "source_url": "https://shop.cognatheque.com/en/cognac-hennessy-online/2883-cognac-hennessy-vsop-deluxe-chinese-lunar-new-year-2025-by-shuting-qiu-limited-edition-snake.html",
+      "data_quality_score": 65,
+      "created_at": "2025-07-01T00:39:40.045596+00:00"
+    },
+    {
+      "id": "fcab0792-069e-41d1-9681-07b557ea29b7",
+      "name": "Martell Noblige Limited Edition Cognac By Angel Chen Cognac Expert",
+      "category": "Other",
+      "source_url": "https://www.cognac-expert.com/napoleon-cognac/martell-noblige-limited-edition-by-angel-chen-cognac",
+      "data_quality_score": 75,
+      "created_at": "2025-07-01T00:39:39.334499+00:00"
+    },
+    {
+      "id": "070fd2c2-aa5c-4074-862f-23e5e9377427",
+      "name": "Martell Noblige Limited Edition By Angel Chen Cognac",
+      "category": "Other",
+      "source_url": "https://www.cognac-expert.com/napoleon-cognac/martell-noblige-limited-edition-by-angel-chen-cognac",
+      "data_quality_score": 55,
+      "created_at": "2025-07-01T00:39:38.831044+00:00"
+    },
+    {
+      "id": "3b78ac70-8e86-4ba1-9269-b2a671b6b4a1",
+      "name": "The Napoleon Selection Cognac",
+      "category": "Other",
+      "source_url": "https://www.cognac-expert.com/napoleon-cognac/the-napoleon-selection",
+      "data_quality_score": 60,
+      "created_at": "2025-07-01T00:39:38.339912+00:00"
+    },
+    {
+      "id": "9b1dcdc2-0039-488c-bdc7-7a39bf7e738f",
+      "name": "Landy'numero 1'x.o. Cognac France",
+      "category": "Other",
+      "source_url": "https://www.wine-searcher.com/find/landy+numero+one+x+o+cognac+france",
+      "data_quality_score": 50,
+      "created_at": "2025-07-01T00:39:34.700483+00:00"
+    },
+    {
+      "id": "b2b067bb-8571-4d1f-902f-ee8cbe246c58",
+      "name": "Landy Desir Cognac France",
+      "category": "Other",
+      "source_url": "https://www.wine-searcher.com/find/landy+desir+cognac+france",
+      "data_quality_score": 50,
+      "created_at": "2025-07-01T00:39:34.176014+00:00"
+    },
+    {
+      "id": "4bfb7b4a-56b8-494a-90f0-215313aed2bc",
+      "name": "Frye Leather Tall Boots In Cognac Brown Western Inside Zip Size",
+      "category": "Other",
+      "source_url": "https://www.centralcoop.coop/?pcmypage?callback=/product%2Fdetail%2F32361723",
+      "data_quality_score": 25,
+      "created_at": "2025-07-01T00:39:31.603568+00:00"
+    },
+    {
+      "id": "a36d79e1-65d4-44ee-a922-8bcfaaf6425d",
+      "name": "Frye Leather Tall Boots In Cognac Brown Western Inside Zip Size 5 M New",
+      "category": "Other",
+      "source_url": "https://www.centralcoop.coop/?pcmypage?callback=/product%2Fdetail%2F32361723",
+      "data_quality_score": 70,
+      "created_at": "2025-07-01T00:39:30.965444+00:00"
+    },
+    {
+      "id": "590ffc7b-d373-49e8-baef-bd0beec1ad46",
+      "name": "Cognac D'usse Vsop",
+      "category": "Other",
+      "source_url": "https://www.cognac-only.com/en/cognac-vs/1097-cognac-hennessy-pure-white.html",
+      "data_quality_score": 40,
+      "created_at": "2025-07-01T00:39:30.263407+00:00"
+    },
+    {
+      "id": "766d4e30-d3d9-4523-bf0e-db451d4c23d7",
+      "name": "Cognac Xo Isle De",
+      "category": "Other",
+      "source_url": "https://www.cognac-only.com/en/cognac-vs/1097-cognac-hennessy-pure-white.html",
+      "data_quality_score": 35,
+      "created_at": "2025-07-01T00:39:29.474312+00:00"
+    },
+    {
+      "id": "2ad600f3-dc9a-4af8-bf66-317e264dfb33",
+      "name": "200 Xo Cognacs",
+      "category": "Other",
+      "source_url": "https://www.cognac-expert.com/xo-cognac/",
+      "data_quality_score": 60,
+      "created_at": "2025-07-01T00:39:24.113652+00:00"
+    },
+    {
+      "id": "c201353d-04dc-4476-81fc-c6ef2be9bfdb",
+      "name": "Cognac Ribbed Leather Jacket",
+      "category": "Other",
+      "source_url": "https://www.kemosabe.com/products/mens-cognac-ribbed-leather-jacket",
+      "data_quality_score": 35,
+      "created_at": "2025-07-01T00:39:21.966435+00:00"
+    },
+    {
+      "id": "e32a2983-335f-444c-a6f9-c383187fdc38",
+      "name": "Torres Brandy Is The Result Of The Torres Family's Almost Century",
+      "category": "Other",
+      "source_url": "https://express.binnys.com/store/binnys/products/16705345-torres-imperial-brandy-10-750-ml",
+      "data_quality_score": 25,
+      "created_at": "2025-07-01T00:39:19.554326+00:00"
+    },
+    {
+      "id": "7718da62-f8d5-47f3-9b07-303154bdf879",
+      "name": "Torres Imperial Brandy 10 Brandy Solera Method Reserva Same",
+      "category": "Other",
+      "source_url": "https://express.binnys.com/store/binnys/products/16705345-torres-imperial-brandy-10-750-ml",
+      "data_quality_score": 60,
+      "created_at": "2025-07-01T00:39:19.139982+00:00"
+    },
+    {
+      "id": "f824c4fd-4713-497c-8c49-cd607c36c178",
+      "name": "Martell Cordon Bleu Cognac Free",
+      "category": "Other",
+      "source_url": "https://cwspirits.com/products/martell-cordon-blue",
+      "data_quality_score": 55,
+      "created_at": "2025-07-01T00:39:14.914012+00:00"
+    },
+    {
+      "id": "6be8fc02-aa8c-4827-9b8c-2f5a09d0e691",
+      "name": "New Cognac Arrivals",
+      "category": "Other",
+      "source_url": "https://www.masterofmalt.com/new-arrivals/cognac-new-arrivals/",
+      "data_quality_score": 40,
+      "created_at": "2025-07-01T00:39:10.212221+00:00"
+    },
+    {
+      "id": "88596b85-2a96-4c2c-83aa-c2c55c0ee3ef",
+      "name": "An Exceptional Cognac Made Almost Exclusively Of Four Crus",
+      "category": "Other",
+      "source_url": "https://www.remedyliquor.com/products/bisquit-dubouche-cognac-vsop-750ml",
+      "data_quality_score": 30,
+      "created_at": "2025-07-01T00:39:05.659124+00:00"
+    },
+    {
+      "id": "1aa13207-03de-4566-b810-9cf4dcc0d6e3",
+      "name": "Courvoisier L'essence Cognac",
+      "category": "Other",
+      "source_url": "https://www.wine.com/product/courvoisier-lessence-cognac/531241",
+      "data_quality_score": 50,
+      "created_at": "2025-07-01T00:39:03.573542+00:00"
+    },
+    {
+      "id": "8b22c76f-1eff-4430-b3fe-44adc2b6076e",
+      "name": "Varietal. Cognac",
+      "category": "Other",
+      "source_url": "https://www.wine.com/product/courvoisier-connoisseur-collection-21-year-cognac/531243",
+      "data_quality_score": 30,
+      "created_at": "2025-07-01T00:39:03.095523+00:00"
+    },
+    {
+      "id": "ab491732-f34e-49e7-b376-652683087cff",
+      "name": "Courvoisier Connoisseur Collection 21 Year Cognac",
+      "category": "Other",
+      "source_url": "https://www.wine.com/product/courvoisier-connoisseur-collection-21-year-cognac/531243",
+      "data_quality_score": 65,
+      "created_at": "2025-07-01T00:39:02.614375+00:00"
+    },
+    {
+      "id": "7c8b4758-b958-46ae-904e-9d2b41869bf0",
+      "name": "This Fine Champagne Cognac Is A Blend Of The Two Best Crus Of The Cognac Region",
+      "category": "Other",
+      "source_url": "https://www.totalwine.com/spirits/brandy-cognac/cognac/barrdseth-vsop-vieille-reserve-cognac/p/218596750",
+      "data_quality_score": 30,
+      "created_at": "2025-07-01T00:38:58.286656+00:00"
+    },
+    {
+      "id": "4735e0c8-49a2-4221-911b-3e3dfa46d557",
+      "name": "Barrdseth Vsop Vieille Reserve Cognac",
+      "category": "Other",
+      "source_url": "https://www.totalwine.com/spirits/brandy-cognac/cognac/barrdseth-vsop-vieille-reserve-cognac/p/218596750",
+      "data_quality_score": 70,
+      "created_at": "2025-07-01T00:38:57.672792+00:00"
+    },
+    {
+      "id": "c9c02967-2af4-4e42-adc5-eee65883d6f6",
+      "name": "Hardy Xo Rare Cognac",
+      "category": "Other",
+      "source_url": "https://www.totalwine.com/spirits/brandy-cognac/cognac/hardy-xo-rare-cognac/p/9870750",
+      "data_quality_score": 55,
+      "created_at": "2025-07-01T00:38:57.119334+00:00"
+    },
+    {
+      "id": "58515d1d-82c2-4ba2-af9e-1274917d47a5",
+      "name": "Decourtet Cognac",
+      "category": "Other",
+      "source_url": "https://www.totalwine.com/spirits/brandy-cognac/cognac/decourtet-vs-cognac/p/109877750",
+      "data_quality_score": 55,
+      "created_at": "2025-07-01T00:38:56.631694+00:00"
+    },
+    {
+      "id": "2f299f78-d18c-4750-af1c-fac1aeb26d65",
+      "name": "Martell Cordon Bleu Cognac",
+      "category": "Other",
+      "source_url": "https://uk.flaviar.com/collections/cognac",
+      "data_quality_score": 25,
+      "created_at": "2025-07-01T00:38:50.821352+00:00"
+    },
+    {
+      "id": "d4704ca5-47b5-44ee-a4de-c608955139b6",
+      "name": "Rare Cognac Brands For Sale Premium Spirits",
+      "category": "Other",
+      "source_url": "https://uk.flaviar.com/collections/cognac",
+      "data_quality_score": 45,
+      "created_at": "2025-07-01T00:38:50.390028+00:00"
+    },
+    {
+      "id": "beb28fd1-810d-4f6e-a046-3572af5f2d8a",
+      "name": "Wine Lovers Brandy & Cognac",
+      "category": "Other",
+      "source_url": "https://flaviar.com/collections/wine-lovers-brandy-cognac",
+      "data_quality_score": 70,
+      "created_at": "2025-07-01T00:38:49.9725+00:00"
+    },
+    {
+      "id": "ddefb91b-0b1d-453a-b66e-5d497e3b25bc",
+      "name": "Pierre Ferrand Selection Des Anges Cognac",
+      "category": "Other",
+      "source_url": "https://www.wine.com/product/pierre-ferrand-selection-des-anges-cognac/531230",
+      "data_quality_score": 60,
+      "created_at": "2025-07-01T00:38:47.608537+00:00"
+    },
+    {
+      "id": "aa9dbd1d-97a7-42a6-8a42-0a5a8fbc8470",
+      "name": "Cognac All Nighter Wedge Hippington",
+      "category": "Other",
+      "source_url": "https://www.shophippington.com/product/cognac-all-nighter-wedge/5486",
+      "data_quality_score": 50,
+      "created_at": "2025-07-01T00:38:42.30121+00:00"
+    },
+    {
+      "id": "fc880b25-cb32-4dfa-b498-7ea2e7e29986",
+      "name": "Cognac Armagnac",
+      "category": "Other",
+      "source_url": "https://www.thewhiskyexchange.com/feature/cognacvsarmagnac",
+      "data_quality_score": 55,
+      "created_at": "2025-07-01T00:38:41.730501+00:00"
+    },
+    {
+      "id": "9d6b0b1a-c498-4847-8d91-86d19b1ff15e",
+      "name": "Hennessy Cognac Xo & Rare Bottles Online At Wooden Cork",
+      "category": "Other",
+      "source_url": "https://woodencork.com/collections/hennessy",
+      "data_quality_score": 50,
+      "created_at": "2025-07-01T00:38:41.1309+00:00"
+    },
+    {
+      "id": "07ea8929-dd22-4432-ae52-ef567af165d7",
+      "name": "Highland Park 54 Year Old Single Malt Scotch Whisky Orkney",
+      "category": "Other",
+      "source_url": "https://www.wine-searcher.com/find/highlands+park+54+old+single+malt+scotch+whisky+orkney+island+scotland",
+      "data_quality_score": 43,
+      "created_at": "2025-06-30T22:36:02.08234+00:00"
+    },
+    {
+      "id": "940df878-7950-43b7-ac7b-ec1debe3570e",
+      "name": "Highland Park 54 Year Old Single Malt Scotch Whisky Orkney Scotland",
+      "category": "Other",
+      "source_url": "https://www.wine-searcher.com/find/highlands+park+54+old+single+malt+scotch+whisky+orkney+island+scotland",
+      "data_quality_score": 68,
+      "created_at": "2025-06-30T22:36:01.681286+00:00"
+    },
+    {
+      "id": "2584d2c7-86fd-4dbe-a2ce-2c2e60cba458",
+      "name": "Highland Park Viking Scars 10 Year Old Single Malt Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.wine-searcher.com/find/highlands+park+viking+scars+ten+old+single+malt+scotch+whisky+orkney+island+scotland",
+      "data_quality_score": 48,
+      "created_at": "2025-06-30T22:36:01.191007+00:00"
+    },
+    {
+      "id": "30acf4ba-a0e9-4efa-874a-0ecc49a66c02",
+      "name": "Highland Park Viking Scars 10 Year Old Single Malt Scotch Whisky Orkney Scotland",
+      "category": "Other",
+      "source_url": "https://www.wine-searcher.com/find/highlands+park+viking+scars+ten+old+single+malt+scotch+whisky+orkney+island+scotland",
+      "data_quality_score": 73,
+      "created_at": "2025-06-30T22:36:00.667398+00:00"
+    },
+    {
+      "id": "bd3c60b4-2671-4c50-b76c-d3df9818b076",
+      "name": "Highland Park Cask Strength Single Malt Scotch Whisky Orkney",
+      "category": "Other",
+      "source_url": "https://www.wine-searcher.com/find/highlands+park+cask+strength+single+malt+scotch+whisky+orkney+island+scotland",
+      "data_quality_score": 43,
+      "created_at": "2025-06-30T22:36:00.139823+00:00"
+    },
+    {
+      "id": "db5ec3a7-0bdb-4674-bb68-f51a35052af5",
+      "name": "Highland Park Cask Strength Single Malt Scotch Whisky Orkney Scotland",
+      "category": "Other",
+      "source_url": "https://www.wine-searcher.com/find/highlands+park+cask+strength+single+malt+scotch+whisky+orkney+island+scotland",
+      "data_quality_score": 68,
+      "created_at": "2025-06-30T22:35:59.756106+00:00"
+    },
+    {
+      "id": "1aa3978f-9236-4456-bd9e-04ce8aac65ff",
+      "name": "Highland Park 30 Year Old Single Malt Scotch Whisky Orkney",
+      "category": "Other",
+      "source_url": "https://www.wine-searcher.com/find/highlands+park+thirty+old+single+malt+scotch+whisky+orkney+island+scotland",
+      "data_quality_score": 48,
+      "created_at": "2025-06-30T22:35:59.281379+00:00"
+    },
+    {
+      "id": "be523574-8a9a-4c21-9dc2-3b9d4693be33",
+      "name": "Highland Park 30 Year Old Single Malt Scotch Whisky Orkney Scotland",
+      "category": "Other",
+      "source_url": "https://www.wine-searcher.com/find/highlands+park+thirty+old+single+malt+scotch+whisky+orkney+island+scotland",
+      "data_quality_score": 73,
+      "created_at": "2025-06-30T22:35:58.833046+00:00"
+    },
+    {
+      "id": "b07e66c3-d295-479d-98ca-cad2decea3be",
+      "name": "Highland Park 25 Year Old Single Malt Scotch Whisky Orkney",
+      "category": "Other",
+      "source_url": "https://www.wine-searcher.com/find/highlands+park+25+old+single+malt+scotch+whisky+orkney+island+scotland",
+      "data_quality_score": 48,
+      "created_at": "2025-06-30T22:35:58.32448+00:00"
+    },
+    {
+      "id": "2c068724-972d-420d-8759-0d93a6ccfc8f",
+      "name": "Highland Park 25 Year Old Single Malt Scotch Whisky Orkney Scotland",
+      "category": "Other",
+      "source_url": "https://www.wine-searcher.com/find/highlands+park+25+old+single+malt+scotch+whisky+orkney+island+scotland",
+      "data_quality_score": 73,
+      "created_at": "2025-06-30T22:35:57.901954+00:00"
+    },
+    {
+      "id": "36edd97a-b593-4a89-87f6-f5f849ea65c0",
+      "name": "Highland Park 21 Year Old Single Malt Scotch Whisky Orkney",
+      "category": "Other",
+      "source_url": "https://www.wine-searcher.com/find/highlands+park+21+old+single+malt+scotch+whisky+orkney+island+scotland",
+      "data_quality_score": 48,
+      "created_at": "2025-06-30T22:35:57.445277+00:00"
+    },
+    {
+      "id": "e4cc9031-be05-4ed6-830e-931d90e86da2",
+      "name": "Highland Park 21 Year Old Single Malt Scotch Whisky Orkney Scotland",
+      "category": "Other",
+      "source_url": "https://www.wine-searcher.com/find/highlands+park+21+old+single+malt+scotch+whisky+orkney+island+scotland",
+      "data_quality_score": 73,
+      "created_at": "2025-06-30T22:35:56.955074+00:00"
+    },
+    {
+      "id": "c5a9cd09-a7d5-4941-af89-79d234210771",
+      "name": "Highland Park Viking Pride 18 Year Old Single Malt Scotch Whisky Orkney Scotland",
+      "category": "Other",
+      "source_url": "https://www.wine-searcher.com/find/highlands+park+viking+pride+eighteen+old+single+malt+scotch+whisky+orkney+island+scotland",
+      "data_quality_score": 73,
+      "created_at": "2025-06-30T22:35:56.050857+00:00"
+    },
+    {
+      "id": "c29bd985-b787-4fdd-8139-7c279a029951",
+      "name": "Highland Park 50 Year Old Single Malt Scotch Whisky Orkney",
+      "category": "Other",
+      "source_url": "https://www.wine-searcher.com/find/highlands+park+50+old+single+malt+scotch+whisky+orkney+island+scotland",
+      "data_quality_score": 48,
+      "created_at": "2025-06-30T22:35:55.608335+00:00"
+    },
+    {
+      "id": "67e02c7c-d6c5-40f9-970c-daba66d46221",
+      "name": "Highland Park 50 Year Old Single Malt Scotch Whisky Orkney Scotland",
+      "category": "Other",
+      "source_url": "https://www.wine-searcher.com/find/highlands+park+50+old+single+malt+scotch+whisky+orkney+island+scotland",
+      "data_quality_score": 73,
+      "created_at": "2025-06-30T22:35:55.191816+00:00"
+    },
+    {
+      "id": "28f23e5b-e9be-41b5-94ae-2802616d5ee2",
+      "name": "Highland Park Viking Honour 12 Year Old Single Malt Scotch",
+      "category": "Other",
+      "source_url": "https://www.wine-searcher.com/find/highlands+park+viking+honour+twelve+old+single+malt+scotch+whisky+orkney+island+scotland",
+      "data_quality_score": 48,
+      "created_at": "2025-06-30T22:35:54.721275+00:00"
+    },
+    {
+      "id": "849854ee-262a-4b02-b99a-6d665a0d0508",
+      "name": "Highland Park Viking Honour 12 Year Old Single Malt Scotch Whisky Orkney Scotland",
+      "category": "Other",
+      "source_url": "https://www.wine-searcher.com/find/highlands+park+viking+honour+twelve+old+single+malt+scotch+whisky+orkney+island+scotland",
+      "data_quality_score": 73,
+      "created_at": "2025-06-30T22:35:54.317325+00:00"
+    },
+    {
+      "id": "151edfb2-5a4b-424d-bb8c-dc380b1dd48f",
+      "name": "Dalwhinnie Winter's Gold. Speyside Single Malt Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.thewhiskyexchange.com/p/29813/dalwhinnie-winters-gold",
+      "data_quality_score": 48,
+      "created_at": "2025-06-30T22:35:43.473596+00:00"
+    },
+    {
+      "id": "204dbf4b-37bb-40fe-a7c6-ad5e2b5222ab",
+      "name": "Aberlour 12 Year Old Non Chill Filtered Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.finedrams.com/aberlour-12-year-old-non-chill-filtered-whisky.html",
+      "data_quality_score": 88,
+      "created_at": "2025-06-30T22:35:39.741078+00:00"
+    },
+    {
+      "id": "419d8deb-b777-4c7c-af91-00dd1adc40e0",
+      "name": "Aberlour 12 Year Old Non Chill Filtered 70 Cl 48%",
+      "category": "Other",
+      "source_url": "https://www.finedrams.com/aberlour-12-year-old-non-chill-filtered-whisky.html",
+      "data_quality_score": 68,
+      "created_at": "2025-06-30T22:35:39.313545+00:00"
+    },
+    {
+      "id": "92d8d73d-f332-4924-a771-a17d3ad22a54",
+      "name": "Glendronach 18 Year Old Port Wood Finish Scotch Single Malt Whisky",
+      "category": "Other",
+      "source_url": "https://www.finedrams.com/glendronach-18-year-old-tawny-port-wood-finish-whisky.html",
+      "data_quality_score": 92,
+      "created_at": "2025-06-30T22:35:38.676353+00:00"
+    },
+    {
+      "id": "b27ff430-5ff2-49d5-a6da-7b3276a17d7e",
+      "name": "Glendronach Peated Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.finedrams.com/glendronach-peated-whisky.html",
+      "data_quality_score": 75,
+      "created_at": "2025-06-30T22:35:37.970428+00:00"
+    },
+    {
+      "id": "4db5e013-2f3e-4b6e-9775-1edee1cd252f",
+      "name": "Glendronach 12 Year Old Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.finedrams.com/glendronach-12-year-old-1-liter-whisky.html",
+      "data_quality_score": 85,
+      "created_at": "2025-06-30T22:35:37.371167+00:00"
+    },
+    {
+      "id": "a0729779-fd2e-446e-b3b9-194f2ea37746",
+      "name": "This Scotch Tastes Just As Good As The Macallan 18 For Half The Price",
+      "category": "Other",
+      "source_url": "https://www.mensjournal.com/food-drink/glenrothes-18-macallan-18-compared",
+      "data_quality_score": 80,
+      "created_at": "2025-06-30T22:35:34.799572+00:00"
+    },
+    {
+      "id": "0f6cccff-49c2-42bc-95d1-c57e6d5a7b91",
+      "name": "Black Bull 12Yr Scotch",
+      "category": "Other",
+      "source_url": "https://www.totalwine.com/spirits/scotch/blended-scotch/black-bull-12-yr-scotch/p/123594750",
+      "data_quality_score": 73,
+      "created_at": "2025-06-30T22:35:30.786249+00:00"
+    },
+    {
+      "id": "909a2bd5-f82c-4d86-807e-6e055c0dd055",
+      "name": "Glen Fohdry 12Yr Mizunara Oak Cask Speyside Single Malt Scotch",
+      "category": "Other",
+      "source_url": "https://www.totalwine.com/spirits/scotch/single-malt/glen-fohdry-12yr-mizunara-oak-cask-speyside-single-malt/p/227709750?s=1137&igrules=true&tab=3&bvstate=pg:2/ct:r",
+      "data_quality_score": 55,
+      "created_at": "2025-06-30T22:35:28.655238+00:00"
+    },
+    {
+      "id": "5a6c67ee-bc0f-429d-8f0c-f10b203b9267",
+      "name": "Glen Fohdry 12Yr Mizunara Oak Cask Speyside Single Malt Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.totalwine.com/spirits/scotch/single-malt/glen-fohdry-12yr-mizunara-oak-cask-speyside-single-malt/p/227709750?s=1137&igrules=true&tab=3&bvstate=pg:2/ct:r",
+      "data_quality_score": 80,
+      "created_at": "2025-06-30T22:35:28.126773+00:00"
+    },
+    {
+      "id": "926c02f1-f652-4ea3-9f1b-1242ddcb3510",
+      "name": "1966 Vintage Whisky",
+      "category": "Other",
+      "source_url": "https://www.thewhiskyexchange.com/whisky/vintage/1966-vintage-whisky",
+      "data_quality_score": 75,
+      "created_at": "2025-06-30T22:35:16.184478+00:00"
+    },
+    {
+      "id": "03cfff1b-b274-4d60-8ca2-0ec74782c4e6",
+      "name": "Ardbeg 25 Year Old 2022 Release Scotch Whisky The Whisky",
+      "category": "Other",
+      "source_url": "https://www.thewhiskyexchange.com/p/67432/ardbeg-25-year-old-2022-release",
+      "data_quality_score": 45,
+      "created_at": "2025-06-30T22:35:15.816803+00:00"
+    },
+    {
+      "id": "7387266a-fbf4-4f6a-8ebe-64d2dc49b776",
+      "name": "Ardbeg 25 Year Old 2022 Release Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.thewhiskyexchange.com/p/67432/ardbeg-25-year-old-2022-release",
+      "data_quality_score": 77,
+      "created_at": "2025-06-30T22:35:15.468797+00:00"
+    },
+    {
+      "id": "87984129-c818-49bd-8ea5-0e0fb8c9b96a",
+      "name": "Ardbeg 1999 Galileo 12 Year Old Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.thewhiskyexchange.com/p/17923/ardbeg-1999-galileo-12-year-old",
+      "data_quality_score": 70,
+      "created_at": "2025-06-30T22:35:14.910513+00:00"
+    },
+    {
+      "id": "da8020e5-a0ac-4f3e-a038-c0e9c895b877",
+      "name": "The Dalmore 45 Year Old Single Malt Scotch Whisky Highlands",
+      "category": "Other",
+      "source_url": "https://www.wine-searcher.com/find/the+dalmore+45+old+single+malt+scotch+whisky+highlands+scotland",
+      "data_quality_score": 48,
+      "created_at": "2025-06-30T22:35:11.748071+00:00"
+    },
+    {
+      "id": "40df19a8-f52a-4b78-bd4b-f9c4fea7a503",
+      "name": "The Dalmore 45 Year Old Single Malt Scotch Whisky Highlands Scotland",
+      "category": "Other",
+      "source_url": "https://www.wine-searcher.com/find/the+dalmore+45+old+single+malt+scotch+whisky+highlands+scotland",
+      "data_quality_score": 73,
+      "created_at": "2025-06-30T22:35:11.339885+00:00"
+    },
+    {
+      "id": "2089c795-0b91-4ce4-9325-df9759c56de3",
+      "name": "The Glenrothes 15 Year Old Single Malt Scotch Whisky Reserve Bar",
+      "category": "Other",
+      "source_url": "https://www.reservebar.com/products/the-glenrothes-15-year-old-single-malt-scotch-whisky/GROUPING-2490931",
+      "data_quality_score": 70,
+      "created_at": "2025-06-30T22:34:40.332406+00:00"
+    },
+    {
+      "id": "02e89aba-705f-4b04-8756-f617d622747e",
+      "name": "The Glenrothes 32 Year Old Single Malt Scotch Whisky Reserve Bar",
+      "category": "Other",
+      "source_url": "https://www.reservebar.com/products/the-glenrothes-32-year-old-single-malt-scotch-whisky/GROUPING-2485480",
+      "data_quality_score": 70,
+      "created_at": "2025-06-30T22:34:39.791867+00:00"
+    },
+    {
+      "id": "ca07e453-9e0e-4e34-8825-6dd02ca09738",
+      "name": "The Glenrothes 10 Year Old Single Malt Whisky Reserve Bar",
+      "category": "Other",
+      "source_url": "https://www.reservebar.com/products/the-glenrothes-10-year-old-single-malt-whisky/GROUPING-1004770",
+      "data_quality_score": 73,
+      "created_at": "2025-06-30T22:34:39.302778+00:00"
+    },
+    {
+      "id": "cbb63b56-92bd-43f3-b48f-380c03c6fea0",
+      "name": "The Glenrothes 51 Year Old Single Malt Scotch Whisky Reserve Bar",
+      "category": "Other",
+      "source_url": "https://www.reservebar.com/products/the-glenrothes-51-year-old-single-malt-scotch-whisky/GROUPING-2516593",
+      "data_quality_score": 65,
+      "created_at": "2025-06-30T22:34:38.56697+00:00"
+    },
+    {
+      "id": "7c2e94ff-082e-47e4-9da9-1a2da099152f",
+      "name": "The Macallan 12 Year Double Cask Single Malt Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.wine.com/product/the-macallan-12-year-double-cask-single-malt-scotch-whisky/530272",
+      "data_quality_score": 75,
+      "created_at": "2025-06-30T22:34:22.522671+00:00"
+    },
+    {
+      "id": "2a581d5f-4d9e-4d7f-9cf7-90211055f99a",
+      "name": "The Macallan Rare Cask Single Malt Scotch Whisky 2021",
+      "category": "Other",
+      "source_url": "https://www.wine.com/product/the-macallan-rare-cask-single-malt-scotch-whisky-2021/782311",
+      "data_quality_score": 68,
+      "created_at": "2025-06-30T22:34:22.04833+00:00"
+    },
+    {
+      "id": "75ea2272-70d9-4da1-a790-217d8a1d1ca4",
+      "name": "The Macallan Rare Cask Batch 1 Single Malt Scotch Whisky 2018",
+      "category": "Other",
+      "source_url": "https://www.wine.com/product/the-macallan-rare-cask-batch-1-single-malt-scotch-whisky-2018/530270",
+      "data_quality_score": 68,
+      "created_at": "2025-06-30T22:34:21.484219+00:00"
+    },
+    {
+      "id": "50ff41b5-6960-45f4-8f50-28f9af309fa7",
+      "name": "The Macallan The Harmony Collection Amber Meadow Single Malt Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.wine.com/product/the-macallan-the-harmony-collection-amber-meadow-single-malt-scotch-whisky/1669623",
+      "data_quality_score": 70,
+      "created_at": "2025-06-30T22:34:20.977417+00:00"
+    },
+    {
+      "id": "9bfde333-d44f-4e97-93b3-9719d23959f4",
+      "name": "The Macallan 15 Year Double Cask Single Malt Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.wine.com/product/the-macallan-15-year-double-cask-single-malt-scotch-whisky/762933",
+      "data_quality_score": 75,
+      "created_at": "2025-06-30T22:34:20.480932+00:00"
+    },
+    {
+      "id": "98a14805-da67-4826-a7c8-c8186c7a9029",
+      "name": "Glenfiddich 14 Year Bourbon Barrel Reserve Single Malt Scotch",
+      "category": "Other",
+      "source_url": "https://www.wine.com/product/glenfiddich-14-year-bourbon-barrel-reserve-single-malt-scotch-whisky/530392",
+      "data_quality_score": 50,
+      "created_at": "2025-06-30T22:34:14.526071+00:00"
+    },
+    {
+      "id": "97f24606-ee23-4628-bec8-9de94a899f42",
+      "name": "Glenfiddich 15 Year Unique Solera Reserva Single Malt Scotch",
+      "category": "Other",
+      "source_url": "https://www.wine.com/product/glenfiddich-15-year-unique-solera-reserva-single-malt-scotch-whisky/27620",
+      "data_quality_score": 50,
+      "created_at": "2025-06-30T22:34:14.058997+00:00"
+    },
+    {
+      "id": "15fb95ed-58de-42a3-bd18-58d480fc585f",
+      "name": "Glenfiddich 15 Year Unique Solera Reserva Single Malt Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.wine.com/product/glenfiddich-15-year-unique-solera-reserva-single-malt-scotch-whisky/27620",
+      "data_quality_score": 73,
+      "created_at": "2025-06-30T22:34:13.677654+00:00"
+    },
+    {
+      "id": "d49fdc1c-71b5-461c-8ccf-2cac232e4b57",
+      "name": "Glenfiddich 12 Year Single Malt Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.wine.com/product/glenfiddich-12-year-single-malt-scotch-whisky/530398",
+      "data_quality_score": 73,
+      "created_at": "2025-06-30T22:34:13.26738+00:00"
+    },
+    {
+      "id": "9a0cec86-75a4-4b8a-bc5f-b5833ca22fbe",
+      "name": "Signatory Glenlivet 2007 Sherry Cask Strength Scotch Barrel Select",
+      "category": "Other",
+      "source_url": "https://www.totalwine.com/spirits/scotch/single-malt/signatory-glenlivet-2007-sherry-cask-strength-scotch-barrel-select/p/243681750",
+      "data_quality_score": 77,
+      "created_at": "2025-06-30T22:34:08.783532+00:00"
+    },
+    {
+      "id": "ab7d1acc-4c82-46d9-8791-299fc3d2cac9",
+      "name": "Signatory Caol Ila Hogshead Barrel Select",
+      "category": "Other",
+      "source_url": "https://www.totalwine.com/spirits/scotch/signatory-caol-ila-hogshead-barrel-select/p/2126216410",
+      "data_quality_score": 73,
+      "created_at": "2025-06-30T22:34:08.301114+00:00"
+    },
+    {
+      "id": "55c5c20b-a545-4832-9bd8-a0294c89ee8b",
+      "name": "Glen Fohdry 29Yr Oloroso Cask Speyside Single Malt Scotch",
+      "category": "Other",
+      "source_url": "https://www.totalwine.com/spirits/scotch/single-malt/glen-fohdry-29yr-oloroso-cask-speyside-single-malt-scotch-whisky/p/230281750",
+      "data_quality_score": 53,
+      "created_at": "2025-06-30T22:34:07.819368+00:00"
+    },
+    {
+      "id": "f0363e9c-3273-4ba0-8827-e6a1bcc2f1fb",
+      "name": "Singleton Of Glen Ord 1987 Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.totalwine.com/spirits/scotch/singleton-of-glen-ord-1987-scotch-whisky/p/2126214007",
+      "data_quality_score": 78,
+      "created_at": "2025-06-30T22:34:07.320928+00:00"
+    },
+    {
+      "id": "4c4029a0-c354-4773-a3a7-2eb2057355c2",
+      "name": "Signatory Single Malt Scotch",
+      "category": "Other",
+      "source_url": "https://www.totalwine.com/theme/signatory-single-malt-scotch",
+      "data_quality_score": 70,
+      "created_at": "2025-06-30T22:34:06.88852+00:00"
+    },
+    {
+      "id": "fd413020-3038-443a-bfed-5bf05c6dc907",
+      "name": "Glen Elgin Single Malt Scotch 18Yr",
+      "category": "Other",
+      "source_url": "https://www.totalwine.com/spirits/scotch/single-malt/glen-elgin-single-malt-scotch-18yr/p/190818750",
+      "data_quality_score": 75,
+      "created_at": "2025-06-30T22:34:06.416943+00:00"
+    },
+    {
+      "id": "1dba2421-8374-4877-9a45-d37497287462",
+      "name": "Old & Rare Glen Elgin 30Yr 1992",
+      "category": "Other",
+      "source_url": "https://www.totalwine.com/spirits/scotch/single-malt/old-rare-glen-elgin-30yr-1992/p/2126213755",
+      "data_quality_score": 78,
+      "created_at": "2025-06-30T22:34:05.950541+00:00"
+    },
+    {
+      "id": "8b4b9c21-acca-453f-baf6-be17059e2113",
+      "name": "Wm Cadenhead Glen Elgin 12 Year Barrel Select Single Malt Scotch",
+      "category": "Other",
+      "source_url": "https://www.totalwine.com/spirits/scotch/single-malt/wm-cadenhead-glen-elgin-12-year-barrel-select-single-malt-scotch/p/351706750",
+      "data_quality_score": 78,
+      "created_at": "2025-06-30T22:34:05.356119+00:00"
+    },
+    {
+      "id": "82e04a1d-7d82-42ee-a615-2a86adc4ab59",
+      "name": "The Balvenie Tun 1509 Batch No.8 Single Malt Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.astorwines.com/item/45180",
+      "data_quality_score": 65,
+      "created_at": "2025-06-30T22:34:03.0412+00:00"
+    },
+    {
+      "id": "2b737da4-2870-4106-bb0b-4e25c2c9f13b",
+      "name": "The Balvenie 27Yr Distant Shores Rum Cask Scotch Whisky Astor",
+      "category": "Other",
+      "source_url": "https://astorwines.com/item/47366",
+      "data_quality_score": 67,
+      "created_at": "2025-06-30T22:34:02.621257+00:00"
+    },
+    {
+      "id": "9b0efcfd-dab2-4c50-a826-eb20b552e60e",
+      "name": "Balvenie Portwood 21Yr. Speyside Single Malt Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://astorwines.com/item/01964",
+      "data_quality_score": 73,
+      "created_at": "2025-06-30T22:34:02.195562+00:00"
+    },
+    {
+      "id": "65a91cd0-7021-4443-af27-1dee9a3eb8ac",
+      "name": "The Balvenie 16Yr French Oak Single Malt Scotch Whisky Astor",
+      "category": "Other",
+      "source_url": "https://astorwines.com/item/47199",
+      "data_quality_score": 70,
+      "created_at": "2025-06-30T22:34:01.814215+00:00"
+    },
+    {
+      "id": "745a4afb-9aaa-46cb-a44b-3ffb6ffc94bd",
+      "name": "Isle Of Jura 21 Year Old Bot.1990 S Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.thewhiskyexchange.com/p/48145/isle-of-jura-21-year-old-bot1990s",
+      "data_quality_score": 70,
+      "created_at": "2025-06-30T22:33:57.70437+00:00"
+    },
+    {
+      "id": "505920da-b3a1-4568-88d9-430108db0c42",
+      "name": "Isle Of Jura 26 Year Old The Stillman's Dram Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.thewhiskyexchange.com/p/2818/isle-of-jura-26-year-old-the-stillmans-dram",
+      "data_quality_score": 75,
+      "created_at": "2025-06-30T22:33:56.987273+00:00"
+    },
+    {
+      "id": "a60e64ac-980d-4324-9e07-47ce98289699",
+      "name": "Jura Seven Wood. Island Single Malt Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.thewhiskyexchange.com/p/42531/jura-seven-wood",
+      "data_quality_score": 45,
+      "created_at": "2025-06-30T22:33:56.513728+00:00"
+    },
+    {
+      "id": "4592cbc1-59bc-407d-9477-bbd9f5b482e2",
+      "name": "Jura Red Wine Cask Edition Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.thewhiskyexchange.com/p/62709/jura-red-wine-cask-edition",
+      "data_quality_score": 62,
+      "created_at": "2025-06-30T22:33:56.052431+00:00"
+    },
+    {
+      "id": "2f6e4dac-f33c-4210-907e-90ba7f103eb9",
+      "name": "Jura Single Malt Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.thewhiskyexchange.com/b/40/jura-single-malt-scotch-whisky",
+      "data_quality_score": 73,
+      "created_at": "2025-06-30T22:33:55.488365+00:00"
+    },
+    {
+      "id": "7c3704cf-e164-4e43-9a95-d25c1ee72714",
+      "name": "Ardbeg Ardcore Single Malt Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.caskers.com/ardbeg-ardcore-single-malt-scotch-whisky/",
+      "data_quality_score": 85,
+      "created_at": "2025-06-30T22:33:49.196922+00:00"
+    },
+    {
+      "id": "3dc849be-8c13-4e62-8ff8-b339a14e1630",
+      "name": "Ardbeg Heavy Vapours Committee Release Single Malt Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.caskers.com/ardbeg-heavy-vapours-committee-release-single-malt-scotch-whisky/",
+      "data_quality_score": 85,
+      "created_at": "2025-06-30T22:33:48.804055+00:00"
+    },
+    {
+      "id": "3b0a3914-63ed-4029-81a7-7e825fe5492c",
+      "name": "Ardbeg Heavy Vapours Single Malt Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.caskers.com/ardbeg-heavy-vapours-single-malt-scotch-whisky/",
+      "data_quality_score": 85,
+      "created_at": "2025-06-30T22:33:48.302691+00:00"
+    },
+    {
+      "id": "a73db375-05cf-4f97-8295-2ad65ad659c8",
+      "name": "Ardbeg Arrrrrrrdbeg! Committee Release 2020 Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.caskers.com/ardbeg-arrrrrrrdbeg-committee-release-2020-scotch-whisky/",
+      "data_quality_score": 80,
+      "created_at": "2025-06-30T22:33:47.892871+00:00"
+    },
+    {
+      "id": "94847cac-1d4b-4e1b-b4fb-4ee5af9382b4",
+      "name": "Ardbeg Uigeadail Single Malt Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.caskers.com/ardbeg-uigeadail-single-malt-scotch-whisky/",
+      "data_quality_score": 85,
+      "created_at": "2025-06-30T22:33:47.447775+00:00"
+    },
+    {
+      "id": "c013045b-0d88-4995-afc6-67ba9dd1b594",
+      "name": "Glenmorangie \"Triple Cask Reserve\" Highland Single Malt Scotch",
+      "category": "Other",
+      "source_url": "https://shop.klwines.com/products/details/1765037",
+      "data_quality_score": 48,
+      "created_at": "2025-06-30T22:33:40.830538+00:00"
+    },
+    {
+      "id": "1f715f42-5612-4c9e-a3d3-4375d4a4583b",
+      "name": "Glenmorangie \"Triple Cask Reserve\" Highland Single Malt Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://shop.klwines.com/products/details/1765037",
+      "data_quality_score": 73,
+      "created_at": "2025-06-30T22:33:40.383287+00:00"
+    },
+    {
+      "id": "42830f5a-b8bb-4054-9b65-1c0b4cbda7a6",
+      "name": "Glenfiddich 50 Year Old Simultaneous Time Time Reimagined",
+      "category": "Other",
+      "source_url": "https://www.masterofmalt.com/whiskies/glenfiddich/glenfiddich-50-year-old-time-reimagined-whisky/",
+      "data_quality_score": 45,
+      "created_at": "2025-06-30T22:33:31.907718+00:00"
+    },
+    {
+      "id": "8d3dcdfe-54e4-4a7e-be07-2539a8f491f8",
+      "name": "The Singleton Of Dufftown Tailfire Single Malt Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.caskers.com/the-singleton-of-dufftown-tailfire-single-malt-scotch-whisky/",
+      "data_quality_score": 85,
+      "created_at": "2025-06-30T22:33:27.709997+00:00"
+    },
+    {
+      "id": "44ce6362-b911-40ff-8286-a71fe6ef787e",
+      "name": "The Glenrothes 42 Year Old Single Malt Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.caskers.com/the-glenrothes-42-year-old-single-malt-scotch-whisky/",
+      "data_quality_score": 75,
+      "created_at": "2025-06-30T22:33:26.834241+00:00"
+    },
+    {
+      "id": "63356670-73d3-4c46-906f-8011a904234e",
+      "name": "The Glenrothes Whisky Maker's Cut Single Malt Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.caskers.com/glenrothes-whisky-maker-s-cut/",
+      "data_quality_score": 85,
+      "created_at": "2025-06-30T22:33:26.481564+00:00"
+    },
+    {
+      "id": "75fd3c48-d0d9-4f42-a543-9aa40739499b",
+      "name": "The Glenrothes 18 Year Old Single Malt Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.caskers.com/the-glenrothes-18-year-old-single-malt-scotch-whisky/",
+      "data_quality_score": 93,
+      "created_at": "2025-06-30T22:33:25.970655+00:00"
+    },
+    {
+      "id": "94e56e12-f83a-4597-9d71-93fa335437f2",
+      "name": "Bruichladdich Scotch Single Malt 2012 Islay Barley",
+      "category": "Other",
+      "source_url": "https://astorwines.com/item/41834",
+      "data_quality_score": 68,
+      "created_at": "2025-06-30T22:33:18.290051+00:00"
+    },
+    {
+      "id": "187aa3ba-a363-4fa5-b3a2-0177ca4fba24",
+      "name": "Ardbeg Heavy Vapours Committee Release Single Malt Scotch",
+      "category": "Other",
+      "source_url": "https://flaviar.com/products/ardbeg-heavy-vapours-committee-release-single-malt-scotch-whisky-750",
+      "data_quality_score": 40,
+      "created_at": "2025-06-30T22:33:15.939532+00:00"
+    },
+    {
+      "id": "01586490-c5bf-4266-9a78-fe4cbb45b4e6",
+      "name": "Ardbeg Fermutation Committee Release Single Malt Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://flaviar.com/products/ardbeg-fermutation-committee-release-single-malt-scotch-whisky-750",
+      "data_quality_score": 85,
+      "created_at": "2025-06-30T22:33:15.38077+00:00"
+    },
+    {
+      "id": "e0bb6090-3efa-4142-a71f-27e6f210ba72",
+      "name": "Ardbeg Anthology'the Harpy's Tale'13 Year Old Single Malt Scotch",
+      "category": "Other",
+      "source_url": "https://flaviar.com/products/ardbeg-anthology-the-harpys-tale-13-year-old-single-malt-scotch-whisky-750",
+      "data_quality_score": 70,
+      "created_at": "2025-06-30T22:33:14.917285+00:00"
+    },
+    {
+      "id": "8dcf1c51-5722-41df-8eb5-966318d3b524",
+      "name": "Ardbeg Grooves Committee Release Single Malt Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://flaviar.com/products/ardbeg-grooves-committee-release-single-malt-scotch-whisky-751",
+      "data_quality_score": 85,
+      "created_at": "2025-06-30T22:33:14.413721+00:00"
+    },
+    {
+      "id": "b397c0a4-089a-4e3b-98fa-6883e65c5e11",
+      "name": "Ardbeg 10 Year Old Islay Single Malt Scotch Whisky Reviews",
+      "category": "Other",
+      "source_url": "https://flaviar.com/products/ardbeg-10-year-old-750",
+      "data_quality_score": 48,
+      "created_at": "2025-06-30T22:33:13.945501+00:00"
+    },
+    {
+      "id": "260fe556-3e5a-4003-a823-0afa24f34e5c",
+      "name": "Ardbeg'anamorphic'committee Release Single Malt Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://flaviar.com/products/ardbeg-anamorphic-committee-release-single-malt-scotch-whisky-750",
+      "data_quality_score": 85,
+      "created_at": "2025-06-30T22:33:13.357167+00:00"
+    },
+    {
+      "id": "f86dd4e8-0ab5-4a2e-a092-951fe38f1353",
+      "name": "Ardbeg Spectacular Limited Edition Single Malt Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://flaviar.com/products/ardbeg-spectacular-limited-edition-single-malt-scotch-whisky-750",
+      "data_quality_score": 85,
+      "created_at": "2025-06-30T22:33:12.909408+00:00"
+    },
+    {
+      "id": "813aa3b1-cd61-455c-b9f5-91f9b7d198fb",
+      "name": "Glenfiddich 12 Amontillado Cask Finish The Whisky Study",
+      "category": "Other",
+      "source_url": "https://thewhiskystudy.com/reviews-3/glenfiddich-12-amontillado-cask-finish",
+      "data_quality_score": 72,
+      "created_at": "2025-06-30T22:32:58.803586+00:00"
+    },
+    {
+      "id": "58f25239-35fa-455d-a462-f1ea6d573c61",
+      "name": "Glen Elgin 12 Year Old Flora & Fauna Scotch Whisky The Whisky",
+      "category": "Other",
+      "source_url": "https://www.thewhiskyexchange.com/p/2012/glen-elgin-12-year-old-flora-fauna",
+      "data_quality_score": 45,
+      "created_at": "2025-06-30T22:32:47.840803+00:00"
+    },
+    {
+      "id": "4edd254c-2b9d-4034-8c9f-39cfd759080b",
+      "name": "Glen Elgin 12 Year Old Flora & Fauna Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.thewhiskyexchange.com/p/2012/glen-elgin-12-year-old-flora-fauna",
+      "data_quality_score": 70,
+      "created_at": "2025-06-30T22:32:47.440134+00:00"
+    },
+    {
+      "id": "b2a34136-7697-4032-a95c-1b3e80498c11",
+      "name": "Glen Elgin 2011-13 Year Old Oloroso Cask Adephi Scotch",
+      "category": "Other",
+      "source_url": "https://www.thewhiskyexchange.com/p/84451/glen-elgin-2011-13-year-old-oloroso-cask-adephi",
+      "data_quality_score": 45,
+      "created_at": "2025-06-30T22:32:46.873048+00:00"
+    },
+    {
+      "id": "e5c8c603-b8c6-4abd-afd8-01c0a163ee3a",
+      "name": "Glen Elgin 2011-13 Year Old Oloroso Cask Adephi Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.thewhiskyexchange.com/p/84451/glen-elgin-2011-13-year-old-oloroso-cask-adephi",
+      "data_quality_score": 77,
+      "created_at": "2025-06-30T22:32:46.33572+00:00"
+    },
+    {
+      "id": "10755bd8-2ea9-4830-9ada-95e8599a7a91",
+      "name": "Glen Elgin 1971-32 Year Old Diageo Special Releases 2003 Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.thewhiskyexchange.com/p/2017/glen-elgin-1971-32-year-old-diageo-special-releases-2003",
+      "data_quality_score": 75,
+      "created_at": "2025-06-30T22:32:45.593732+00:00"
+    },
+    {
+      "id": "6d8e4d16-917a-4f55-8dd0-af0ce49651c4",
+      "name": "Glen Elgin 2008-13 Year Old The Whisky Exchange Scotch",
+      "category": "Other",
+      "source_url": "https://www.thewhiskyexchange.com/p/62887/glen-elgin-2008-13-year-old-the-whisky-exchange",
+      "data_quality_score": 45,
+      "created_at": "2025-06-30T22:32:45.130126+00:00"
+    },
+    {
+      "id": "6db9f4ed-440d-4637-bc5b-fd291ac24312",
+      "name": "Glen Elgin 2008-13 Year Old The Whisky Exchange Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.thewhiskyexchange.com/p/62887/glen-elgin-2008-13-year-old-the-whisky-exchange",
+      "data_quality_score": 75,
+      "created_at": "2025-06-30T22:32:44.547113+00:00"
+    },
+    {
+      "id": "88f9497e-65c9-4a87-8028-dcf7582cae41",
+      "name": "Glen Elgin White Horse Bot.1990 S Scotch Whisky The Whisky",
+      "category": "Other",
+      "source_url": "https://www.thewhiskyexchange.com/p/22424/glen-elgin-white-horse-bot1990s",
+      "data_quality_score": 40,
+      "created_at": "2025-06-30T22:32:44.042461+00:00"
+    },
+    {
+      "id": "f00a1aff-689c-4054-b47e-a88c0d28c706",
+      "name": "Glen Elgin White Horse Bot.1990 S Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.thewhiskyexchange.com/p/22424/glen-elgin-white-horse-bot1990s",
+      "data_quality_score": 68,
+      "created_at": "2025-06-30T22:32:43.526968+00:00"
+    },
+    {
+      "id": "3de7cccb-2a1e-4b47-ba4e-3e5325b85498",
+      "name": "Glen Elgin 1998-18 Year Old Special Releases 2017 Scotch",
+      "category": "Other",
+      "source_url": "https://www.thewhiskyexchange.com/p/38438/glen-elgin-1998-18-year-old-special-releases-2017",
+      "data_quality_score": 50,
+      "created_at": "2025-06-30T22:32:43.008447+00:00"
+    },
+    {
+      "id": "f074d73f-f7f1-4816-915e-189be92a04a2",
+      "name": "Glen Elgin 1998-18 Year Old Special Releases 2017 Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.thewhiskyexchange.com/p/38438/glen-elgin-1998-18-year-old-special-releases-2017",
+      "data_quality_score": 78,
+      "created_at": "2025-06-30T22:32:42.461862+00:00"
+    },
+    {
+      "id": "0956fccc-aeac-49b6-960f-8ef819da72d2",
+      "name": "Glen Elgin 12 Year Old Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.thewhiskyexchange.com/p/2013/glen-elgin-12-year-old",
+      "data_quality_score": 75,
+      "created_at": "2025-06-30T22:32:41.93108+00:00"
+    },
+    {
+      "id": "4014a51c-aa47-491e-b2d3-185b938b07f3",
+      "name": "Glen Elgin Single Malt Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.thewhiskyexchange.com/b/40/glen-elgin-single-malt-scotch-whisky",
+      "data_quality_score": 70,
+      "created_at": "2025-06-30T22:32:41.382319+00:00"
+    },
+    {
+      "id": "1f72040d-25fc-4f78-a39b-8a9b32e91e70",
+      "name": "The Glendronach 18 Year Old Allardice Single Malt Whiskey",
+      "category": "Other",
+      "source_url": "https://www.reservebar.com/products/the-glendronach-18-year-old-allardice-single-malt-whiskey/GROUPING-82256",
+      "data_quality_score": 75,
+      "created_at": "2025-06-30T22:32:16.719655+00:00"
+    },
+    {
+      "id": "1c8eb357-cf08-437b-8604-50535357d4a6",
+      "name": "The Glendronach Single Malt Scotch Whisky Revival Aged 15 Years",
+      "category": "Other",
+      "source_url": "https://www.reservebar.com/products/the-glendronach-single-malt-scotch-whisky-revival-aged-15-years/GROUPING-81359",
+      "data_quality_score": 72,
+      "created_at": "2025-06-30T22:32:16.341329+00:00"
+    },
+    {
+      "id": "0941e378-c7f5-45b8-bde5-cb430cc8bdaf",
+      "name": "Glendronach 27 Year Old 1994 Cask 7466 Single Malt Scotch",
+      "category": "Other",
+      "source_url": "https://www.reservebar.com/products/glendronach-27-year-old-1994-cask-7466-single-malt-scotch-whisky/GROUPING-2521768",
+      "data_quality_score": 70,
+      "created_at": "2025-06-30T22:32:15.779503+00:00"
+    },
+    {
+      "id": "260bcccf-bb21-4fab-b9e8-fc589a9ab90d",
+      "name": "The Glendronach 18 Year Old Single Malt Scotch Whisky Reserve Bar",
+      "category": "Other",
+      "source_url": "https://www.reservebar.com/products/the-glendronach-18-year-old-single-malt-scotch-whisky/GROUPING-2515074",
+      "data_quality_score": 75,
+      "created_at": "2025-06-30T22:32:15.376354+00:00"
+    },
+    {
+      "id": "9f0a939b-f24f-4688-9920-bc38ab8ebb08",
+      "name": "Glendronach 28 Year Old 1993 Cask 4195 Single Malt Scotch",
+      "category": "Other",
+      "source_url": "https://www.reservebar.com/products/glendronach-28-year-old-1993-cask-4195-single-malt-scotch-whisky/GROUPING-2330332",
+      "data_quality_score": 70,
+      "created_at": "2025-06-30T22:32:15.006334+00:00"
+    },
+    {
+      "id": "91dfa4ab-b33c-4c1a-b20f-f72f84a84d6a",
+      "name": "Macallan 18 Year Old Sherry Oak Cask Highland Single Malt Scotch",
+      "category": "Other",
+      "source_url": "https://www.klwines.com/p/i?i=1447544",
+      "data_quality_score": 53,
+      "created_at": "2025-06-30T22:32:03.758116+00:00"
+    },
+    {
+      "id": "71ca4fb4-b333-4fd9-b2d1-82e77629f071",
+      "name": "Macallan \"Rare Cask 2023 Release\" Highland Single Malt Scotch",
+      "category": "Other",
+      "source_url": "https://www.klwines.com/p/i?i=1717671",
+      "data_quality_score": 48,
+      "created_at": "2025-06-30T22:32:02.995913+00:00"
+    },
+    {
+      "id": "e9e7918f-016d-4e20-a007-a3e1bf9908f3",
+      "name": "Macallan \"Rare Cask 2023 Release\" Highland Single Malt Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.klwines.com/p/i?i=1717671",
+      "data_quality_score": 75,
+      "created_at": "2025-06-30T22:32:02.503841+00:00"
+    },
+    {
+      "id": "72fa2cfc-36e5-4791-a099-8c521e2606ba",
+      "name": "Macallan 18 Year Old Speyside Single Malt Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.klwines.com/detail.asp?sku=620010",
+      "data_quality_score": 78,
+      "created_at": "2025-06-30T22:32:01.958766+00:00"
+    },
+    {
+      "id": "1989482b-171e-434f-9cdc-4d39f3fbfb9f",
+      "name": "Macallan 25 Year Old \"Distillery Bottling\" Highland Single Malt Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.klwines.com/p/i?i=620022",
+      "data_quality_score": 80,
+      "created_at": "2025-06-30T22:32:01.501019+00:00"
+    },
+    {
+      "id": "d55a75ae-7bb8-41c0-ad39-86ddcca7bde2",
+      "name": "Oban 21 Year Old Single Malt Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.caskers.com/oban-21-year-old-single-malt-scotch-whisky/",
+      "data_quality_score": 85,
+      "created_at": "2025-06-30T22:31:57.932561+00:00"
+    },
+    {
+      "id": "585e79ec-b994-4d37-897a-212679fc9f7b",
+      "name": "Highland Park 15 Year Old Viking Heart Single Malt Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.liquor.com/highland-park-15-year-old-viking-heart-review-5225029",
+      "data_quality_score": 48,
+      "created_at": "2025-06-30T22:31:51.717633+00:00"
+    },
+    {
+      "id": "3d8a10e8-aa3e-4bca-a808-dc65fb0cd8d1",
+      "name": "Macallan No.6 Decanter Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.thewhiskyexchange.com/p/27897/macallan-no6-decanter",
+      "data_quality_score": 57,
+      "created_at": "2025-06-30T22:31:43.644977+00:00"
+    },
+    {
+      "id": "f0759186-9cfc-4640-aa94-854319cd8e45",
+      "name": "Macallan 1969-52 Year Old Duncan Taylor Rarest Reserve Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.thewhiskyexchange.com/p/83079/macallan-1969-52-year-old-duncan-taylor-rarest-reserve",
+      "data_quality_score": 70,
+      "created_at": "2025-06-30T22:31:43.075249+00:00"
+    },
+    {
+      "id": "ac783921-d437-4946-b1c2-9e0b2a3edc47",
+      "name": "Macallan Edition No.5 Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.thewhiskyexchange.com/p/51087/macallan-edition-no5",
+      "data_quality_score": 60,
+      "created_at": "2025-06-30T22:31:42.63822+00:00"
+    },
+    {
+      "id": "cb551380-5c80-48ee-b44e-c8d4d5f42c2b",
+      "name": "Macallan 18 Year Old Sherry Oak 2024 Release Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.thewhiskyexchange.com/p/82168/macallan-18-year-old-sherry-oak-2024-release",
+      "data_quality_score": 75,
+      "created_at": "2025-06-30T22:31:42.162051+00:00"
+    },
+    {
+      "id": "e9134713-6796-425f-ab20-f3284874406c",
+      "name": "Macallan Classic Cut 2022 Release Scotch Whisky The Whisky",
+      "category": "Other",
+      "source_url": "https://www.thewhiskyexchange.com/p/68147/macallan-classic-cut-2022-release",
+      "data_quality_score": 40,
+      "created_at": "2025-06-30T22:31:41.714784+00:00"
+    },
+    {
+      "id": "e16ec6bd-97b6-49c7-b881-cd41f952acd2",
+      "name": "Macallan 1950 Tales Of The Macallan Volume 1 Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.thewhiskyexchange.com/p/63291/macallan-1950-tales-of-the-macallan-volume-1",
+      "data_quality_score": 65,
+      "created_at": "2025-06-30T22:31:41.135114+00:00"
+    },
+    {
+      "id": "00f4d2cc-e3a4-4866-b16f-aedc188a1bca",
+      "name": "Kilkerran 12Yr Campbeltown Single Malt Scotch Whisky Astor",
+      "category": "Other",
+      "source_url": "https://astorwines.com/item/35935",
+      "data_quality_score": 73,
+      "created_at": "2025-06-30T22:31:37.03007+00:00"
+    },
+    {
+      "id": "c51a8e37-a3a8-46a5-8b6d-eef8dd57d878",
+      "name": "Year Cask Strength Single Malt Scotch Whisky",
+      "category": "Other",
+      "source_url": "https://www.astorwines.com/item/44763",
+      "data_quality_score": 60,
+      "created_at": "2025-06-30T22:31:36.329647+00:00"
+    },
+    {
+      "id": "a612fd6c-2a76-4f02-a61b-1ddb4542f5ab",
+      "name": "Oban Little Bay Single Malt Scotch",
+      "category": "Other",
+      "source_url": "https://astorwines.com/item/46897",
+      "data_quality_score": 85,
+      "created_at": "2025-06-30T22:31:35.53363+00:00"
+    }
+  ],
+  "stats": {
+    "total": 168,
+    "missingUrl": 0,
+    "otherCategory": 168,
+    "lowQuality": 41
+  }
+}

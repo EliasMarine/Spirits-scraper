@@ -6,6 +6,7 @@ import { logger } from '../utils/logger.js';
 import { V25CriticalFixes } from '../fixes/v2.5-critical-fixes.js';
 import { preStorageValidator } from './pre-storage-validator.js';
 import { contentValidator } from './content-validator.js';
+import { comprehensiveDataQualityValidator } from './comprehensive-data-quality-rules.js';
 
 export interface StorageResult {
   success: boolean;
@@ -34,12 +35,39 @@ export class SupabaseStorage {
    */
   async storeSpirit(data: Partial<SpiritData>): Promise<StorageResult> {
     try {
-      // Validate data
+      // V3.1.6: CRITICAL - Comprehensive quality validation first
+      // This prevents the catastrophic data quality issues found in audit
+      const qualityValidation = comprehensiveDataQualityValidator.validate(data);
+      
+      if (!qualityValidation.canStore) {
+        const criticalErrors = qualityValidation.errors.filter(e => e.severity === 'CRITICAL');
+        logger.error(`🚨 CRITICAL QUALITY FAILURE - Blocking storage: ${data.name}`);
+        logger.error(`   Quality score: ${qualityValidation.score}/100`);
+        logger.error(`   Critical errors: ${criticalErrors.map(e => e.message).join(', ')}`);
+        
+        return {
+          success: false,
+          error: `Critical quality validation failed: ${criticalErrors.map(e => e.message).join(', ')}`,
+        };
+      }
+      
+      // Log quality warnings for monitoring
+      if (qualityValidation.warnings.length > 0) {
+        logger.warn(`⚠️ Quality warnings for: ${data.name}`);
+        qualityValidation.warnings.forEach(w => {
+          logger.warn(`   ${w.code}: ${w.message}`);
+        });
+      }
+      
+      // Log quality score for monitoring
+      logger.info(`✅ Quality validation passed: ${data.name} (Score: ${qualityValidation.score}/100)`);
+
+      // Legacy validation (kept for compatibility)
       const validation = dataValidator.validate(data);
       if (!validation.isValid) {
         return {
           success: false,
-          error: `Validation failed: ${validation.errors.join(', ')}`,
+          error: `Legacy validation failed: ${validation.errors.join(', ')}`,
         };
       }
 
@@ -90,6 +118,9 @@ export class SupabaseStorage {
       if (contentValidation.suggestions.volume) {
         spiritData.volume = contentValidation.suggestions.volume;
       }
+      
+      // V3.1.6: Store the comprehensive quality score
+      spiritData.data_quality_score = qualityValidation.score;
 
       // Check for duplicates
       const duplicate = await this.checkDuplicate(spiritData);
