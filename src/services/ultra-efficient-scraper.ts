@@ -288,7 +288,7 @@ export class UltraEfficientScraper {
                 logger.warn(`  Spirit data: ${JSON.stringify({
                   name: spirit.name,
                   brand: spirit.brand,
-                  type: spirit.type,
+                  category: spirit.category,
                   price: spirit.price,
                   abv: spirit.abv,
                   source_url: spirit.source_url
@@ -712,7 +712,7 @@ export class UltraEfficientScraper {
         
         products.push({
           name: TextProcessor.fixTextSpacing(name),
-          type: category,
+          category: category,
           price: cleanPrice,
           image_url: image,
           source_url: 'totalwine.com',
@@ -745,7 +745,7 @@ export class UltraEfficientScraper {
         
         products.push({
           name: TextProcessor.fixTextSpacing(name),
-          type: category,
+          category: category,
           price: cleanPrice,
           abv: abv,
           image_url: image,
@@ -776,7 +776,7 @@ export class UltraEfficientScraper {
         
         products.push({
           name: TextProcessor.fixTextSpacing(name),
-          type: category,
+          category: category,
           price: cleanPrice,
           description: details,
           source_url: 'wine.com',
@@ -807,7 +807,7 @@ export class UltraEfficientScraper {
         
         products.push({
           name: TextProcessor.fixTextSpacing(name),
-          type: category,
+          category: category,
           price: cleanPrice,
           abv: abv,
           description: details,
@@ -840,7 +840,7 @@ export class UltraEfficientScraper {
         
         products.push({
           name: TextProcessor.fixTextSpacing(name),
-          type: category,
+          category: category,
           price: cleanPrice,
           abv: cleanABV,
           volume: volume || '700ml',
@@ -882,7 +882,7 @@ export class UltraEfficientScraper {
           if (title && title.length > 3) {
             products.push({
               name: TextProcessor.fixTextSpacing(title),
-              type: category,
+              category: category,
               price: this.extractPrice(priceMatch[0]),
               source_url: 'unknown',
               data_source: 'catalog_extraction'
@@ -932,7 +932,7 @@ export class UltraEfficientScraper {
           
           spirits.push({
             name: TextProcessor.fixTextSpacing(product.name),
-            type: category,
+            category: category,
             price: structuredPrice,
             brand: product.brand?.name || product.brand || TextProcessor.extractBrandFromName(product.name),
             description: product.description,
@@ -955,7 +955,7 @@ export class UltraEfficientScraper {
         if (!exists) {
           spirits.push({
             name: this.cleanProductName(productName),
-            type: category,
+            category: category,
             price: this.extractPrice(meta['product:price:amount'] || meta['product:price'] || meta['og:price:amount']),
             brand: meta['product:brand'] || meta['og:brand'],
             description: meta['og:description'] || meta['description'],
@@ -1340,7 +1340,7 @@ export class UltraEfficientScraper {
     return {
       name: productName,
       brand: brand || TextProcessor.extractBrandFromName(productName),
-      type: category,
+      category: category,
       price: priceMatch ? this.extractPrice(priceMatch[1]) : undefined,
       source_url: link,
       data_source: 'title_extraction'
@@ -1371,7 +1371,7 @@ export class UltraEfficientScraper {
             products.push({
               name: cleanName,
               brand: TextProcessor.extractBrandFromName(cleanName),
-              type: category,
+              category: category,
               price: this.extractPrice(match[2]),
               source_url: link,
               data_source: 'snippet_extraction'
@@ -1393,7 +1393,7 @@ export class UltraEfficientScraper {
           products.push({
             name: cleanName,
             brand: this.extractBrandFromName(cleanName),
-            type: category,
+            category: category,
             source_url: link,
             data_source: 'snippet_listing'
           });
@@ -1584,7 +1584,7 @@ export class UltraEfficientScraper {
       
       // Detect proper type
       const typeDetection = detectSpiritType(fixedSpirit.name, fixedSpirit.brand || '', fixedSpirit.description);
-      const detectedType = typeDetection?.type || fixedSpirit.type;
+      const detectedType = typeDetection?.type || fixedSpirit.category;
       
       // Skip if the detected type doesn't match the category we're searching for
       // Allow some flexibility (e.g., "Whiskey" matches "Bourbon")
@@ -1600,9 +1600,9 @@ export class UltraEfficientScraper {
       };
       
       // For searchAndExtract, be more flexible with type matching
-      // If fixedSpirit.type is 'whiskey' (from searchAndExtract), accept all whiskey types
-      const categoryKey = fixedSpirit.type.toLowerCase();
-      const allowedTypes = categoryMap[categoryKey] || [fixedSpirit.type];
+      // If fixedSpirit.category is 'whiskey' (from searchAndExtract), accept all whiskey types
+      const categoryKey = fixedSpirit.category.toLowerCase();
+      const allowedTypes = categoryMap[categoryKey] || [fixedSpirit.category];
       
       // Special handling for generic searches (searchAndExtract)
       // If the detected type is any valid spirit type, allow it
@@ -1698,8 +1698,7 @@ export class UltraEfficientScraper {
       const spiritData = {
         name: fixedSpirit.name,
         brand: fixedSpirit.brand || TextProcessor.extractBrandFromName(fixedSpirit.name),
-        type: detectedType,
-        category: this.mapTypeToCategory(detectedType),
+        category: detectedType,
         price: finalPrice,
         abv: calculatedAbv,
         proof: calculatedProof,  // V2.6: Calculate proof from ABV

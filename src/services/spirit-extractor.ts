@@ -244,36 +244,40 @@ export class SpiritExtractor {
     
     // Type detection - Use the new comprehensive type detection
     const typeResult = detectSpiritType(fixedName, extractedData.brand, extractedData.description);
-    extractedData.type = typeResult.type;
+    // OLD CODE START: was setting 'type' field causing validation mismatch
+    // extractedData.type = typeResult.type;
+    // OLD CODE END
+    // Fix critical field name mismatch - validation expects 'category' field
+    extractedData.category = typeResult.type;
     extractedData.subcategory = typeResult.subType;
     
     // Only log type detection in debug mode
-    // console.log(`🏷️ Type detection: name="${fixedName}" brand="${extractedData.brand}" -> type="${extractedData.type}"${typeResult.subType ? ` (${typeResult.subType})` : ''} [confidence: ${typeResult.confidence}]`);
+    // console.log(`🏷️ Type detection: name="${fixedName}" brand="${extractedData.brand}" -> category="${extractedData.category}"${typeResult.subType ? ` (${typeResult.subType})` : ''} [confidence: ${typeResult.confidence}]`);
     
     // If low confidence or generic type, try text processor as fallback
-    if (typeResult.confidence < 0.5 || extractedData.type === 'Spirit') {
+    if (typeResult.confidence < 0.5 || extractedData.category === 'Spirit') {
       // Only log fallback attempts in debug mode
       // console.log(`🔄 Low confidence (${typeResult.confidence}) or generic type, trying TextProcessor...`);
-      const fallbackType = TextProcessor.normalizeCategory(fixedName + ' ' + (extractedData.description || ''), extractedData.type);
+      const fallbackType = TextProcessor.normalizeCategory(fixedName + ' ' + (extractedData.description || ''), extractedData.category);
       // Only log TextProcessor results in debug mode
       // console.log(`🔄 TextProcessor returned: "${fallbackType}"`);
       
       // Only use fallback if it's more specific
       if (fallbackType !== 'Other' && fallbackType !== 'Spirit') {
-        extractedData.type = fallbackType;
+        extractedData.category = fallbackType;
       }
     }
     
     // Extract whiskey style for bourbon/whiskey types
-    if (extractedData.type === 'Bourbon' || extractedData.type === 'Whiskey') {
+    if (extractedData.category === 'Bourbon' || extractedData.category === 'Whiskey') {
       const whiskeyStyle = getWhiskeyStyle(fixedName, extractedData.description);
       if (whiskeyStyle) {
         extractedData.whiskey_style = whiskeyStyle;
       }
     }
     
-    // Map type to category - fix method signature
-    extractedData.category = this.detectCategory(extractedData.type);
+    // FIXED: Category is already set from type detection above - no need to remap
+    // extractedData.category is already set from detectSpiritType result
     
     // Extract distillery from brand
     const distillery = this.extractDistillery(extractedData.brand || '', fixedName);
@@ -281,9 +285,9 @@ export class SpiritExtractor {
       extractedData.distillery = distillery;
     }
     
-    // Extract country based on type
+    // Extract country based on category (fixed field name)
     const originCountry = this.extractOriginCountry(
-      extractedData.type || '', 
+      extractedData.category || '', 
       fixedName, 
       extractedData.description || '',
       parsedResults[0]?.url || ''
@@ -294,9 +298,9 @@ export class SpiritExtractor {
     }
     
     // CRITICAL: If bourbon or rye, MUST have USA as origin
-    if ((extractedData.type === 'Bourbon' || extractedData.type === 'Rye Whiskey') && !extractedData.origin_country) {
+    if ((extractedData.category === 'Bourbon' || extractedData.category === 'Rye Whiskey') && !extractedData.origin_country) {
       extractedData.origin_country = 'United States';
-      console.log(`🇺🇸 Auto-setting origin country to United States for ${extractedData.type}`);
+      console.log(`🇺🇸 Auto-setting origin country to United States for ${extractedData.category}`);
     }
     
     // Find best image
@@ -2025,14 +2029,23 @@ export class SpiritExtractor {
       }
     }
     
-    // If no known brand found, try generic extraction
+    // V3.2 ULTRATHINK: Enhanced generic brand extraction
     // Pattern: First 1-3 words before spirit type indicators
-    const genericMatch = productName.match(/^([A-Z][a-zA-Z']+(?:s+[A-Z][a-zA-Z']+){0,2})s+(?:Bourbon|Whiskey|Whisky|Rye|Scotch|Vodka|Gin|Rum|Tequila|Straight|Kentucky|Tennessee|Single|Small|Barrel|Batch|Proof)/i);
+    const genericMatch = productName.match(/^([A-Z][a-zA-Z']+(?:\s+[A-Z][a-zA-Z']+){0,2})\s+(?:Bourbon|Whiskey|Whisky|Rye|Scotch|Vodka|Gin|Rum|Tequila|Straight|Kentucky|Tennessee|Single|Small|Barrel|Batch|Proof)/i);
     if (genericMatch && genericMatch[1]) {
-      const potentialBrand = genericMatch[1].trim();
+      let potentialBrand = genericMatch[1].trim();
+      
+      // V3.2: Fix apostrophe contamination (Pinhook'bourbon -> Pinhook)
+      potentialBrand = potentialBrand.replace(/[''](?:bourbon|whiskey|whisky|rye|scotch)/gi, '');
+      
       // Don't return generic words as brands
-      const genericWords = ['The', 'Single', 'Small', 'Barrel', 'Batch', 'Straight', 'Kentucky', 'Tennessee', 'Bottled', 'Bond'];
-      if (!genericWords.includes(potentialBrand)) {
+      const genericWords = ['The', 'Single', 'Small', 'Barrel', 'Batch', 'Straight', 'Kentucky', 'Tennessee', 'Bottled', 'Bond', 'Brand', 'Year', 'Old', 'Aged'];
+      
+      // V3.2: Additional validation - brand must be meaningful
+      if (!genericWords.includes(potentialBrand) && 
+          potentialBrand.length >= 3 && 
+          potentialBrand.length <= 30 &&
+          !/^\d+/.test(potentialBrand)) { // Don't start with numbers
         return potentialBrand;
       }
     }
