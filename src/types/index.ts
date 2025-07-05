@@ -52,8 +52,10 @@ export interface GoogleSearchResponse {
 export const SpiritDataSchema = z.object({
   name: z.string().min(1),
   brand: z.string().optional(),
-  type: z.string().optional(),
-  category: z.string().optional(),
+  // OLD CODE START: had both type and category causing confusion
+  // type: z.string().optional(),
+  // OLD CODE END
+  category: z.string().optional(), // Primary field for spirit classification
   subcategory: z.string().optional(),
   abv: z.number().min(0).max(100).optional(),
   proof: z.number().min(0).max(200).optional(),

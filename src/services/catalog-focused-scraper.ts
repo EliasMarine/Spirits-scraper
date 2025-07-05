@@ -401,8 +401,7 @@ export class CatalogFocusedScraper {
                 fullProductData?.brand || product.brand || this.extractBrandFromName(product.name, distillery)
               ),
               distillery: fullProductData?.distillery || distillery.name,
-              type: TextProcessor.normalizeCategory(product.name, finalType),
-              category: fullProductData?.category || this.detectCategoryFromType(finalType),
+              category: TextProcessor.normalizeCategory(product.name, finalType),
               subcategory: fullProductData?.subcategory,
               region: fullProductData?.region || distillery.region,
               country: fullProductData?.origin_country || distillery.country,
@@ -444,7 +443,7 @@ export class CatalogFocusedScraper {
             if (stored.success) {
               result.productsStored++;
               processedProducts.add(productKey);
-              logger.info(`✅ Stored: ${spiritData.name} (${spiritData.type})`);
+              logger.info(`✅ Stored: ${spiritData.name} (${spiritData.category})`);
             } else {
               logger.error(`❌ Failed to store: ${spiritData.name} - ${stored.error}`);
             }

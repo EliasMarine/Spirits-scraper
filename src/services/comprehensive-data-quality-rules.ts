@@ -240,7 +240,9 @@ export class ComprehensiveDataQualityValidator {
     warnings.push(...urlValidation.warnings);
 
     // CRITICAL VALIDATION: Category
-    const categoryValidation = this.validateCategory(spirit.name, spirit.description, spirit.category);
+    // V3.1.6 FIX: Use both category and type fields for validation
+    const categoryToValidate = spirit.category || (spirit as any).type;
+    const categoryValidation = this.validateCategory(spirit.name, spirit.description, categoryToValidate);
     errors.push(...categoryValidation.errors);
     warnings.push(...categoryValidation.warnings);
 
@@ -259,12 +261,51 @@ export class ComprehensiveDataQualityValidator {
     errors.push(...consistencyValidation.errors);
     warnings.push(...consistencyValidation.warnings);
 
+    // V3.2 ULTRATHINK: Field Completeness Validation with Smart Defaults
+    const completenessValidation = this.validateFieldCompleteness(spirit);
+    errors.push(...completenessValidation.errors);
+    warnings.push(...completenessValidation.warnings);
+    
+    // Apply smart defaults if available
+    const smartDefaults = completenessValidation.suggestions;
+    if (Object.keys(smartDefaults).length > 0) {
+      for (const [field, value] of Object.entries(smartDefaults)) {
+        recommendations.push(`Auto-detected ${field}: "${value}"`);
+      }
+    }
+
     // Calculate quality score
     const score = this.calculateQualityScore(spirit, errors, warnings);
 
-    // Determine if data can be stored
+    // V3.2 ULTRATHINK: HARD QUALITY STANDARDS - Minimum Score 70
     const criticalErrors = errors.filter(e => e.severity === 'CRITICAL');
-    const canStore = criticalErrors.length === 0 && score >= 60;
+    const highErrors = errors.filter(e => e.severity === 'HIGH');
+    
+    // ULTRA-STRICT STORAGE REQUIREMENTS
+    const meetsCriticalRequirements = criticalErrors.length === 0;
+    const meetsScoreRequirement = score >= 70; // RAISED from 60 to 70
+    const meetsFieldRequirements = this.validateHardRequiredFields(spirit);
+    
+    const canStore = meetsCriticalRequirements && meetsScoreRequirement && meetsFieldRequirements;
+    
+    // Add quality gate warnings
+    if (!meetsScoreRequirement && meetsCriticalRequirements) {
+      warnings.push({
+        code: 'QUALITY_SCORE_TOO_LOW',
+        message: `Quality score ${score} is below minimum threshold of 70`,
+        field: 'overall',
+        suggestion: 'Improve data quality to meet storage requirements'
+      });
+    }
+    
+    if (!meetsFieldRequirements) {
+      warnings.push({
+        code: 'HARD_REQUIRED_FIELDS_MISSING',
+        message: 'Missing hard required fields for production storage',
+        field: 'overall',
+        suggestion: 'Ensure name, source_url, and category are populated'
+      });
+    }
 
     return {
       isValid: errors.length === 0,
@@ -465,23 +506,26 @@ export class ComprehensiveDataQualityValidator {
     const errors: QualityError[] = [];
     const warnings: QualityWarning[] = [];
 
+    // V3.1.6 FIX: Check if category is missing or "Other"
     if (!category || category === 'Other') {
       // Try to detect category from name and description
       const text = `${name || ''} ${description || ''}`.toLowerCase();
       const detectedCategory = this.detectCategory(text);
       
       if (detectedCategory !== 'Other') {
+        // V3.1.6 FIX: This should be a warning, not an error - the category CAN be detected
         warnings.push({
           code: 'CATEGORY_AUTO_DETECTABLE',
-          message: `Category could be auto-detected as "${detectedCategory}" but was "${category || 'missing'}"`,
+          message: `Category successfully auto-detected as "${detectedCategory}" from content`,
           field: 'category',
-          suggestion: `Consider setting category to "${detectedCategory}"`
+          suggestion: `Auto-detected category: "${detectedCategory}"`
         });
       } else {
+        // Only error if we truly cannot detect any category
         errors.push({
           code: 'CATEGORY_DETECTION_FAILED',
-          message: 'Category detection failed - cannot classify spirit type',
-          severity: 'HIGH',
+          message: 'Category detection failed - cannot classify spirit type from available content',
+          severity: 'MEDIUM', // V3.1.6 FIX: Reduced from HIGH to MEDIUM
           field: 'category',
           value: category
         });
@@ -523,7 +567,7 @@ export class ComprehensiveDataQualityValidator {
   }
 
   /**
-   * Validate description quality to prevent review fragments
+   * Validate description quality to prevent review fragments and navigation contamination
    */
   private validateDescription(description?: string, name?: string): { errors: QualityError[], warnings: QualityWarning[] } {
     const errors: QualityError[] = [];
@@ -537,6 +581,41 @@ export class ComprehensiveDataQualityValidator {
         suggestion: 'Add product description for better quality'
       });
       return { errors, warnings };
+    }
+
+    // V3.2 ULTRATHINK: Check for navigation/menu contamination (CRITICAL)
+    const navigationPatterns = [
+      /\bStaff Pick Notes\b/i,
+      /\bYou May Also Enjoy\b/i,
+      /\bItem Notes\b/i,
+      /\bAdd to Cart\b/i,
+      /\bFree Shipping\b/i,
+      /\bBuy Now\b/i,
+      /\bSelect Options\b/i,
+      /\bOut of Stock\b/i,
+      /\bIn Stock\b/i,
+      /\bShop Now\b/i,
+      /\bView Details\b/i,
+      /\bProduct Details\b/i,
+      /\bQuick View\b/i,
+      /\bCompare Products\b/i,
+      /\bRelated Products\b/i,
+      /\bCustomers Also Bought\b/i,
+      /\bCustomers Who Viewed\b/i,
+      /\bFrequently Bought Together\b/i
+    ];
+
+    for (const pattern of navigationPatterns) {
+      if (pattern.test(description)) {
+        errors.push({
+          code: 'DESCRIPTION_NAVIGATION_CONTAMINATION',
+          message: 'Description contains website navigation/menu text instead of product information',
+          severity: 'CRITICAL',
+          field: 'description',
+          value: description.substring(0, 150)
+        });
+        return { errors, warnings }; // Critical error, don't continue
+      }
     }
 
     // Check for review fragments
@@ -553,6 +632,31 @@ export class ComprehensiveDataQualityValidator {
           severity: 'HIGH',
           field: 'description',
           value: description.substring(0, 100)
+        });
+        break;
+      }
+    }
+
+    // V3.2: Check for generic category descriptions
+    const genericDescriptions = [
+      /^SPIRITS$/i,
+      /^Bourbon$/i,
+      /^Whiskey$/i,
+      /^Rum$/i,
+      /^Gin$/i,
+      /^Vodka$/i,
+      /^Tequila$/i,
+      /^(Bourbon|Whiskey|Rum|Gin|Vodka|Tequila),\s*SPIRITS$/i
+    ];
+
+    for (const pattern of genericDescriptions) {
+      if (pattern.test(description.trim())) {
+        errors.push({
+          code: 'DESCRIPTION_TOO_GENERIC',
+          message: 'Description is too generic (just category name)',
+          severity: 'HIGH',
+          field: 'description',
+          value: description
         });
         break;
       }
@@ -713,15 +817,18 @@ export class ComprehensiveDataQualityValidator {
     }
 
     // Age validation
-    if (spirit.age) {
-      const age = parseInt(spirit.age.toString());
-      if (isNaN(age) || age < 1 || age > 100) {
-        warnings.push({
-          code: 'AGE_INVALID',
-          message: `Invalid age statement: ${spirit.age}`,
-          field: 'age',
-          suggestion: 'Age should be between 1-100 years'
-        });
+    if (spirit.age_statement) {
+      const ageMatch = spirit.age_statement.match(/(\d+)\s*(?:year|yr)/i);
+      if (ageMatch) {
+        const age = parseInt(ageMatch[1]);
+        if (isNaN(age) || age < 1 || age > 100) {
+          warnings.push({
+            code: 'AGE_INVALID',
+            message: `Invalid age statement: ${spirit.age_statement}`,
+            field: 'age_statement',
+            suggestion: 'Age should be between 1-100 years'
+          });
+        }
       }
     }
 
@@ -759,6 +866,417 @@ export class ComprehensiveDataQualityValidator {
     score += completenessBonus;
 
     return Math.max(0, Math.min(100, Math.round(score)));
+  }
+
+  /**
+   * V3.2 ULTRATHINK: Field completeness validation with smart defaults
+   */
+  private validateFieldCompleteness(spirit: Partial<SpiritData>): { errors: QualityError[], warnings: QualityWarning[], suggestions: Record<string, any> } {
+    const errors: QualityError[] = [];
+    const warnings: QualityWarning[] = [];
+    const suggestions: Record<string, any> = {};
+
+    // CRITICAL REQUIRED FIELDS
+    const requiredFields = ['name', 'source_url', 'category'];
+    for (const field of requiredFields) {
+      if (!spirit[field] || spirit[field] === '') {
+        errors.push({
+          code: 'FIELD_REQUIRED_MISSING',
+          message: `Required field "${field}" is missing`,
+          severity: 'CRITICAL',
+          field: field
+        });
+      }
+    }
+
+    // SMART DEFAULTS: origin_country
+    if (!spirit.origin_country || spirit.origin_country === '') {
+      const detectedCountry = this.detectOriginCountry(spirit.name, spirit.description, spirit.category);
+      if (detectedCountry !== 'Unknown') {
+        suggestions.origin_country = detectedCountry;
+        warnings.push({
+          code: 'ORIGIN_COUNTRY_AUTO_DETECTABLE',
+          message: `Origin country can be auto-detected as "${detectedCountry}"`,
+          field: 'origin_country',
+          suggestion: `Set origin_country to: "${detectedCountry}"`
+        });
+      } else {
+        warnings.push({
+          code: 'ORIGIN_COUNTRY_MISSING',
+          message: 'Origin country is missing and cannot be auto-detected',
+          field: 'origin_country',
+          suggestion: 'Manually set origin_country for better data quality'
+        });
+      }
+    }
+
+    // SMART DEFAULTS: distillery (if brand is provided)
+    if (!spirit.distillery && spirit.brand) {
+      const detectedDistillery = this.detectDistillery(spirit.brand, spirit.name);
+      if (detectedDistillery !== 'Unknown') {
+        suggestions.distillery = detectedDistillery;
+        warnings.push({
+          code: 'DISTILLERY_AUTO_DETECTABLE',
+          message: `Distillery can be auto-detected as "${detectedDistillery}"`,
+          field: 'distillery',
+          suggestion: `Set distillery to: "${detectedDistillery}"`
+        });
+      }
+    }
+
+    // FIELD QUALITY CHECKS
+    // Volume normalization
+    if (spirit.volume && spirit.volume !== '') {
+      const normalizedVolume = this.normalizeVolume(spirit.volume);
+      if (normalizedVolume !== spirit.volume) {
+        suggestions.volume = normalizedVolume;
+        warnings.push({
+          code: 'VOLUME_NORMALIZATION',
+          message: `Volume can be normalized from "${spirit.volume}" to "${normalizedVolume}"`,
+          field: 'volume',
+          suggestion: `Normalize volume to: "${normalizedVolume}"`
+        });
+      }
+    }
+
+    // Price validation
+    if (spirit.price !== undefined && spirit.price !== null) {
+      if (typeof spirit.price === 'number') {
+        if (spirit.price < 0 || spirit.price > 10000) {
+          warnings.push({
+            code: 'PRICE_INVALID_RANGE',
+            message: `Price value is outside reasonable range: ${spirit.price}`,
+            field: 'price',
+            suggestion: 'Price should be between $0-$10,000'
+          });
+        }
+      } else {
+        warnings.push({
+          code: 'PRICE_INVALID_TYPE',
+          message: `Price should be a number, found: ${typeof spirit.price}`,
+          field: 'price',
+          suggestion: 'Convert price to numeric value'
+        });
+      }
+    }
+
+    return { errors, warnings, suggestions };
+  }
+
+  /**
+   * Detect origin country based on spirit characteristics
+   */
+  private detectOriginCountry(name?: string, description?: string, category?: string): string {
+    const text = `${name || ''} ${description || ''} ${category || ''}`.toLowerCase();
+
+    // Priority-based country detection
+    const countryPatterns = {
+      'United States': [
+        /\bbourbon\b/i,
+        /\brye\s+whiskey\b/i,
+        /\btennessee\s+whiskey\b/i,
+        /\bamerican\s+(single\s+malt|whiskey)\b/i,
+        /\bkentucky\b/i,
+        /\btennessee\b/i,
+        /\b(jack\s+daniel's|jim\s+beam|maker's\s+mark|buffalo\s+trace|four\s+roses|wild\s+turkey)\b/i
+      ],
+      'Scotland': [
+        /\bscotch\b/i,
+        /\bsingle\s+malt\b/i,
+        /\b(highland|speyside|islay|campbeltown|lowland)\b/i,
+        /\b(macallan|glenfiddich|glenlivet|johnnie\s+walker|chivas|lagavulin|ardbeg)\b/i
+      ],
+      'Ireland': [
+        /\birish\s+whiskey\b/i,
+        /\b(jameson|bushmills|tullamore|redbreast|green\s+spot)\b/i
+      ],
+      'Japan': [
+        /\bjapanese\s+whisky\b/i,
+        /\b(yamazaki|hakushu|nikka|hibiki|taketsuru)\b/i
+      ],
+      'Canada': [
+        /\bcanadian\s+whisky\b/i,
+        /\b(crown\s+royal|canadian\s+club|forty\s+creek)\b/i
+      ],
+      'Mexico': [
+        /\btequila\b/i,
+        /\bmezcal\b/i,
+        /\b(blanco|reposado|añejo|extra\s+añejo)\b/i,
+        /\b(patron|don\s+julio|herradura|clase\s+azul)\b/i
+      ],
+      'France': [
+        /\bcognac\b/i,
+        /\barmagnac\b/i,
+        /\bcalvados\b/i,
+        /\b(hennessy|rémy\s+martin|martell|courvoisier)\b/i
+      ],
+      'United Kingdom': [
+        /\bgin\b/i,
+        /\blondon\s+dry\b/i,
+        /\b(hendrick's|tanqueray|bombay|plymouth)\b/i
+      ]
+    };
+
+    for (const [country, patterns] of Object.entries(countryPatterns)) {
+      if (patterns.some(pattern => pattern.test(text))) {
+        return country;
+      }
+    }
+
+    return 'Unknown';
+  }
+
+  /**
+   * Detect distillery from brand name
+   */
+  private detectDistillery(brand?: string, name?: string): string {
+    if (!brand) return 'Unknown';
+
+    const text = `${brand} ${name || ''}`.toLowerCase();
+
+    // Known brand-to-distillery mappings
+    const distilleryMappings = {
+      'jack daniel\'s': 'Jack Daniel Distillery',
+      'jim beam': 'Jim Beam Distillery',
+      'maker\'s mark': 'Maker\'s Mark Distillery',
+      'buffalo trace': 'Buffalo Trace Distillery',
+      'four roses': 'Four Roses Distillery',
+      'wild turkey': 'Wild Turkey Distillery',
+      'woodford reserve': 'Woodford Reserve Distillery',
+      'macallan': 'The Macallan Distillery',
+      'glenfiddich': 'Glenfiddich Distillery',
+      'glenlivet': 'The Glenlivet Distillery',
+      'johnnie walker': 'Multiple Scottish Distilleries',
+      'jameson': 'Midleton Distillery',
+      'bushmills': 'Old Bushmills Distillery',
+      'yamazaki': 'Yamazaki Distillery',
+      'nikka': 'Nikka Distilleries'
+    };
+
+    const brandLower = brand.toLowerCase();
+    for (const [brandPattern, distillery] of Object.entries(distilleryMappings)) {
+      if (brandLower.includes(brandPattern)) {
+        return distillery;
+      }
+    }
+
+    // Default: assume brand name is distillery name
+    return `${brand} Distillery`;
+  }
+
+  /**
+   * Normalize volume to standard formats
+   */
+  private normalizeVolume(volume: string): string {
+    if (!volume) return '';
+
+    const volumeStr = volume.toLowerCase().trim();
+    
+    // Common volume normalizations
+    const normalizations = {
+      '0.75l': '750ml',
+      '0.7l': '700ml',
+      '1l': '1000ml',
+      '1.0l': '1000ml',
+      '1.75l': '1750ml',
+      '50ml': '50ml',
+      '100ml': '100ml',
+      '200ml': '200ml',
+      '375ml': '375ml',
+      '500ml': '500ml',
+      '750ml': '750ml',
+      '1000ml': '1000ml',
+      '1750ml': '1750ml'
+    };
+
+    // Extract number and unit
+    const match = volumeStr.match(/(\d+(?:\.\d+)?)\s*(ml|l|oz|cl)/);
+    if (match) {
+      const [, number, unit] = match;
+      const num = parseFloat(number);
+      
+      if (unit === 'l') {
+        return `${Math.round(num * 1000)}ml`;
+      } else if (unit === 'cl') {
+        return `${Math.round(num * 10)}ml`;
+      } else if (unit === 'oz') {
+        return `${Math.round(num * 29.5735)}ml`;
+      } else if (unit === 'ml') {
+        return `${Math.round(num)}ml`;
+      }
+    }
+
+    return normalizations[volumeStr] || volume;
+  }
+
+
+  /**
+   * V3.2 ULTRATHINK: Validate hard required fields for production storage
+   */
+  private validateHardRequiredFields(spirit: Partial<SpiritData>): boolean {
+    // ABSOLUTE MINIMUM FIELDS FOR PRODUCTION STORAGE
+    const hardRequiredFields = [
+      'name',        // Product name
+      'source_url',  // Source verification
+      'category'     // Spirit classification
+      // OLD CODE START: origin_country was incorrectly marked as hard required
+      // 'origin_country' // Geographic origin
+      // OLD CODE END
+      // Note: origin_country is now "nice to have" - contributes to quality score but doesn't block storage
+    ];
+
+    // Check if all hard required fields are present and non-empty
+    for (const field of hardRequiredFields) {
+      const value = spirit[field];
+      if (!value || value === '' || value === 'Other' || value === 'Unknown') {
+        logger.debug(`Hard required field validation failed: ${field} = "${value}"`);
+        return false;
+      }
+    }
+
+    // Additional business logic validation
+    // Category cannot be "Other" for production storage
+    if (spirit.category === 'Other') {
+      logger.debug(`Category validation failed: category cannot be "Other" for production storage`);
+      return false;
+    }
+
+    // Name cannot be too generic or incomplete
+    if (spirit.name && spirit.name.length < 10) {
+      logger.debug(`Name validation failed: name too short for production storage`);
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * V3.2 ULTRATHINK: Apply smart defaults to spirit data
+   */
+  applySmartDefaults(spirit: Partial<SpiritData>): Partial<SpiritData> {
+    const enhanced = { ...spirit };
+    const completenessValidation = this.validateFieldCompleteness(spirit);
+    const suggestions = completenessValidation.suggestions;
+
+    // Apply all available smart defaults
+    for (const [field, value] of Object.entries(suggestions)) {
+      if (!enhanced[field] || enhanced[field] === '') {
+        enhanced[field] = value;
+        logger.info(`Applied smart default: ${field} = "${value}"`);
+      }
+    }
+
+    return enhanced;
+  }
+
+  /**
+   * V3.2 ULTRATHINK: Get enhanced quality validation with smart defaults applied
+   */
+  validateWithSmartDefaults(spirit: Partial<SpiritData>): QualityValidationResult & { enhancedSpirit: Partial<SpiritData> } {
+    // First, apply smart defaults
+    const enhancedSpirit = this.applySmartDefaults(spirit);
+    
+    // Then validate the enhanced version
+    const validation = this.validate(enhancedSpirit);
+    
+    return {
+      ...validation,
+      enhancedSpirit
+    };
+  }
+
+  /**
+   * V3.2 ULTRATHINK: Get production readiness assessment
+   */
+  getProductionReadiness(spirit: Partial<SpiritData>): {
+    isProductionReady: boolean;
+    qualityScore: number;
+    missingRequiredFields: string[];
+    criticalIssues: string[];
+    recommendations: string[];
+  } {
+    const validation = this.validate(spirit);
+    const criticalErrors = validation.errors.filter(e => e.severity === 'CRITICAL');
+    const hardFieldsValid = this.validateHardRequiredFields(spirit);
+    
+    const missingRequiredFields = [];
+    const hardRequiredFields = ['name', 'source_url', 'category'];
+    
+    for (const field of hardRequiredFields) {
+      const value = spirit[field];
+      if (!value || value === '' || value === 'Other' || value === 'Unknown') {
+        missingRequiredFields.push(field);
+      }
+    }
+
+    const criticalIssues = criticalErrors.map(e => e.message);
+    
+    return {
+      isProductionReady: validation.canStore,
+      qualityScore: validation.score,
+      missingRequiredFields,
+      criticalIssues,
+      recommendations: validation.recommendations
+    };
+  }
+
+  /**
+   * V3.2 ULTRATHINK: Batch quality assessment for monitoring
+   */
+  assessBatchQuality(spirits: Partial<SpiritData>[]): {
+    totalSpirits: number;
+    productionReady: number;
+    averageScore: number;
+    scoreBuckets: Record<string, number>;
+    topIssues: Record<string, number>;
+    categoryDistribution: Record<string, number>;
+  } {
+    const stats = {
+      totalSpirits: spirits.length,
+      productionReady: 0,
+      averageScore: 0,
+      scoreBuckets: {
+        'Excellent (90-100)': 0,
+        'Good (80-89)': 0,
+        'Acceptable (70-79)': 0,
+        'Poor (60-69)': 0,
+        'Unacceptable (<60)': 0
+      },
+      topIssues: {} as Record<string, number>,
+      categoryDistribution: {} as Record<string, number>
+    };
+
+    let totalScore = 0;
+
+    for (const spirit of spirits) {
+      const validation = this.validate(spirit);
+      totalScore += validation.score;
+
+      if (validation.canStore) {
+        stats.productionReady++;
+      }
+
+      // Score buckets
+      const score = validation.score;
+      if (score >= 90) stats.scoreBuckets['Excellent (90-100)']++;
+      else if (score >= 80) stats.scoreBuckets['Good (80-89)']++;
+      else if (score >= 70) stats.scoreBuckets['Acceptable (70-79)']++;
+      else if (score >= 60) stats.scoreBuckets['Poor (60-69)']++;
+      else stats.scoreBuckets['Unacceptable (<60)']++;
+
+      // Track issues
+      for (const error of validation.errors) {
+        stats.topIssues[error.code] = (stats.topIssues[error.code] || 0) + 1;
+      }
+
+      // Category distribution
+      const category = spirit.category || 'Unknown';
+      stats.categoryDistribution[category] = (stats.categoryDistribution[category] || 0) + 1;
+    }
+
+    stats.averageScore = totalScore / spirits.length;
+
+    return stats;
   }
 
   /**
