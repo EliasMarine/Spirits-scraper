@@ -294,6 +294,7 @@ export class TextProcessor {
     result = result.replace(/SingleBarrel/g, 'Single Barrel');
     
     // V2.6.4: Fix ALL broken word patterns found in CSV analysis
+    // V3.2 ULTRATHINK: Additional fixes from database audit
     // Fix specific broken words we've seen
     result = result.replace(/\bBa Ller\b/g, 'Baller');
     result = result.replace(/\bMa Lt\b/g, 'Malt');
@@ -302,6 +303,12 @@ export class TextProcessor {
     result = result.replace(/\bCa Lifornia\b/g, 'California');
     result = result.replace(/\bCast Le\b/gi, 'Castle');
     result = result.replace(/\bE Lijah\b/gi, 'Elijah');
+    
+    // V3.2: New broken patterns from audit
+    result = result.replace(/\bLoca L Bar Ley\b/g, 'Local Barley');
+    result = result.replace(/\bUnc Le\b/g, 'Uncle');
+    result = result.replace(/\bMc ([A-Z][a-z]+)\b/g, 'Mc$1'); // Fix "Mc Kenna" -> "McKenna"
+    result = result.replace(/\bMac ([A-Z][a-z]+)\b/g, 'Mac$1'); // Fix "Mac Donald" -> "MacDonald"
     result = result.replace(/\bO Ld\b/gi, 'Old');
     result = result.replace(/\bAnnua L\b/gi, 'Annual');
     result = result.replace(/\bJ L\b/gi, 'JL');
@@ -1108,6 +1115,17 @@ export class TextProcessor {
    * Extract brand from spirit name (helper method)
    */
   private static extractBrandFromName(name: string): string {
+    // V3.3 ULTRATHINK: List of invalid single-word brands to reject
+    const INVALID_BRANDS = [
+      'order', 'what', 'the', 'purchase', 'online', 'rare',
+      'top', 'best', 'world', 'we', 'total', 'shelf', 'bottom',
+      'spirits', 'type', 'browse', 'shop', 'buy', 'get', 'find',
+      'new', 'latest', 'featured', 'premium', 'exclusive', 'special',
+      'tequila', 'whiskey', 'bourbon', 'scotch', 'rum', 'gin', 'vodka',
+      'year', 'old', 'single', 'double', 'triple', 'small', 'batch',
+      'cask', 'barrel', 'limited', 'edition', 'reserve', 'select'
+    ];
+    
     // V2.6.4: Special cases for known brand patterns
     if (/st\.?\s*george\s*(ba\s*ller|baller|breaking|single|spirits)/i.test(name)) {
       return 'St. George Spirits';  // Always return full brand name for St. George products
@@ -1144,15 +1162,50 @@ export class TextProcessor {
     for (const pattern of brandPatterns) {
       const match = name.match(pattern);
       if (match) {
-        return this.normalizeBrandName(match[1]);
+        const extractedBrand = match[1].trim();
+        
+        // V3.3: Validate the extracted brand
+        if (INVALID_BRANDS.includes(extractedBrand.toLowerCase())) {
+          console.log(`⚠️ TextProcessor: Rejected invalid brand "${extractedBrand}" from "${name}"`);
+          return 'Unknown';
+        }
+        
+        // V3.3: Never return single common words as brands
+        const brandWords = extractedBrand.split(/\s+/);
+        if (brandWords.length === 1 && extractedBrand.length < 4) {
+          console.log(`⚠️ TextProcessor: Rejected short single-word brand "${extractedBrand}"`);
+          return 'Unknown';
+        }
+        
+        return this.normalizeBrandName(extractedBrand);
       }
     }
 
     // If no pattern matches, take the first 2-3 words as brand
     const words = name.split(/\s+/);
     if (words.length >= 2) {
-      const potentialBrand = words.slice(0, Math.min(3, words.length)).join(' ');
-      return this.normalizeBrandName(potentialBrand);
+      // V3.3: Skip invalid starting words
+      let startIndex = 0;
+      while (startIndex < words.length && INVALID_BRANDS.includes(words[startIndex].toLowerCase())) {
+        startIndex++;
+      }
+      
+      if (startIndex < words.length) {
+        const potentialBrand = words.slice(startIndex, Math.min(startIndex + 3, words.length)).join(' ');
+        
+        // V3.3: Final validation
+        if (potentialBrand.split(/\s+/).length === 1 && 
+            (potentialBrand.length < 4 || INVALID_BRANDS.includes(potentialBrand.toLowerCase()))) {
+          return 'Unknown';
+        }
+        
+        return this.normalizeBrandName(potentialBrand);
+      }
+    }
+
+    // V3.3: Default to Unknown for single words or invalid brands
+    if (words.length === 1 && (words[0].length < 4 || INVALID_BRANDS.includes(words[0].toLowerCase()))) {
+      return 'Unknown';
     }
 
     return this.normalizeBrandName(name);

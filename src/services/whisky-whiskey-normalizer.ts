@@ -170,7 +170,9 @@ export class WhiskyWhiskeyNormalizer {
       shouldDelete = true;
     }
 
-    if (/\s+The\s*$/i.test(name)) {
+    // V3.1.6 FIX: Be more specific about "The" pattern to avoid false positives
+    // Only flag as site reference if it's clearly a site name, not part of article titles
+    if (/\s+The\s*$/i.test(name) && !/\|\s*The\s*$/i.test(name)) {
       issues.push('Ends with "The" (incomplete site reference)');
       shouldDelete = true;
     }

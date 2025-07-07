@@ -94,14 +94,15 @@ export class SupabaseStorage {
       }
       
       // V3.1.5: Perform content validation after pre-storage validation
+      // V3.3 ULTRATHINK: Raised minimum quality score from 60 to 70
       const contentValidation = contentValidator.validateSpirit(spiritData);
-      if (!contentValidation.isValid || contentValidation.qualityScore < 60) {
+      if (!contentValidation.isValid || contentValidation.qualityScore < 70) {
         logger.warn(`❌ Content validation failed: ${spiritData.name}`);
-        logger.warn(`   Quality score: ${contentValidation.qualityScore}`);
+        logger.warn(`   Quality score: ${contentValidation.qualityScore} (minimum required: 70)`);
         logger.warn(`   Issues: ${contentValidation.issues.join(', ')}`);
         return {
           success: false,
-          error: `Content validation failed: ${contentValidation.issues.join(', ')}`,
+          error: `Content validation failed: Quality score ${contentValidation.qualityScore} below minimum 70`,
         };
       }
       

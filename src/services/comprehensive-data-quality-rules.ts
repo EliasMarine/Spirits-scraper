@@ -93,6 +93,50 @@ const INVALID_NAME_PATTERNS = [
   /^we['']?re\s+(living|tasting|trying)\b/i,
   /^i['']?ve\s+(tried|tasted)\s+hundreds\b/i,
   /^we\s+(tasted|tried)\s+\d+\b/i,
+  
+  // V3.3 ULTRATHINK: E-commerce/Navigation patterns
+  /^order\s+\w+\s+online/i,
+  /delivery\s+to\s+your\s+doorstep/i,
+  /^purchase\s+.+\s+and\s+our\s+full\s+line/i,
+  /home\s+delivery\s+online/i,
+  /^tequila\s+order\s+premium/i,
+  /get\s+your\s+top\s+shelf\s+fix/i,
+  
+  // V3.3: Blog/Review patterns from database audit
+  /^brian'?s?\s+whiskey\s+reviews/i,
+  /whiskey\s+shelf\s+reviews/i,
+  /^we\s+did\s+a\s+blind\s+test/i,
+  /for\s+the\s+ages$/i,
+  /bottom\s+shelf\s+.+\s+taste\s+off/i,
+  
+  // V3.3: Article/List patterns
+  /^the\s+world'?s?\s+top\s+/i,
+  /^the\s+top\s+/i,
+  /^rare\s+.+\s+bottles\s+for\s+sale\s+top/i,
+  /best\s+.+\s+for\s+beginners$/i,
+  /top\s+hard\s+to\s+find/i,
+  
+  // V3.3: Fashion/Clothing contamination
+  /scotch\s*&\s*soda.*(spring|summer|campaign|unveil|launch|joe\s+jonas|stylish)/i,
+  /\bmen'?s?\s+(shirt|clothing|apparel|fashion)/i,
+  /\brelaxed\s+fit\s+(shirt|clothing)/i,
+  
+  // V3.3: Delivery/Shipping info
+  /\(cannot\s+ship/i,
+  /local\s+delivery\s+only/i,
+  /delivery\s+online/i,
+  /free\s+shipping/i,
+  /ships\s+as\s+a\s+\d+/i,
+  
+  // V3.3: Cocktail recipes
+  /cocktail\s+.+\s+is\s+a\s+/i,
+  /cocktail\s+recipe/i,
+  /how\s+to\s+make\s+/i,
+  
+  // V3.3: Store category pages
+  /^spirits\s+type\./i,
+  /^shop\s+(whiskey|bourbon|spirits)/i,
+  /^browse\s+(all|our)\s+/i,
 ];
 
 /**
@@ -216,7 +260,38 @@ const BANNED_DOMAINS = [
   'substack.com',
   'podcasts.apple.com',
   'spotify.com/show',
-  'podcasts.google.com'
+  'podcasts.google.com',
+  
+  // V3.3 ULTRATHINK: Fashion/Clothing sites
+  'scotchandsoda.com',
+  'scotch-soda.com',
+  'macys.com',
+  'nordstrom.com',
+  'saks.com',
+  'bloomingdales.com',
+  'neimanmarcus.com',
+  'barneys.com',
+  
+  // V3.3: Review/Blog sites from database audit
+  'whiskyadvocate.com/ratings-reviews',
+  'thewhiskeywash.com/reviews',
+  'whiskyanalysis.com',
+  'scotchwhisky.com/reviews',
+  'thewhiskeyjug.com',
+  'thewhiskeywash.com',
+  'whiskyforeveryone.com',
+  
+  // V3.3: Forum/Community sites
+  'badgerandblade.com',
+  'whiskeynetwork.com',
+  'bourbonr.com/forum',
+  'liquor.com/recipes',
+  'spiritsnetwork.com',
+  
+  // V3.3: E-commerce category pages (partial paths)
+  'nationwideliquor.com/shop',
+  'totalwine.com/spirits/browse',
+  'wine.com/browse'
 ];
 
 export class ComprehensiveDataQualityValidator {
